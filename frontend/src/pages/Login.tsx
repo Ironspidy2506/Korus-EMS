@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
 import axios from 'axios';
+import { Eye, EyeOff } from "lucide-react";
 
 const Login: React.FC = () => {
   const { user, login, isLoading } = useAuth();
@@ -27,6 +28,11 @@ const Login: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isResettingPassword, setIsResettingPassword] = useState(false);
 
+  // Eye button states
+  const [showPassword, setShowPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   if (user) {
     return <Navigate to={`/${user.role}-dashboard`} replace />;
   }
@@ -37,9 +43,6 @@ const Login: React.FC = () => {
 
     try {
       const response = await login(email, password);
-
-      console.log(response);
-
       if (response.data.success) {
         toast({
           title: "Login successful",
@@ -199,16 +202,25 @@ const Login: React.FC = () => {
                 required
               />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2 relative">
               <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
-                type="password"
+                type={showPassword ? "text" : "password"}
                 placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                className="absolute right-3 top-9 text-gray-500"
+                tabIndex={-1}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
             </div>
 
             <div className="flex justify-end">
@@ -254,7 +266,7 @@ const Login: React.FC = () => {
                       </div>
                     ) : (
                       <div className="space-y-4">
-                        <div>
+                        <div className="relative">
                           <Label htmlFor="otp">OTP</Label>
                           <Input
                             id="otp"
@@ -266,27 +278,45 @@ const Login: React.FC = () => {
                             maxLength={6}
                           />
                         </div>
-                        <div>
+                        <div className="relative">
                           <Label htmlFor="new-password">New Password</Label>
                           <Input
                             id="new-password"
-                            type="password"
+                            type={showNewPassword ? "text" : "password"}
                             placeholder="Enter new password"
                             value={newPassword}
                             onChange={(e) => setNewPassword(e.target.value)}
                             className="mt-1"
                           />
+                          <button
+                            type="button"
+                            onClick={() => setShowNewPassword((prev) => !prev)}
+                            className="absolute right-3 top-9 text-gray-500"
+                            tabIndex={-1}
+                            aria-label={showNewPassword ? "Hide password" : "Show password"}
+                          >
+                            {showNewPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                          </button>
                         </div>
-                        <div>
+                        <div className="relative">
                           <Label htmlFor="confirm-password">Confirm Password</Label>
                           <Input
                             id="confirm-password"
-                            type="password"
+                            type={showConfirmPassword ? "text" : "password"}
                             placeholder="Confirm new password"
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
                             className="mt-1"
                           />
+                          <button
+                            type="button"
+                            onClick={() => setShowConfirmPassword((prev) => !prev)}
+                            className="absolute right-3 top-9 text-gray-500"
+                            tabIndex={-1}
+                            aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                          >
+                            {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                          </button>
                         </div>
                         <Button
                           onClick={handleResetPassword}

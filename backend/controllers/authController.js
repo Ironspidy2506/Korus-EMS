@@ -73,9 +73,9 @@ const sendResetOtp = async (req, res) => {
       subject: "Password Reset OTP",
       text: `Your Password Reset OTP is ${otp}. Use this OTP to reset your password. It will expire in 15 minutes.`,
     };
-    
+
     await transporter.sendMail(mailOptions);
-    
+
 
     return res.json({
       success: true,
