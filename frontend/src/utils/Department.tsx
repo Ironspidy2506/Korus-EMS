@@ -7,7 +7,7 @@ export interface Department {
 }
 
 
-const BASE_URL = 'http://localhost:5000/api/department';
+const BASE_URL = 'https://korus-ems-backend.vercel.app/api/department';
 
 // Fetch all departments
 export const getAllDepartments = async (): Promise<Department[]> => {

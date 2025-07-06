@@ -626,7 +626,7 @@ const AdminFixedAllowances: React.FC = () => {
                           size="sm"
                           onClick={() =>
                             window.open(
-                              `http://localhost:5000/api/fixed-allowances/attachment/${a._id}`,
+                              `https://korus-ems-backend.vercel.app/api/fixed-allowances/attachment/${a._id}`,
                               "_blank"
                             )
                           }

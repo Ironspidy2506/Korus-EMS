@@ -22,7 +22,7 @@ export interface Message {
     createdAt: string;
 }
 
-const BASE_URL = "http://localhost:5000/api/message";
+const BASE_URL = "https://korus-ems-backend.vercel.app/api/message";
 
 // Fetch all messages
 export const getAllMessages = async (): Promise<Message[]> => {

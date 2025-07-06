@@ -21,7 +21,7 @@ export interface Allowance {
     updatedAt?: Date;
 }
 
-const API_BASE_URL = 'http://localhost:5000/api/allowances';
+const API_BASE_URL = 'https://korus-ems-backend.vercel.app/api/allowances';
 
 // 
 export const getAllAllowances = async () => {

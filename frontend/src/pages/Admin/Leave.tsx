@@ -428,7 +428,7 @@ const AdminLeave: React.FC = () => {
                           size="sm"
                           onClick={() =>
                             window.open(
-                              `https://korus-employee-management-system-mern-stack.vercel.app/api/leaves/attachment/${request._id}`,
+                              `https://korus-ems-backend.vercel.app/api/leaves/attachment/${request._id}`,
                               "_blank"
                             )
                           }
@@ -653,7 +653,7 @@ const AdminLeave: React.FC = () => {
                       className="w-fit"
                       onClick={() =>
                         window.open(
-                          `https://korus-employee-management-system-mern-stack.vercel.app/api/leaves/attachment/${selectedLeave._id}`,
+                          `https://korus-ems-backend.vercel.app/api/leaves/attachment/${selectedLeave._id}`,
                           "_blank"
                         )
                       }
