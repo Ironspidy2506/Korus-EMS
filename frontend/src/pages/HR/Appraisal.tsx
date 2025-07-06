@@ -209,7 +209,7 @@ const HRAppraisal: React.FC = () => {
   const fetchEmployees = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get("http://localhost:5000/api/employees", {
+      const response = await axios.get("https://korus-ems-backend.vercel.app/api/employees", {
         headers: { Authorization: `Bearer ${token}` },
       });
       setEmployees(response.data.employees);
@@ -226,7 +226,7 @@ const HRAppraisal: React.FC = () => {
   const fetchDepartments = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get("http://localhost:5000/api/department", {
+      const response = await axios.get("https://korus-ems-backend.vercel.app/api/department", {
         headers: { Authorization: `Bearer ${token}` },
       });
       setDepartments(response.data.departments);

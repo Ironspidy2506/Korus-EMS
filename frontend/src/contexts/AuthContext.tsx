@@ -45,7 +45,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       try {
         const response = await axios.get(
-          "http://localhost:5000/api/auth/verify",
+          "https://korus-ems-backend.vercel.app/api/auth/verify",
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -73,7 +73,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     try {
       const response = await axios.post(
-        "http://localhost:5000/api/auth/login",
+        "https://korus-ems-backend.vercel.app/api/auth/login",
         {
           email,
           password,
