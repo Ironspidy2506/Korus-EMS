@@ -37,6 +37,9 @@ const Login: React.FC = () => {
 
     try {
       const response = await login(email, password);
+
+      console.log(response);
+
       if (response.data.success) {
         toast({
           title: "Login successful",
@@ -45,7 +48,7 @@ const Login: React.FC = () => {
       } else {
         toast({
           title: "Login failed",
-          description: `${response.data.message}`,
+          description: response.data.message !== undefined ? `${response.data.message}` : "Connection timed out!",
           variant: "destructive",
         });
       }
