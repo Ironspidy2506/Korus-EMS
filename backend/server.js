@@ -20,7 +20,7 @@ config({ path: ".env" });
 
 app.use(
   cors({
-    origin: "*",
+    origin: "https://korus-ems.vercel.app",
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     credentials: true,
   })
