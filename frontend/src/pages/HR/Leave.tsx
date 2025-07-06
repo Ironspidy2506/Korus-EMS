@@ -419,7 +419,7 @@ const HRLeave: React.FC = () => {
                           size="sm"
                           onClick={() =>
                             window.open(
-                              `https://korus-ems-backend.vercel.app/api/leaves/attachment/${request._id}`,
+                              `http://localhost:5000/api/leaves/attachment/${request._id}`,
                               "_blank"
                             )
                           }
@@ -633,7 +633,7 @@ const HRLeave: React.FC = () => {
                       className="w-fit"
                       onClick={() =>
                         window.open(
-                          `https://korus-ems-backend.vercel.app/api/leaves/attachment/${selectedLeave._id}`,
+                          `http://localhost:5000/api/leaves/attachment/${selectedLeave._id}`,
                           "_blank"
                         )
                       }

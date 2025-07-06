@@ -26,14 +26,14 @@ const login = async (req, res) => {
       { expiresIn: "24h" }
     );
 
-    res.status(200).json({
+    res.json({
       success: true,
       user: { _id: user._id, role: user.role, name: user.name },
       token,
       message: "Login Success!",
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.json({ success: false, error: error.message });
   }
 };
 

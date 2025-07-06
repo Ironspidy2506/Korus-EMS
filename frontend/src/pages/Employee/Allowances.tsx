@@ -383,7 +383,7 @@ const EmployeeAllowances: React.FC = () => {
                         size="sm"
                         onClick={() =>
                           window.open(
-                            `https://korus-ems-backend.vercel.app/api/allowances/attachment/${a._id}`,
+                            `http://localhost:5000/api/allowances/attachment/${a._id}`,
                             "_blank"
                           )
                         }

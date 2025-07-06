@@ -541,7 +541,7 @@ const EmployeeLeave: React.FC = () => {
                         size="sm"
                         onClick={() =>
                           window.open(
-                            `https://korus-ems-backend.vercel.app/api/leaves/attachment/${request._id}`,
+                            `http://localhost:5000/api/leaves/attachment/${request._id}`,
                             "_blank"
                           )
                         }

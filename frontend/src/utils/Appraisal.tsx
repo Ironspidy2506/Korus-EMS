@@ -23,7 +23,7 @@ export interface Appraisal {
     totalRating: number;
 }
 
-const API_BASE_URL = 'https://korus-ems-backend.vercel.app/api/appraisals';
+const API_BASE_URL = 'http://localhost:5000/api/appraisals';
 
 // Get all appraisals
 export const getAppraisals = async () => {

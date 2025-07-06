@@ -36,17 +36,16 @@ const Login: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      const success = await login(email, password);
-      if (success) {
+      const response = await login(email, password);
+      if (response.data.success) {
         toast({
           title: "Login successful",
           description: "Welcome back!",
         });
-        // Navigation will be handled by the redirect in the useEffect
       } else {
         toast({
           title: "Login failed",
-          description: `An error Occured while logging in`,
+          description: `${response.data.message}`,
           variant: "destructive",
         });
       }
@@ -73,7 +72,7 @@ const Login: React.FC = () => {
 
     setIsSendingOtp(true);
     try {
-      const response = await axios.post('https://korus-ems-backend.vercel.app/api/auth/send-reset-otp', {
+      const response = await axios.post('http://localhost:5000/api/auth/send-reset-otp', {
         email: forgotEmail
       });
 
@@ -131,7 +130,7 @@ const Login: React.FC = () => {
 
     setIsResettingPassword(true);
     try {
-      const response = await axios.post('https://korus-ems-backend.vercel.app/api/auth/reset-password', {
+      const response = await axios.post('http://localhost:5000/api/auth/reset-password', {
         email: forgotEmail,
         otp,
         password: newPassword

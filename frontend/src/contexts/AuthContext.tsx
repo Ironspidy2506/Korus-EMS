@@ -16,7 +16,7 @@ export interface User {
 // Auth context type
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<any>;
   logout: () => void;
   isLoading: boolean;
 }
@@ -45,7 +45,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       try {
         const response = await axios.get(
-          "https://korus-ems-backend.vercel.app/api/auth/verify",
+          "http://localhost:5000/api/auth/verify",
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -69,23 +69,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     verifyToken();
   }, []);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
       const response = await axios.post(
-        "https://korus-ems-backend.vercel.app/api/auth/login",
+        "http://localhost:5000/api/auth/login",
         {
           email,
           password,
         }
       );
-
       if (response.data.success) {
         localStorage.setItem("token", response.data.token);
         setUser(response.data.user);
-        return true;
+        return response
       } else {
-        return false;
+        return response
       }
     } catch (error) {
       return false;
