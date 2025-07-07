@@ -89,7 +89,7 @@ const DashboardLayout: React.FC = () => {
           { icon: DollarSign, label: 'Salary', path: '/employee-dashboard/salary' },
           { icon: Gift, label: 'Fixed Allowances', path: '/employee-dashboard/fixed-allowances' },
           { icon: Award, label: 'Variable Allowances', path: '/employee-dashboard/allowances' },
-          { icon: Star, label: 'Appraisal', path: '/employee-dashboard/appraisal' },
+          // { icon: Star, label: 'Appraisal', path: '/employee-dashboard/appraisal' },
           { icon: MessageSquare, label: 'Messages', path: '/employee-dashboard/messages' },
           { icon: HelpCircle, label: 'Helpdesk', path: '/employee-dashboard/helpdesk' }
         ];

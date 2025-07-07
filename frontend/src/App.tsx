@@ -338,14 +338,14 @@ const App = () => (
               } />
               <Route path="lead-dashboard/appraisal" element={
                 <ProtectedRoute allowedRoles={['lead']}>
-                  <EmployeeAppraisal />
-                </ProtectedRoute>
-              } />
-              <Route path="lead-dashboard/added-appraisals" element={
-                <ProtectedRoute allowedRoles={['lead']}>
                   <EmployeeAddedAppraisals />
                 </ProtectedRoute>
               } />
+              {/* <Route path="lead-dashboard/added-appraisals" element={
+                <ProtectedRoute allowedRoles={['lead']}>
+                  <EmployeeAddedAppraisals />
+                </ProtectedRoute>
+              } /> */}
               <Route path="lead-dashboard/webmail" element={
                 <ProtectedRoute allowedRoles={['lead']}>
                   <EmployeeWebmail />
