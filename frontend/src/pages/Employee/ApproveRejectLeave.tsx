@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Search, Filter, ChevronLeft, ChevronRight, Eye, FileText, Calendar, Clock, User, Download, CheckCircle, XCircle, Paperclip, MessageSquare, Pencil } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import { useToast } from '@/hooks/use-toast';
 import { getAllLeaves, approveOrRejectLeave, getLeaveForMyApprovals, updateReasonOfRejection } from '@/utils/Leave';
 import { useNavigate } from 'react-router-dom';
@@ -262,6 +263,30 @@ const EmployeeApproveRejectLeave: React.FC = () => {
         setCurrentPage(newPage);
     }, []);
 
+    // Excel export handler
+    const handleDownloadExcel = () => {
+        const dataToExport = filteredLeaveRequests.map((request: any, idx: number) => ({
+            'S.No.': idx + 1,
+            'Employee ID': request.employeeId?.employeeId,
+            'Employee Name': request.employeeId?.name,
+            'Department': request.employeeId?.department?.departmentName,
+            'Leave Type': getLeaveTypeLabel(request.type),
+            'Start Date': formatDate(request.startDate),
+            'Start Time': formatTime(request.startTime),
+            'End Date': formatDate(request.endDate),
+            'End Time': formatTime(request.endTime),
+            'Days': request.days,
+            'Reason': request.reason,
+            'Attachment': request.attachment ? 'Yes' : 'No',
+            'Status': request.status,
+            'Reason of Rejection': request.ror || '',
+        }));
+        const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Leave Requests');
+        XLSX.writeFile(workbook, 'leave_requests.xlsx');
+    };
+
     if (isLoading) {
         return (
             <div className="space-y-6">
@@ -371,6 +396,14 @@ const EmployeeApproveRejectLeave: React.FC = () => {
                                 <SelectItem value="rejected">Rejected</SelectItem>
                             </SelectContent>
                         </Select>
+                        <Button
+                            variant="outline"
+                            className="ml-auto"
+                            onClick={handleDownloadExcel}
+                        >
+                            <Download className="h-4 w-4 mr-2" />
+                            Download as Excel
+                        </Button>
                     </div>
                 </CardHeader>
                 <CardContent>

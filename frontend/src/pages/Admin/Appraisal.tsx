@@ -8,10 +8,11 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Star, Plus, Edit, Eye, Calendar, TrendingUp, Trash2, Search } from 'lucide-react';
+import { Star, Plus, Edit, Eye, Calendar, TrendingUp, Trash2, Search, Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getAppraisals, addAppraisal, deleteAppraisal, editAppraisal } from '@/utils/Appraisal';
 import axios from 'axios';
+import * as XLSX from 'xlsx';
 
 const ratingScale = {
   1: 25,
@@ -713,19 +714,39 @@ const AdminAppraisal: React.FC = () => {
         <CardHeader>
           <CardTitle>Performance Reviews</CardTitle>
           <CardDescription>Track and manage employee performance appraisals</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {/* Search Bar */}
-          <div className="mt-2 flex items-center space-x-2">
+          <div className="flex items-center gap-2 mt-2 overflow-x-auto pb-2">
             <Search className="h-4 w-4 text-gray-400" />
             <Input
               placeholder="Search employees by Id or Name..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="max-w-sm"
+              className="w-48 sm:w-56 md:w-64 min-w-[10rem]"
             />
+            <Button
+              onClick={() => {
+                const tableData = filteredAppraisals.map((appraisal: any) => ({
+                  'Employee ID': appraisal.employeeId.employeeId,
+                  'Employee Name': appraisal.employeeId.name,
+                  'Department': appraisal.department.departmentName,
+                  'Supervisor(s)': Array.isArray(appraisal.supervisor) && appraisal.supervisor.length > 0 ? appraisal.supervisor.map((sup: any) => sup.name).join(', ') : '-',
+                  'Total Rating': appraisal.totalRating,
+                  'Performance': (appraisal.totalRating ? (function(rating) { if (rating < 65) return 'Unsatisfactory'; else if (rating < 70) return 'Needs Improvement'; else if (rating < 85) return 'Average'; else if (rating < 95) return 'Very Good'; else return 'Excellent'; })(appraisal.totalRating) : '-'),
+                  'Review Date': appraisal.createdAt ? formatDate(appraisal.createdAt) : '-',
+                }));
+                const worksheet = XLSX.utils.json_to_sheet(tableData);
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, 'Appraisals');
+                XLSX.writeFile(workbook, 'Appraisals.xlsx');
+              }}
+              variant="outline"
+              className="border border-gray-300 text-gray-700 hover:bg-gray-100 ml-2 flex items-center min-w-[10rem]"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Download Excel
+            </Button>
           </div>
-
+        </CardHeader>
+        <CardContent>
           <Table>
             <TableHeader>
               <TableRow>

@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Download, Trash2, Pencil, Award, Gift, UserPlus } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -204,6 +205,23 @@ const EmployeeAllowances: React.FC = () => {
     }
   };
 
+  // Excel export handler
+  const handleDownloadExcel = () => {
+    const dataToExport = allowances.map(a => ({
+      'Allowance Type': ALLOWANCE_TYPE_LABELS[a.allowanceType] || a.allowanceType,
+      'Amount': a.allowanceAmount,
+      'Month': a.allowanceMonth,
+      'Year': a.allowanceYear,
+      'Status': a.status ? a.status.charAt(0).toUpperCase() + a.status.slice(1) : 'Pending',
+      'Voucher No.': a.voucherNo,
+      'Attachment': a.attachment ? 'Yes' : 'No',
+    }));
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Allowances');
+    XLSX.writeFile(workbook, 'allowances.xlsx');
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -344,8 +362,20 @@ const EmployeeAllowances: React.FC = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>Allowance Details</CardTitle>
-          <CardDescription>Complete list of your allowances</CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Allowance Details</CardTitle>
+              <CardDescription>Complete list of your allowances</CardDescription>
+            </div>
+            <Button
+              variant="outline"
+              className="ml-auto"
+              onClick={handleDownloadExcel}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Download as Excel
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <Table>

@@ -11,8 +11,9 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Mail, Plus, Send, Inbox, AlertCircle, CheckCircle, Search, Edit, Trash2, MessageSquare, ChevronDown } from 'lucide-react';
+import { Mail, Plus, Send, Inbox, AlertCircle, CheckCircle, Search, Edit, Trash2, MessageSquare, ChevronDown, Download } from 'lucide-react';
 import { toast } from 'sonner';
+import * as XLSX from 'xlsx';
 
 // Extended Message interface for display
 interface MessageWithPopulated extends Message {
@@ -249,6 +250,24 @@ const HRMessages: React.FC = () => {
     }
   };
 
+  // Excel export handler
+  const handleDownloadExcel = () => {
+    const dataToExport = filteredMessages.map(msg => ({
+      'Emp ID': msg.employeeId?.employeeId,
+      'Emp Name': msg.employeeId?.name,
+      'Department': msg.department?.departmentName,
+      'Subject': msg.subject,
+      'Priority': msg.priority,
+      'Message': msg.message,
+      'Reply': msg.reply ? 'Yes' : 'No',
+      'Date': formatDate(msg.createdAt),
+    }));
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Messages');
+    XLSX.writeFile(workbook, 'messages.xlsx');
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -439,6 +458,14 @@ const HRMessages: React.FC = () => {
                 <SelectItem value="urgent">Urgent</SelectItem>
               </SelectContent>
             </Select>
+            <Button
+              variant="outline"
+              className="ml-auto"
+              onClick={handleDownloadExcel}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Download as Excel
+            </Button>
           </div>
         </CardHeader>
         <CardContent>

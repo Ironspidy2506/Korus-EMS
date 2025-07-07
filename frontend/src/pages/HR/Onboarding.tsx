@@ -7,11 +7,12 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Users, CheckCircle, Clock, FileText, Plus, Edit, Search, Calendar } from 'lucide-react';
+import { Users, CheckCircle, Clock, FileText, Plus, Edit, Search, Calendar, Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import axios from 'axios';
 import { getAllEmployees, updateEmployeeJourney } from '@/utils/Employee';
 import { Employee } from '@/utils/Employee';
+import * as XLSX from 'xlsx';
 
 const HROnboarding: React.FC = () => {
   const { toast } = useToast();
@@ -168,6 +169,22 @@ const HROnboarding: React.FC = () => {
     emp.name.toLowerCase().includes(employeeSearchTerm.toLowerCase())
   );
 
+  // Excel export handler
+  const handleDownloadExcel = () => {
+    const dataToExport = filteredEmployees.map(emp => ({
+      'Employee ID': emp.employeeId,
+      'Name': emp.name,
+      'Department': emp.department?.departmentName || '-',
+      'Date of Joining': formatDate(emp.doj || ''),
+      'Date of Leaving': formatDate(emp.dol || ''),
+      'Status': emp.dol ? 'Inactive' : 'Active',
+    }));
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Inactive Employees');
+    XLSX.writeFile(workbook, 'inactive_employees.xlsx');
+  };
+
   if (isLoading) {
     return <div className="flex justify-center items-center h-96">Loading...</div>;
   }
@@ -298,7 +315,7 @@ const HROnboarding: React.FC = () => {
           <CardDescription>Employees who have left the company (with DOL)</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="mb-4">
+          <div className="mb-4 flex items-center gap-4">
             <div className="relative">
               <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
               <Input
@@ -308,6 +325,14 @@ const HROnboarding: React.FC = () => {
                 className="pl-10 max-w-sm"
               />
             </div>
+            <Button
+              variant="outline"
+              className="ml-auto"
+              onClick={handleDownloadExcel}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Download as Excel
+            </Button>
           </div>
 
           <Table>

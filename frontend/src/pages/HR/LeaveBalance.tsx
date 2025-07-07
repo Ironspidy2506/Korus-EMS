@@ -6,10 +6,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Label } from '@/components/ui/label';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Search, ChevronLeft, ChevronRight, Save, User, Check, ChevronsUpDown } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, Save, User, Check, ChevronsUpDown, Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Employee, getAllEmployees, updateEmployeeLeaveBalance } from '@/utils/Employee';
 import { cn } from '@/lib/utils';
+import * as XLSX from 'xlsx';
 
 const ITEMS_PER_PAGE = 20;
 
@@ -191,6 +192,27 @@ const HRLeaveBalance: React.FC = () => {
   const getLeaveBalance = useCallback((employee: Employee, leaveType: keyof Employee['leaveBalance']) => {
     return employee.leaveBalance?.[leaveType] || 0;
   }, []);
+
+  // Excel export handler
+  const handleDownloadExcel = () => {
+    const dataToExport = filteredEmployees.map((employee, idx) => ({
+      'S.No.': idx + 1,
+      'Employee ID': employee.employeeId,
+      'Employee Name': employee.name,
+      'Department': employee.department?.departmentName,
+      'Earned Leave': getLeaveBalance(employee, 'el'),
+      'Sick Leave': getLeaveBalance(employee, 'sl'),
+      'Casual Leave': getLeaveBalance(employee, 'cl'),
+      'On Duty': getLeaveBalance(employee, 'od'),
+      'Leave Without Pay': getLeaveBalance(employee, 'lwp'),
+      'Late Hours Deduction': getLeaveBalance(employee, 'lhd'),
+      'Others': getLeaveBalance(employee, 'others'),
+    }));
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Leave Balances');
+    XLSX.writeFile(workbook, 'leave_balances.xlsx');
+  };
 
   if (isLoading) {
     return (
@@ -418,6 +440,14 @@ const HRLeaveBalance: React.FC = () => {
                 className="w-80"
               />
             </div>
+            <Button
+              variant="outline"
+              className="ml-auto"
+              onClick={handleDownloadExcel}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Download as Excel
+            </Button>
           </div>
         </CardHeader>
         <CardContent>

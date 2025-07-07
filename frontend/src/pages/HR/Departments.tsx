@@ -9,8 +9,9 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Building2, Plus, Edit, Trash2, Users } from 'lucide-react';
+import { Building2, Plus, Edit, Trash2, Users, Download } from 'lucide-react';
 import { toast } from 'sonner';
+import * as XLSX from 'xlsx';
 
 const HRDepartments: React.FC = () => {
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -148,6 +149,20 @@ const HRDepartments: React.FC = () => {
     setIsDeleteDialogOpen(true);
   };
 
+  // Excel export handler
+  const handleDownloadExcel = () => {
+    const dataToExport = departments.map(dep => ({
+      'Department ID': dep.departmentId,
+      'Department Name': dep.departmentName,
+      'Employees': getEmployeeCount(dep._id!),
+      'Description': dep.description,
+    }));
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Departments');
+    XLSX.writeFile(workbook, 'departments.xlsx');
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -234,6 +249,16 @@ const HRDepartments: React.FC = () => {
         <CardHeader>
           <CardTitle>All Departments</CardTitle>
           <CardDescription>Manage and view all organizational departments</CardDescription>
+          <div className="flex items-center justify-end">
+            <Button
+              variant="outline"
+              className="ml-auto"
+              onClick={handleDownloadExcel}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Download as Excel
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <Table>

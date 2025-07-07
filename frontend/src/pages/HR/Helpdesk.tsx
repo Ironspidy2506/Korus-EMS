@@ -9,8 +9,9 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Headphones, Plus, Search, AlertCircle, CheckCircle, Clock, XCircle, MessageSquare } from 'lucide-react';
+import { Headphones, Plus, Search, AlertCircle, CheckCircle, Clock, XCircle, MessageSquare, Download } from 'lucide-react';
 import { toast } from 'sonner';
+import * as XLSX from 'xlsx';
 
 const HRHelpdesk: React.FC = () => {
   const [helpdesks, setHelpdesks] = useState<Helpdesk[]>([]);
@@ -110,6 +111,23 @@ const HRHelpdesk: React.FC = () => {
     withResponse: helpdesks.filter(h => h.response && h.response.trim() !== '').length
   };
 
+  // Excel export handler
+  const handleDownloadExcel = () => {
+    const dataToExport = filteredHelpdesks.map(h => ({
+      'Ticket ID': h.helpId,
+      'Emp ID': h.employeeId.employeeId,
+      'Employee Name': h.employeeId.name,
+      'Query': h.query,
+      'Date': h.date ? formatDate(h.date) : 'N/A',
+      'Status': h.status ? 'Resolved' : 'Open',
+      'Response': h.response ? 'Yes' : 'No',
+    }));
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Helpdesk Tickets');
+    XLSX.writeFile(workbook, 'helpdesk_tickets.xlsx');
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -170,6 +188,14 @@ const HRHelpdesk: React.FC = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="max-w-sm"
             />
+            <Button
+              variant="outline"
+              className="ml-auto"
+              onClick={handleDownloadExcel}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Download as Excel
+            </Button>
           </div>
         </CardHeader>
         <CardContent>

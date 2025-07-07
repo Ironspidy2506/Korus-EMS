@@ -12,6 +12,8 @@ import { toast } from 'sonner';
 import { ChevronDown } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { getAllEmployees, Employee } from '@/utils/Employee';
+import * as XLSX from 'xlsx';
+import { Download } from 'lucide-react';
 
 const AdminSalary: React.FC = () => {
   const [salaryRecords, setSalaryRecords] = useState<Salary[]>([]);
@@ -428,12 +430,12 @@ const AdminSalary: React.FC = () => {
         <CardHeader>
           <CardTitle>Salary Records</CardTitle>
           <CardDescription>View and manage employee compensation details</CardDescription>
-          <div className="flex flex-wrap items-center space-x-4 gap-y-2">
+          <div className="flex items-center gap-2 mt-2 overflow-x-auto pb-2">
             <Input
               placeholder="Search employees by Id or Name..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="max-w-sm"
+              className="w-48 sm:w-56 md:w-64 min-w-[10rem]"
             />
             <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
               <SelectTrigger className="w-[180px]">
@@ -468,6 +470,45 @@ const AdminSalary: React.FC = () => {
                 ))}
               </SelectContent>
             </Select>
+            <Button
+              onClick={() => {
+                const tableData = filteredRecords.map((record: any) => {
+                  const employeeName = record.employeeId && typeof record.employeeId === 'object' ? record.employeeId.name : '';
+                  const department = record.employeeId && typeof record.employeeId === 'object' && record.employeeId.department ? record.employeeId.department.departmentName : '';
+                  const position = record.employeeType || '';
+                  const grossSalary = record.grossSalary || 0;
+                  const baseSalary = record.basicSalary || 0;
+                  const allowances = Array.isArray(record.allowances) ? record.allowances.reduce((sum, a) => sum + (a.amount || 0), 0) : 0;
+                  const deductions = Array.isArray(record.deductions) ? record.deductions.reduce((sum, d) => sum + (d.amount || 0), 0) : 0;
+                  const netSalary = (record.grossSalary || 0) - deductions;
+                  return {
+                    'Employee ID': record.employeeId.employeeId,
+                    'Employee Name': employeeName,
+                    'Department': department,
+                    'Position': position,
+                    'Gross Salary': grossSalary,
+                    'Basic Salary': baseSalary,
+                    'Allowances': allowances,
+                    'Deductions': deductions,
+                    'Net Salary': netSalary,
+                    'Payable Days': record.payableDays,
+                    'Sundays': record.sundays,
+                    'Net Payable Days': record.netPayableDays,
+                    'Payment Month': record.paymentMonth,
+                    'Payment Year': record.paymentYear,
+                  };
+                });
+                const worksheet = XLSX.utils.json_to_sheet(tableData);
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, 'Salaries');
+                XLSX.writeFile(workbook, 'Salaries.xlsx');
+              }}
+              variant="outline"
+              className="border border-gray-300 text-gray-700 hover:bg-gray-100 ml-2 flex items-center min-w-[10rem]"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Download Excel
+            </Button>
           </div>
         </CardHeader>
         <CardContent>

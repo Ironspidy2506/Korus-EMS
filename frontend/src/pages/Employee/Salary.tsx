@@ -3,7 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { DollarSign, Eye } from 'lucide-react';
+import { DollarSign, Eye, Download } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import { useAuth } from '@/contexts/AuthContext';
 import { getUserSalaries } from '@/utils/Salary';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -52,6 +53,31 @@ const EmployeeSalary: React.FC = () => {
     }
   };
 
+  // Excel export handler
+  const handleDownloadExcel = () => {
+    const dataToExport = salaryHistory
+      .filter((record: any) =>
+        (selectedYear === 'all' || record.paymentYear === selectedYear) &&
+        (selectedMonth === 'all' || record.paymentMonth === selectedMonth)
+      )
+      .map(record => ({
+        'Month': record.paymentMonth,
+        'Year': record.paymentYear,
+        'Payable Days': record.payableDays,
+        'Sundays': record.sundays,
+        'Net Payable Days': record.netPayableDays,
+        'Gross Salary': record.grossSalary,
+        'Basic Salary': record.basicSalary,
+        'Allowances': (record.allowances?.reduce((sum: number, a: any) => sum + a.amount, 0) || 0),
+        'Deductions': (record.deductions?.reduce((sum: number, d: any) => sum + d.amount, 0) || 0),
+        'Net Salary': (record.grossSalary - (record.deductions?.reduce((sum: number, d: any) => sum + d.amount, 0) || 0)),
+      }));
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Salary History');
+    XLSX.writeFile(workbook, 'salary_history.xlsx');
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -75,8 +101,20 @@ const EmployeeSalary: React.FC = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>Salary History</CardTitle>
-          <CardDescription>Your salary history for the selected year</CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Salary History</CardTitle>
+              <CardDescription>Your salary history for the selected year</CardDescription>
+            </div>
+            <Button
+              variant="outline"
+              className="ml-auto"
+              onClick={handleDownloadExcel}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Download as Excel
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col md:flex-row gap-2 mb-4 items-center">

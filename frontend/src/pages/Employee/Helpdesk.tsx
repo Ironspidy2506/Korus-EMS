@@ -8,7 +8,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { HelpCircle, Plus, Search, Clock, CheckCircle, AlertCircle, Trash, Pencil } from 'lucide-react';
+import { HelpCircle, Plus, Search, Clock, CheckCircle, AlertCircle, Trash, Pencil, Download } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import { useAuth } from '@/contexts/AuthContext';
 import { getUserHelpdesks, Helpdesk, addHelpdesk, updateHelpdesk, deleteHelpdesk } from '@/utils/Helpdesk';
 import { toast } from 'sonner';
@@ -133,6 +134,21 @@ const EmployeeHelpdesk: React.FC = () => {
   const openTickets = tickets.filter(t => !t.status).length;
   const resolvedTickets = tickets.filter(t => t.status).length;
 
+  // Excel export handler
+  const handleDownloadExcel = () => {
+    const dataToExport = filteredTickets.map(ticket => ({
+      'Ticket ID': ticket.helpId,
+      'Query': ticket.query,
+      'Response': ticket.response || 'No response',
+      'Status': ticket.status ? 'Resolved' : 'Open',
+      'Created Date': formatDate(ticket.date || ''),
+    }));
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Helpdesk Tickets');
+    XLSX.writeFile(workbook, 'helpdesk_tickets.xlsx');
+  };
+
   if (loading) {
     return <div className="flex justify-center items-center h-96">Loading tickets...</div>;
   }
@@ -229,6 +245,14 @@ const EmployeeHelpdesk: React.FC = () => {
                   <SelectItem value="Resolved">Resolved</SelectItem>
                 </SelectContent>
               </Select>
+              <Button
+                variant="outline"
+                className="ml-auto"
+                onClick={handleDownloadExcel}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Download as Excel
+              </Button>
             </div>
           </div>
         </CardHeader>
@@ -248,8 +272,8 @@ const EmployeeHelpdesk: React.FC = () => {
               {filteredTickets.map((ticket) => (
                 <TableRow key={ticket._id}>
                   <TableCell className="font-medium">{ticket.helpId}</TableCell>
-                  <TableCell className="max-w-xs truncate">{ticket.query}</TableCell>
-                  <TableCell className="max-w-xs truncate">{ticket.response || 'No response'}</TableCell>
+                  <TableCell className="max-w-xs">{ticket.query}</TableCell>
+                  <TableCell className="max-w-xs">{ticket.response || 'No response'}</TableCell>
                   <TableCell>
                     <div className="flex items-center space-x-2">
                       {getStatusIcon(ticket.status)}

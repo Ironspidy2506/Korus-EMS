@@ -8,7 +8,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Star, Plus, Edit, Eye, Calendar, TrendingUp, Trash2 } from 'lucide-react';
+import { Star, Plus, Edit, Eye, Calendar, TrendingUp, Trash2, Download } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import { useToast } from '@/hooks/use-toast';
 import { getAppraisals, addAppraisal, deleteAppraisal, editAppraisal, getTeamLeadAppraisals } from '@/utils/Appraisal';
 import axios from 'axios';
@@ -458,6 +459,23 @@ const EmployeeAddedAppraisals: React.FC = () => {
         return employeeId.includes(searchLower) || employeeName.includes(searchLower);
     });
 
+    // Excel export handler
+    const handleDownloadExcel = () => {
+        const dataToExport = filteredAppraisals.map(appraisal => ({
+            'Employee ID': appraisal.employeeId?.employeeId,
+            'Employee Name': appraisal.employeeId?.name,
+            'Department': appraisal.department?.departmentName,
+            'Supervisor(s)': Array.isArray(appraisal.supervisor) && appraisal.supervisor.length > 0 ? appraisal.supervisor.map((sup: any) => sup.name).join(', ') : '-',
+            'Total Rating': appraisal.totalRating,
+            'Performance': getPerformanceMessage(appraisal.totalRating || 0).text,
+            'Review Date': appraisal.createdAt ? formatDate(appraisal.createdAt) : '-',
+        }));
+        const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Appraisals');
+        XLSX.writeFile(workbook, 'appraisals.xlsx');
+    };
+
     if (isLoading) {
         return <div className="flex justify-center items-center h-96">Loading...</div>;
     }
@@ -717,13 +735,21 @@ const EmployeeAddedAppraisals: React.FC = () => {
                 </CardHeader>
                 <CardContent>
                     {/* Search Bar */}
-                    <div className="mb-4">
+                    <div className="mb-4 flex items-center gap-4">
                         <Input
                             placeholder="Search by Employee ID or Name..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="max-w-sm"
                         />
+                        <Button
+                            variant="outline"
+                            className="ml-auto"
+                            onClick={handleDownloadExcel}
+                        >
+                            <Download className="h-4 w-4 mr-2" />
+                            Download as Excel
+                        </Button>
                     </div>
 
                     <Table>

@@ -10,6 +10,8 @@ import { getAllSalaries } from '@/utils/Salary';
 import { getAllAllowances } from '@/utils/Allowance';
 import { getAllFixedAllowances } from '@/utils/FixedAllowance';
 import { toast } from 'sonner';
+import * as XLSX from 'xlsx';
+import { Button } from '@/components/ui/button';
 
 interface CTCData {
   employeeId: string;
@@ -312,16 +314,14 @@ const AdminCTC: React.FC = () => {
         <CardHeader>
           <CardTitle>CTC Management</CardTitle>
           <CardDescription>Merged salary, allowances, and fixed allowances data</CardDescription>
-          <div className="mt-4 flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <Search className="h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Search by Employee ID, Name, or Department"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-80"
-              />
-            </div>
+          <div className="flex items-center gap-2 mt-2 overflow-x-auto pb-2">
+            <Search className="h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Search by Employee ID, Name, or Department"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-48 sm:w-56 md:w-64 min-w-[10rem]"
+            />
             <Select onValueChange={(value) => setMonthFilter(value)} value={monthFilter}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Select Month" />
@@ -344,6 +344,33 @@ const AdminCTC: React.FC = () => {
                 ))}
               </SelectContent>
             </Select>
+            <Button
+              onClick={() => {
+                const tableData = filteredCTCData.map((item) => ({
+                  'Employee ID': item.employeeId,
+                  'Employee Name': item.employeeName,
+                  'Department': item.department,
+                  'Month': item.month,
+                  'Year': item.year,
+                  'Gross Salary': item.grossSalary,
+                  'Basic Salary': item.basicSalary,
+                  'Salary Allowances': item.salaryAllowances,
+                  'Salary Deductions': item.salaryDeductions,
+                  'Variable Allowances': item.variableAllowances,
+                  'Fixed Allowances': item.fixedAllowances,
+                  'Total CTC': item.totalCTC,
+                }));
+                const worksheet = XLSX.utils.json_to_sheet(tableData);
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, 'CTC');
+                XLSX.writeFile(workbook, 'CTC.xlsx');
+              }}
+              variant="outline"
+              className="border border-gray-300 text-gray-700 hover:bg-gray-100 ml-2 flex items-center min-w-[10rem]"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Download Excel
+            </Button>
           </div>
         </CardHeader>
         <CardContent>

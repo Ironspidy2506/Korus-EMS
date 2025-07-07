@@ -9,10 +9,11 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { UserPlus, Search, Edit, Trash2, Eye, Plus, Clock, CheckCircle, Users } from 'lucide-react';
+import { UserPlus, Search, Edit, Trash2, Eye, Plus, Clock, CheckCircle, Users, Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getAllDepartments } from '@/utils/Department';
 import axios from 'axios';
+import * as XLSX from 'xlsx';
 
 interface EmployeeFormData {
   employeeId: string;
@@ -407,6 +408,22 @@ const HREmployees: React.FC = () => {
     </div>
   );
 
+  // Excel export handler
+  const handleDownloadExcel = () => {
+    const dataToExport = filteredEmployees.map(emp => ({
+      'Emp ID': emp.employeeId,
+      'Name': emp.name,
+      'Email': emp.email,
+      'Department': typeof emp.department === 'object' ? emp.department.departmentName : '',
+      'Designation': emp.designation,
+      'DOB': formatDate(emp.dob),
+    }));
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Employees');
+    XLSX.writeFile(workbook, 'employees.xlsx');
+  };
+
   if (isLoading) {
     return <div className="flex justify-center items-center h-96">Loading...</div>;
   }
@@ -588,6 +605,14 @@ const HREmployees: React.FC = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="max-w-sm"
             />
+            <Button
+              variant="outline"
+              className="ml-auto"
+              onClick={handleDownloadExcel}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Download as Excel
+            </Button>
           </div>
         </CardHeader>
         <CardContent>

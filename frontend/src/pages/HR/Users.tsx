@@ -7,8 +7,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { UserPlus, Search, Edit, Trash2, Shield, Key, Users } from 'lucide-react';
+import { UserPlus, Search, Edit, Trash2, Shield, Key, Users, Download } from 'lucide-react';
 import { toast } from 'sonner';
+import * as XLSX from 'xlsx';
 
 const HRUsers: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -74,6 +75,19 @@ const HRUsers: React.FC = () => {
       case 'accounts': return 'teal';
       default: return 'cyan';
     }
+  };
+
+  // Excel export handler
+  const handleDownloadExcel = () => {
+    const dataToExport = filteredUsers.map(user => ({
+      Name: user.name,
+      Email: user.email,
+      Role: user.role
+    }));
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Users');
+    XLSX.writeFile(workbook, 'users.xlsx');
   };
 
   return (
@@ -161,6 +175,14 @@ const HRUsers: React.FC = () => {
                 <SelectItem value="accounts">Accounts</SelectItem>
               </SelectContent>
             </Select>
+            <Button
+              variant="outline"
+              className="ml-auto"
+              onClick={handleDownloadExcel}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Download as Excel
+            </Button>
           </div>
         </CardHeader>
         <CardContent>

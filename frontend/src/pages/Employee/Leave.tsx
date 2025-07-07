@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Calendar, Plus, Clock, CheckCircle, XCircle, Briefcase, Sun, Moon, Heart, MinusCircle, Check, Download, Trash, Pencil } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import { useAuth } from '@/contexts/AuthContext';
 import { Leave, applyForLeave, updateLeave, deleteLeave, getUserLeaves } from '@/utils/Leave';
 import { getAllEmployees, Employee } from '@/utils/Employee';
@@ -261,6 +262,26 @@ const EmployeeLeave: React.FC = () => {
     });
   }, []);
 
+  // Excel export handler
+  const handleDownloadExcel = () => {
+    const dataToExport = Leaves.map(request => ({
+      'Leave Type': getLeaveTypeLabel(request.type),
+      'Start Date': formatDate(request.startDate),
+      'Start Time': formatTime(request.startTime),
+      'End Date': formatDate(request.endDate),
+      'End Time': formatTime(request.endTime),
+      'Days': request.days,
+      'Reason': request.reason,
+      'Attachment': request.attachment ? 'Yes' : 'No',
+      'Reason of Rejection': request.status === 'rejected' ? request.ror : '',
+      'Status': request.status ? request.status.charAt(0).toUpperCase() + request.status.slice(1) : '',
+    }));
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Leave Requests');
+    XLSX.writeFile(workbook, 'leave_requests.xlsx');
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -504,8 +525,20 @@ const EmployeeLeave: React.FC = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>My Leave Requests</CardTitle>
-          <CardDescription>Track your submitted leave requests</CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>My Leave Requests</CardTitle>
+              <CardDescription>Track your submitted leave requests</CardDescription>
+            </div>
+            <Button
+              variant="outline"
+              className="ml-auto"
+              onClick={handleDownloadExcel}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Download as Excel
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <Table>

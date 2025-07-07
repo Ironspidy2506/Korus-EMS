@@ -9,10 +9,13 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { UserPlus, Search, Edit, Trash2, Eye, Plus, Clock, CheckCircle, Users } from 'lucide-react';
+import { UserPlus, Search, Edit, Trash2, Eye, Download, Clock, CheckCircle, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getAllDepartments } from '@/utils/Department';
 import axios from 'axios';
+import * as XLSX from 'xlsx';
+// No react-to-print import needed
+import { useRef } from 'react';
 
 interface EmployeeFormData {
   employeeId: string;
@@ -66,6 +69,7 @@ const AdminEmployees: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [employeeToDelete, setEmployeeToDelete] = useState<Employee | null>(null);
+  const printRef = useRef<HTMLDivElement>(null);
 
   const [formData, setFormData] = useState<EmployeeFormData>({
     employeeId: '',
@@ -209,7 +213,7 @@ const AdminEmployees: React.FC = () => {
       delete employeeToAdd._id;
       const result = await addEmployee(employeeToAdd);
       console.log(result);
-      
+
       if (result) {
         toast({ title: 'Success', description: 'Employee added successfully' });
         setIsAddDialogOpen(false);
@@ -268,7 +272,7 @@ const AdminEmployees: React.FC = () => {
 
   const handleView = (employee: Employee) => {
     console.log(employee);
-    
+
     setSelectedEmployee(employee);
     setIsViewDialogOpen(true);
   };
@@ -406,6 +410,13 @@ const AdminEmployees: React.FC = () => {
       <p className="text-gray-600">{value || '-'}</p>
     </div>
   );
+
+  const handleDownloadExcel = () => {
+    const worksheet = XLSX.utils.json_to_sheet(employees);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Employees");
+    XLSX.writeFile(workbook, "Employees.xlsx");
+  };
 
   if (isLoading) {
     return <div className="flex justify-center items-center h-96">Loading...</div>;
@@ -589,6 +600,16 @@ const AdminEmployees: React.FC = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="max-w-sm"
             />
+            <div className="flex-1 flex justify-end">
+              <Button
+                onClick={handleDownloadExcel}
+                variant="outline"
+                className="border border-gray-300 text-gray-700 hover:bg-gray-100 ml-4 flex items-center"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Download Excel
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -764,8 +785,21 @@ const AdminEmployees: React.FC = () => {
             <DialogTitle>Employee Details</DialogTitle>
             <DialogDescription>View complete employee information</DialogDescription>
           </DialogHeader>
+          <div className="flex justify-end mb-2">
+            <Button variant="outline" className="mb-2" onClick={() => {
+              if (!printRef.current) return;
+              const printContents = printRef.current.innerHTML;
+              const originalContents = document.body.innerHTML;
+              document.body.innerHTML = printContents;
+              window.print();
+              document.body.innerHTML = originalContents;
+              window.location.reload(); // reload to restore event listeners and state
+            }}>
+              Print Profile
+            </Button>
+          </div>
           {selectedEmployee && (
-            <div className="space-y-6">
+            <div className="space-y-6" ref={printRef}>
               {/* Profile Image */}
               {selectedEmployee.userId.profileImage && typeof selectedEmployee.userId.profileImage === 'string' && (
                 <div className="flex justify-center mb-4">
@@ -777,7 +811,7 @@ const AdminEmployees: React.FC = () => {
                 </div>
               )}
 
-              
+
               {/* Personal Information */}
               <div className="mb-4">
                 <h3 className="text-lg font-semibold mb-2">Personal Information</h3>
@@ -813,7 +847,7 @@ const AdminEmployees: React.FC = () => {
                   {renderViewField('Year of Passing', selectedEmployee.yop)}
                   {renderViewField('Date of Joining', selectedEmployee.doj ? formatDate(selectedEmployee.doj) : null)}
                   {renderViewField('Reporting Person', selectedEmployee.repperson)}
-                  {renderViewField('Role', selectedEmployee.role.slice(0,1).toUpperCase() + selectedEmployee.role.slice(1, selectedEmployee.role.length).toLowerCase())}
+                  {renderViewField('Role', selectedEmployee.role.slice(0, 1).toUpperCase() + selectedEmployee.role.slice(1, selectedEmployee.role.length).toLowerCase())}
                 </div>
               </div>
               {/* Bank Information */}

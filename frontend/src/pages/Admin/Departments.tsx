@@ -9,7 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Building2, Plus, Edit, Trash2, Users } from 'lucide-react';
+import { Building2, Plus, Edit, Trash2, Users, Download } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import { toast } from 'sonner';
 
 const AdminDepartments: React.FC = () => {
@@ -20,7 +21,7 @@ const AdminDepartments: React.FC = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedDepartment, setSelectedDepartment] = useState<Department | null>(null);
-  
+
   const [newDepartment, setNewDepartment] = useState({
     departmentId: '',
     departmentName: '',
@@ -231,8 +232,33 @@ const AdminDepartments: React.FC = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>All Departments</CardTitle>
-          <CardDescription>Manage and view all organizational departments</CardDescription>
+          <div className="flex items-center w-full">
+            <div>
+              <CardTitle>All Departments</CardTitle>
+              <CardDescription>Manage and view all organizational departments</CardDescription>
+            </div>
+            <div className="flex-1 flex justify-end">
+              <Button
+                onClick={() => {
+                  const tableData = departments.map((department) => ({
+                    'Department ID': department.departmentId,
+                    'Department Name': department.departmentName,
+                    'Employees': employees.filter(emp => emp.department?._id === department._id).length,
+                    'Description': department.description || '',
+                  }));
+                  const worksheet = XLSX.utils.json_to_sheet(tableData);
+                  const workbook = XLSX.utils.book_new();
+                  XLSX.utils.book_append_sheet(workbook, worksheet, 'Departments');
+                  XLSX.writeFile(workbook, 'Departments.xlsx');
+                }}
+                variant="outline"
+                className="border border-gray-300 text-gray-700 hover:bg-gray-100 ml-4 flex items-center"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Download Excel
+              </Button>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           <Table>
@@ -254,8 +280,8 @@ const AdminDepartments: React.FC = () => {
                   <TableCell className="max-w-xs truncate">{department.description}</TableCell>
                   <TableCell>
                     <div className="flex items-center space-x-2">
-                      <Button 
-                        variant="ghost" 
+                      <Button
+                        variant="ghost"
                         size="sm"
                         onClick={() => openEditDialog(department)}
                       >

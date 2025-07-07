@@ -12,6 +12,7 @@ import { Search, Filter, ChevronLeft, ChevronRight, Eye, FileText, Calendar, Clo
 import { useToast } from '@/hooks/use-toast';
 import { getAllLeaves, approveOrRejectLeave, updateReasonOfRejection } from '@/utils/Leave';
 import { useNavigate } from 'react-router-dom';
+import * as XLSX from 'xlsx';
 
 const ITEMS_PER_PAGE = 20; // Show 20 items per page for better performance
 
@@ -333,18 +334,16 @@ const AdminLeave: React.FC = () => {
         <CardHeader>
           <CardTitle>Leave Requests</CardTitle>
           <CardDescription>Review and approve/reject employee leave requests</CardDescription>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <Search className="h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Search by Employee ID or Name"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-80"
-              />
-            </div>
+          <div className="flex items-center gap-2 mt-2 overflow-x-auto pb-2">
+            <Search className="h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Search by Employee ID or Name"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-48 sm:w-56 md:w-64 min-w-[10rem]"
+            />
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-32 sm:w-40 min-w-[8rem]">
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
               <SelectContent>
@@ -355,7 +354,7 @@ const AdminLeave: React.FC = () => {
               </SelectContent>
             </Select>
             <Select value={leaveTypeFilter} onValueChange={setLeaveTypeFilter}>
-              <SelectTrigger className="w-[200px]">
+              <SelectTrigger className="w-36 sm:w-48 min-w-[9rem]">
                 <SelectValue placeholder="Filter by leave type" />
               </SelectTrigger>
               <SelectContent>
@@ -369,7 +368,38 @@ const AdminLeave: React.FC = () => {
                 <SelectItem value="Others">Others</SelectItem>
               </SelectContent>
             </Select>
+            <Button
+              onClick={() => {
+                const tableData = filteredLeaveRequests.map((request: any, index: number) => ({
+                  'S.No.': index + 1,
+                  'Employee ID': request.employeeId?.employeeId,
+                  'Employee Name': request.employeeId?.name,
+                  'Department': request.employeeId?.department?.departmentName,
+                  'Leave Type': getLeaveTypeLabel(request.type),
+                  'Start Date': formatDate(request.startDate),
+                  'Start Time': formatTime(request.startTime),
+                  'End Date': formatDate(request.endDate),
+                  'End Time': formatTime(request.endTime),
+                  'Days': request.days,
+                  'Reason': request.reason,
+                  'Status': request.status,
+                  'Approved By': request.approvedBy || '',
+                  'Rejected By': request.rejectedBy || '',
+                  'Reason of Rejection': request.ror || '',
+                }));
+                const worksheet = XLSX.utils.json_to_sheet(tableData);
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, 'LeaveRequests');
+                XLSX.writeFile(workbook, 'LeaveRequests.xlsx');
+              }}
+              variant="outline"
+              className="border border-gray-300 text-gray-700 hover:bg-gray-100 ml-2 flex items-center min-w-[10rem]"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Download Excel
+            </Button>
           </div>
+
         </CardHeader>
         <CardContent>
           <Table>

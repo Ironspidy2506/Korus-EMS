@@ -9,8 +9,9 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Calendar, Plus, Edit, Trash2, CalendarDays } from 'lucide-react';
+import { Calendar, Plus, Edit, Trash2, CalendarDays, Download } from 'lucide-react';
 import { toast } from 'sonner';
+import * as XLSX from 'xlsx';
 
 const HRHoliday: React.FC = () => {
   const [holidays, setHolidays] = useState<Holiday[]>([]);
@@ -177,6 +178,21 @@ const HRHoliday: React.FC = () => {
     }).length
   };
 
+  // Excel export handler
+  const handleDownloadExcel = () => {
+    const dataToExport = sortedHolidays.map(holiday => ({
+      'Holiday Name': holiday.name,
+      'Date': formatDate(holiday.date),
+      'Type': holiday.type,
+      'Description': holiday.description,
+      'Recurring': holiday.isRecurring ? 'Yes' : 'No',
+    }));
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Holidays');
+    XLSX.writeFile(workbook, 'holidays.xlsx');
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -305,6 +321,16 @@ const HRHoliday: React.FC = () => {
         <CardHeader>
           <CardTitle>Holiday Calendar</CardTitle>
           <CardDescription>Manage company-wide holidays and observances</CardDescription>
+          <div className="flex items-center justify-end">
+            <Button
+              variant="outline"
+              className="ml-auto"
+              onClick={handleDownloadExcel}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Download as Excel
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <Table>

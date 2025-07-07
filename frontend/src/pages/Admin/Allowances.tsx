@@ -17,6 +17,7 @@ import { cn } from '@/lib/utils';
 import { Employee } from '@/utils/Employee';
 import { getAllDepartments, Department } from '@/utils/Department';
 import { toast } from 'sonner';
+import * as XLSX from 'xlsx';
 
 const ALLOWANCE_TYPE_LABELS: Record<string, string> = {
   epfByCo: 'E.P.F By Co.',
@@ -499,16 +500,14 @@ const AdminAllowances: React.FC = () => {
         <CardHeader>
           <CardTitle>Variable Allowances Management</CardTitle>
           <CardDescription>All employee variable allowances</CardDescription>
-          <div className="mt-4 flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <Search className="h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Search by Employee ID or Name"
-                value={tableSearchTerm}
-                onChange={e => setTableSearchTerm(e.target.value)}
-                className="w-80"
-              />
-            </div>
+          <div className="flex items-center gap-2 mt-2 overflow-x-auto pb-2">
+            <Search className="h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Search by Employee ID or Name"
+              value={tableSearchTerm}
+              onChange={e => setTableSearchTerm(e.target.value)}
+              className="w-48 sm:w-56 md:w-64 min-w-[10rem]"
+            />
             <Select value={monthFilter} onValueChange={setMonthFilter}>
               <SelectTrigger className="w-[150px]">
                 <SelectValue placeholder="Filter by month" />
@@ -531,6 +530,29 @@ const AdminAllowances: React.FC = () => {
                 ))}
               </SelectContent>
             </Select>
+            <Button
+              onClick={() => {
+                const tableData = filteredAllowances.map((a: any) => ({
+                  'Employee ID': a.employeeId && typeof a.employeeId === 'object' ? a.employeeId.employeeId : '',
+                  'Employee Name': a.employeeId && typeof a.employeeId === 'object' ? a.employeeId.name : '',
+                  'Allowance Type': ALLOWANCE_TYPE_LABELS[a.allowanceType] || a.allowanceType,
+                  'Amount': a.allowanceAmount,
+                  'Month': a.allowanceMonth,
+                  'Year': a.allowanceYear,
+                  'Status': a.status,
+                  'Voucher No.': a.voucherNo || '',
+                }));
+                const worksheet = XLSX.utils.json_to_sheet(tableData);
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, 'Allowances');
+                XLSX.writeFile(workbook, 'Allowances.xlsx');
+              }}
+              variant="outline"
+              className="border border-gray-300 text-gray-700 hover:bg-gray-100 ml-2 flex items-center min-w-[10rem]"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Download Excel
+            </Button>
           </div>
         </CardHeader>
         <CardContent>

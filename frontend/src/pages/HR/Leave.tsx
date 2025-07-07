@@ -12,6 +12,7 @@ import { Search, Filter, ChevronLeft, ChevronRight, Eye, FileText, Calendar, Clo
 import { useToast } from '@/hooks/use-toast';
 import { getAllLeaves, approveOrRejectLeave, updateReasonOfRejection } from '@/utils/Leave';
 import { useNavigate } from 'react-router-dom';
+import * as XLSX from 'xlsx';
 
 const ITEMS_PER_PAGE = 20; // Show 20 items per page for better performance
 
@@ -259,6 +260,32 @@ const HRLeave: React.FC = () => {
     setCurrentPage(newPage);
   }, []);
 
+  // Excel export handler
+  const handleDownloadExcel = () => {
+    const dataToExport = filteredLeaveRequests.map((request: any, idx: number) => ({
+      'S.No.': idx + 1,
+      'Employee ID': request.employeeId?.employeeId,
+      'Employee Name': request.employeeId?.name,
+      'Department': request.employeeId?.department?.departmentName,
+      'Leave Type': getLeaveTypeLabel(request.type),
+      'Start Date': formatDate(request.startDate),
+      'Start Time': formatTime(request.startTime),
+      'End Date': formatDate(request.endDate),
+      'End Time': formatTime(request.endTime),
+      'Days': request.days,
+      'Reason': request.reason,
+      'Attachment': request.attachment ? 'Yes' : 'No',
+      'Status': request.status,
+      'Approved By': request.approvedBy || '',
+      'Rejected By': request.rejectedBy || '',
+      'Reason of Rejection': request.ror || '',
+    }));
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Leave Requests');
+    XLSX.writeFile(workbook, 'leave_requests.xlsx');
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -361,6 +388,14 @@ const HRLeave: React.FC = () => {
                 <SelectItem value="rejected">Rejected</SelectItem>
               </SelectContent>
             </Select>
+            <Button
+              variant="outline"
+              className="ml-auto"
+              onClick={handleDownloadExcel}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Download as Excel
+            </Button>
           </div>
         </CardHeader>
         <CardContent>
