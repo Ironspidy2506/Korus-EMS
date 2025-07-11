@@ -51,6 +51,7 @@ import AdminLeaveBalance from "./pages/Admin/LeaveBalance";
 import EmployeeApproveRejectLeave from "./pages/Employee/ApproveRejectLeave";
 import EmployeeFixedAllowances from "./pages/Employee/FixedAllowances";
 import EmployeeAddedAppraisals from "./pages/Employee/AddedAppraisals";
+import JoiningReport from "./pages/JoiningReport";
 
 const queryClient = new QueryClient();
 
@@ -62,9 +63,10 @@ const App = () => (
       <AuthProvider>
         <BrowserRouter>
           <Routes>
+            <Route path="joining-form" element={<JoiningReport />} />
             <Route path="/login" element={<Login />} />
             <Route path="/unauthorized" element={<Unauthorized />} />
-            
+
             <Route path="/" element={
               <ProtectedRoute>
                 <DashboardLayout />
@@ -174,7 +176,7 @@ const App = () => (
                   <AdminAllowances />
                 </ProtectedRoute>
               } />
-              
+
               {/* HR Routes */}
               <Route path="hr-dashboard" element={
                 <ProtectedRoute allowedRoles={['hr']}>
@@ -231,7 +233,7 @@ const App = () => (
                   <HRHelpdesk />
                 </ProtectedRoute>
               } />
-              
+
               {/* Employee Routes */}
               <Route path="employee-dashboard" element={
                 <ProtectedRoute allowedRoles={['employee']}>
@@ -366,11 +368,11 @@ const App = () => (
                   <EmployeeHelpdesk />
                 </ProtectedRoute>
               } />
-              
+
               {/* Default redirect based on role */}
               <Route index element={<Navigate to="/login" replace />} />
             </Route>
-            
+
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

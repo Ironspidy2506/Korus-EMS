@@ -45,11 +45,11 @@ const HRLeaveBalance: React.FC = () => {
         const sorted = data.sort((a: Employee, b: Employee) => {
           const aId = String(a.employeeId || '');
           const bId = String(b.employeeId || '');
-          
+
           // Extract numeric part for proper numeric sorting
           const aNum = parseInt(aId.replace(/\D/g, '')) || 0;
           const bNum = parseInt(bId.replace(/\D/g, '')) || 0;
-          
+
           return aNum - bNum;
         });
         setEmployees(sorted);
@@ -89,7 +89,7 @@ const HRLeaveBalance: React.FC = () => {
 
   // Handle leave balance input changes
   const handleLeaveBalanceChange = useCallback((field: keyof typeof leaveBalances, value: string) => {
-    const numValue = parseInt(value) || 0;
+    const numValue = parseFloat(value) || 0;
     setLeaveBalances(prev => ({
       ...prev,
       [field]: numValue
@@ -103,15 +103,15 @@ const HRLeaveBalance: React.FC = () => {
     try {
       setIsSaving(true);
       await updateEmployeeLeaveBalance(String(selectedEmployee.employeeId), leaveBalances);
-      
+
       toast({
         title: "Success",
         description: "Leave balances updated successfully",
       });
 
       // Update the employee in the list
-      setEmployees(prev => prev.map(emp => 
-        emp._id === selectedEmployee._id 
+      setEmployees(prev => prev.map(emp =>
+        emp._id === selectedEmployee._id
           ? { ...emp, leaveBalance: leaveBalances }
           : emp
       ));
@@ -143,16 +143,16 @@ const HRLeaveBalance: React.FC = () => {
   // Memoized filtered data - CRITICAL for performance
   const filteredEmployees = useMemo(() => {
     if (!searchTerm.trim()) return employees;
-    
+
     const searchLower = searchTerm.toLowerCase();
     return employees.filter((employee: Employee) => {
       const employeeId = String(employee.employeeId || '');
       const name = String(employee.name || '');
       const departmentName = String(employee.department?.departmentName || '');
-      
+
       return employeeId.toLowerCase().includes(searchLower) ||
-             name.toLowerCase().includes(searchLower) ||
-             departmentName.toLowerCase().includes(searchLower);
+        name.toLowerCase().includes(searchLower) ||
+        departmentName.toLowerCase().includes(searchLower);
     });
   }, [employees, searchTerm]);
 
@@ -168,7 +168,7 @@ const HRLeaveBalance: React.FC = () => {
     const totalPages = Math.ceil(filteredEmployees.length / ITEMS_PER_PAGE);
     const startItem = (currentPage - 1) * ITEMS_PER_PAGE + 1;
     const endItem = Math.min(currentPage * ITEMS_PER_PAGE, filteredEmployees.length);
-    
+
     return {
       totalPages,
       startItem,
@@ -266,7 +266,7 @@ const HRLeaveBalance: React.FC = () => {
                       !selectedEmployee && "text-muted-foreground"
                     )}
                   >
-                    {selectedEmployee 
+                    {selectedEmployee
                       ? `${selectedEmployee.employeeId} - ${selectedEmployee.name}`
                       : "Search employee by ID or name..."
                     }
@@ -319,6 +319,7 @@ const HRLeaveBalance: React.FC = () => {
                     id="el"
                     type="number"
                     min="0"
+                    step="0.01"
                     value={leaveBalances.el}
                     onChange={(e) => handleLeaveBalanceChange('el', e.target.value)}
                     placeholder="0"
@@ -330,6 +331,7 @@ const HRLeaveBalance: React.FC = () => {
                     id="sl"
                     type="number"
                     min="0"
+                    step="0.01"
                     value={leaveBalances.sl}
                     onChange={(e) => handleLeaveBalanceChange('sl', e.target.value)}
                     placeholder="0"
@@ -341,6 +343,7 @@ const HRLeaveBalance: React.FC = () => {
                     id="cl"
                     type="number"
                     min="0"
+                    step="0.01"
                     value={leaveBalances.cl}
                     onChange={(e) => handleLeaveBalanceChange('cl', e.target.value)}
                     placeholder="0"
@@ -352,6 +355,7 @@ const HRLeaveBalance: React.FC = () => {
                     id="od"
                     type="number"
                     min="0"
+                    step="0.01"
                     value={leaveBalances.od}
                     onChange={(e) => handleLeaveBalanceChange('od', e.target.value)}
                     placeholder="0"
@@ -363,6 +367,7 @@ const HRLeaveBalance: React.FC = () => {
                     id="lwp"
                     type="number"
                     min="0"
+                    step="0.01"
                     value={leaveBalances.lwp}
                     onChange={(e) => handleLeaveBalanceChange('lwp', e.target.value)}
                     placeholder="0"
@@ -374,6 +379,7 @@ const HRLeaveBalance: React.FC = () => {
                     id="lhd"
                     type="number"
                     min="0"
+                    step="0.01"
                     value={leaveBalances.lhd}
                     onChange={(e) => handleLeaveBalanceChange('lhd', e.target.value)}
                     placeholder="0"
@@ -385,6 +391,7 @@ const HRLeaveBalance: React.FC = () => {
                     id="others"
                     type="number"
                     min="0"
+                    step="0.01"
                     value={leaveBalances.others}
                     onChange={(e) => handleLeaveBalanceChange('others', e.target.value)}
                     placeholder="0"
@@ -393,7 +400,7 @@ const HRLeaveBalance: React.FC = () => {
               </div>
 
               <div className="flex gap-2">
-                <Button 
+                <Button
                   onClick={handleSaveLeaveBalances}
                   disabled={isSaving}
                   className="flex items-center gap-2"
@@ -401,7 +408,7 @@ const HRLeaveBalance: React.FC = () => {
                   <Save className="h-4 w-4" />
                   {isSaving ? 'Saving...' : 'Save Changes'}
                 </Button>
-                <Button 
+                <Button
                   variant="outline"
                   onClick={() => {
                     setSelectedEmployee(null);
@@ -472,8 +479,8 @@ const HRLeaveBalance: React.FC = () => {
                 <TableRow>
                   <TableCell colSpan={11} className="text-center py-8">
                     <div className="text-gray-500">
-                      {searchTerm 
-                        ? 'No employees match your search criteria.' 
+                      {searchTerm
+                        ? 'No employees match your search criteria.'
                         : 'No employees found.'}
                     </div>
                   </TableCell>

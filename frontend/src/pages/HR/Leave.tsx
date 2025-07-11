@@ -28,6 +28,8 @@ const HRLeave: React.FC = () => {
   const [editingRejectionId, setEditingRejectionId] = useState(null);
   const [rejectionReason, setRejectionReason] = useState('');
   const [isUpdatingRejection, setIsUpdatingRejection] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState<string>('All');
+  const [selectedYear, setSelectedYear] = useState<string>('All');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -67,9 +69,22 @@ const HRLeave: React.FC = () => {
 
       const matchesStatus = statusFilter === 'All' || request.status === statusFilter;
 
-      return matchesSearch && matchesStatus;
+      // Month/year filter
+      let matchesMonth = true;
+      let matchesYear = true;
+      if (selectedMonth !== 'All' || selectedYear !== 'All') {
+        const startDate = new Date(request.startDate);
+        if (selectedMonth !== 'All') {
+          matchesMonth = startDate.getMonth() + 1 === parseInt(selectedMonth);
+        }
+        if (selectedYear !== 'All') {
+          matchesYear = startDate.getFullYear() === parseInt(selectedYear);
+        }
+      }
+
+      return matchesSearch && matchesStatus && matchesMonth && matchesYear;
     });
-  }, [leaveRequests, searchTerm, statusFilter]);
+  }, [leaveRequests, searchTerm, statusFilter, selectedMonth, selectedYear]);
 
   // Memoized paginated data - CRITICAL for performance
   const paginatedLeaveRequests = useMemo(() => {
@@ -107,7 +122,7 @@ const HRLeave: React.FC = () => {
   // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, statusFilter]);
+  }, [searchTerm, statusFilter, selectedMonth, selectedYear]);
 
   const handleApprove = useCallback(async (leaveId: string) => {
     try {
@@ -388,6 +403,46 @@ const HRLeave: React.FC = () => {
                 <SelectItem value="rejected">Rejected</SelectItem>
               </SelectContent>
             </Select>
+            {/* Month Filter */}
+            <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+              <SelectTrigger className="w-[120px]">
+                <SelectValue placeholder="Month" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="All">All Months</SelectItem>
+                <SelectItem value="1">January</SelectItem>
+                <SelectItem value="2">February</SelectItem>
+                <SelectItem value="3">March</SelectItem>
+                <SelectItem value="4">April</SelectItem>
+                <SelectItem value="5">May</SelectItem>
+                <SelectItem value="6">June</SelectItem>
+                <SelectItem value="7">July</SelectItem>
+                <SelectItem value="8">August</SelectItem>
+                <SelectItem value="9">September</SelectItem>
+                <SelectItem value="10">October</SelectItem>
+                <SelectItem value="11">November</SelectItem>
+                <SelectItem value="12">December</SelectItem>
+              </SelectContent>
+            </Select>
+            {/* Year Filter */}
+            <Select value={selectedYear} onValueChange={setSelectedYear}>
+              <SelectTrigger className="w-[120px]">
+                <SelectValue placeholder="Year" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="All">All Years</SelectItem>
+                {/* Dynamically generate year options from leaveRequests, only valid 4-digit years */}
+                {Array.from(new Set(leaveRequests.map((req: any) => {
+                  const year = new Date(req.startDate).getFullYear();
+                  return (year >= 2000 && year <= 2100) ? year : null;
+                })))
+                  .filter((year) => year !== null)
+                  .sort((a, b) => b - a)
+                  .map((year) => (
+                    <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
             <Button
               variant="outline"
               className="ml-auto"
@@ -423,7 +478,7 @@ const HRLeave: React.FC = () => {
                 <TableRow>
                   <TableCell colSpan={14} className="text-center py-8">
                     <div className="text-gray-500">
-                      {searchTerm || statusFilter !== 'All'
+                      {searchTerm || statusFilter !== 'All' || selectedMonth !== 'All' || selectedYear !== 'All'
                         ? 'No leave requests match your search criteria.'
                         : 'No leave requests found.'}
                     </div>
