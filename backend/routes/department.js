@@ -6,7 +6,7 @@ import { addDepartment, getDepartments, getDepartment, updateDepartment , delete
 const router = express.Router();
 
 // Route to get all the departments
-router.get('/', authMiddleware, getDepartments);
+router.get('/', getDepartments);
 
 // Route to add a department
 router.post('/add', authMiddleware, addDepartment);
