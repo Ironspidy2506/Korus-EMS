@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Star, Plus, Edit, Eye, Calendar, TrendingUp, Trash2, Download } from 'lucide-react';
+import { Star, Plus, Edit, Eye, Calendar, TrendingUp, Trash2, Download, Printer } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { useToast } from '@/hooks/use-toast';
 import { getAppraisals, addAppraisal, deleteAppraisal, editAppraisal, getTeamLeadAppraisals } from '@/utils/Appraisal';
@@ -186,6 +186,20 @@ const EmployeeAddedAppraisals: React.FC = () => {
     const leads = employees
         .filter((emp) => emp.role === "lead")
         .sort((a, b) => a.employeeId - b.employeeId);
+
+    const printRef = useRef<HTMLDivElement>(null);
+
+    // Print handler
+    const handlePrint = () => {
+        if (printRef.current) {
+            const printContents = printRef.current.innerHTML;
+            const originalContents = document.body.innerHTML;
+            document.body.innerHTML = printContents;
+            window.print();
+            document.body.innerHTML = originalContents;
+            window.location.reload(); // reload to restore event listeners
+        }
+    };
 
     useEffect(() => {
         fetchAppraisals();
@@ -516,169 +530,175 @@ const EmployeeAddedAppraisals: React.FC = () => {
                             <DialogTitle>Create New Appraisal</DialogTitle>
                             <DialogDescription>Complete performance appraisal for an employee</DialogDescription>
                         </DialogHeader>
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            {/* Employee Info */}
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <Label htmlFor="employee">Employee</Label>
-                                    <Select onValueChange={(value) => handleEmployeeChange({ value })}>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select Employee" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {employees
-                                                .sort((a: any, b: any) => a.employeeId - b.employeeId)
-                                                .map((employee: any) => (
-                                                    <SelectItem key={employee._id} value={employee._id}>
-                                                        {employee.employeeId} - {employee.name}
+                        <Button onClick={handlePrint} className="mb-4" variant="outline">
+                            <Printer className="h-4 w-4 mr-2" />
+                            Print
+                        </Button>
+                        <div ref={printRef} className="printable-appraisal">
+                            <form onSubmit={handleSubmit} className="space-y-4">
+                                {/* Employee Info */}
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <Label htmlFor="employee">Employee</Label>
+                                        <Select onValueChange={(value) => handleEmployeeChange({ value })}>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select Employee" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {employees
+                                                    .sort((a: any, b: any) => a.employeeId - b.employeeId)
+                                                    .map((employee: any) => (
+                                                        <SelectItem key={employee._id} value={employee._id}>
+                                                            {employee.employeeId} - {employee.name}
+                                                        </SelectItem>
+                                                    ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+
+                                    <div>
+                                        <Label htmlFor="department">Department</Label>
+                                        <Select value={formData.department} disabled>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Auto-filled" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {departments.map((dep: any) => (
+                                                    <SelectItem key={dep._id} value={dep._id}>
+                                                        {dep.departmentId} {dep.departmentName}
                                                     </SelectItem>
                                                 ))}
-                                        </SelectContent>
-                                    </Select>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
                                 </div>
 
                                 <div>
-                                    <Label htmlFor="department">Department</Label>
-                                    <Select value={formData.department} disabled>
+                                    <Label htmlFor="supervisor">Supervisor</Label>
+                                    <Select
+                                        onValueChange={(value) => {
+                                            const currentSupervisors = formData.supervisor || [];
+                                            if (currentSupervisors.includes(value)) {
+                                                // Remove if already selected
+                                                setFormData({
+                                                    ...formData,
+                                                    supervisor: currentSupervisors.filter(s => s !== value)
+                                                });
+                                            } else {
+                                                // Add if not selected
+                                                setFormData({
+                                                    ...formData,
+                                                    supervisor: [...currentSupervisors, value]
+                                                });
+                                            }
+                                        }}
+                                    >
                                         <SelectTrigger>
-                                            <SelectValue placeholder="Auto-filled" />
+                                            <SelectValue placeholder="Select Lead(s)" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            {departments.map((dep: any) => (
-                                                <SelectItem key={dep._id} value={dep._id}>
-                                                    {dep.departmentId} {dep.departmentName}
+                                            {leads.map((lead: any) => (
+                                                <SelectItem key={lead._id} value={lead._id}>
+                                                    {lead.employeeId} - {lead.name}
                                                 </SelectItem>
                                             ))}
                                         </SelectContent>
                                     </Select>
-                                </div>
-                            </div>
-
-                            <div>
-                                <Label htmlFor="supervisor">Supervisor</Label>
-                                <Select
-                                    onValueChange={(value) => {
-                                        const currentSupervisors = formData.supervisor || [];
-                                        if (currentSupervisors.includes(value)) {
-                                            // Remove if already selected
-                                            setFormData({
-                                                ...formData,
-                                                supervisor: currentSupervisors.filter(s => s !== value)
-                                            });
-                                        } else {
-                                            // Add if not selected
-                                            setFormData({
-                                                ...formData,
-                                                supervisor: [...currentSupervisors, value]
-                                            });
-                                        }
-                                    }}
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select Lead(s)" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {leads.map((lead: any) => (
-                                            <SelectItem key={lead._id} value={lead._id}>
-                                                {lead.employeeId} - {lead.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                {/* Display selected supervisors */}
-                                {formData.supervisor && formData.supervisor.length > 0 && (
-                                    <div className="mt-2 flex flex-wrap gap-2">
-                                        {formData.supervisor.map((supervisorId: string) => {
-                                            const supervisor = leads.find((lead: any) => lead._id === supervisorId);
-                                            return supervisor ? (
-                                                <Badge key={supervisorId} variant="secondary" className="cursor-pointer hover:bg-red-100"
-                                                    onClick={() => {
-                                                        setFormData({
-                                                            ...formData,
-                                                            supervisor: formData.supervisor.filter(s => s !== supervisorId)
-                                                        });
-                                                    }}>
-                                                    {supervisor.employeeId} - {supervisor.name} ×
-                                                </Badge>
-                                            ) : null;
-                                        })}
-                                    </div>
-                                )}
-                            </div>
-
-                            <div>
-                                <Label htmlFor="supervisorComments">Supervisor Comments</Label>
-                                <Textarea
-                                    name="supervisorComments"
-                                    placeholder="Supervisor Comments"
-                                    value={formData.supervisorComments}
-                                    onChange={handleChange}
-                                    className="h-20"
-                                />
-                            </div>
-
-                            <div>
-                                <Label htmlFor="accomplishments">Accomplishments</Label>
-                                <Textarea
-                                    name="accomplishments"
-                                    placeholder="Accomplishments of Position Duties"
-                                    value={formData.accomplishments}
-                                    onChange={handleChange}
-                                    className="h-20"
-                                />
-                            </div>
-
-                            {/* Ratings Section */}
-                            <div>
-                                <h3 className="text-xl font-bold text-gray-800 mb-4">Performance Ratings</h3>
-                                {ratingFields.map((field) => (
-                                    <div key={field.key} className="p-4 bg-gray-100 rounded-lg shadow mt-4">
-                                        <Label className="text-lg font-semibold text-gray-700 capitalize">
-                                            {field.label}
-                                        </Label>
-                                        <p className="text-sm text-gray-600 mt-1">{field.description}</p>
-                                        <div className="flex flex-col gap-3 mt-2">
-                                            {Object.entries(field.descriptions).map(([score, desc]) => (
-                                                <label
-                                                    key={score}
-                                                    className="flex items-start gap-2 bg-gray-200 px-3 py-2 rounded-lg shadow cursor-pointer hover:bg-gray-300 transition"
-                                                >
-                                                    <input
-                                                        type="radio"
-                                                        name={field.key}
-                                                        value={score}
-                                                        checked={ratings[field.key] === score}
-                                                        onChange={handleRatingChange}
-                                                        className="w-5 h-5 accent-orange-500 mt-1 cursor-pointer"
-                                                    />
-                                                    <div>
-                                                        <span className="font-semibold text-gray-800">
-                                                            Rating {score}
-                                                        </span>
-                                                        <p className="text-sm text-gray-700">{desc}</p>
-                                                    </div>
-                                                </label>
-                                            ))}
+                                    {/* Display selected supervisors */}
+                                    {formData.supervisor && formData.supervisor.length > 0 && (
+                                        <div className="mt-2 flex flex-wrap gap-2">
+                                            {formData.supervisor.map((supervisorId: string) => {
+                                                const supervisor = leads.find((lead: any) => lead._id === supervisorId);
+                                                return supervisor ? (
+                                                    <Badge key={supervisorId} variant="secondary" className="cursor-pointer hover:bg-red-100"
+                                                        onClick={() => {
+                                                            setFormData({
+                                                                ...formData,
+                                                                supervisor: formData.supervisor.filter(s => s !== supervisorId)
+                                                            });
+                                                        }}>
+                                                        {supervisor.employeeId} - {supervisor.name} ×
+                                                    </Badge>
+                                                ) : null;
+                                            })}
                                         </div>
-                                    </div>
-                                ))}
-                            </div>
+                                    )}
+                                </div>
 
-                            {/* Display Total Rating */}
-                            <div className="text-center text-xl font-extrabold mt-4">
-                                Total Rating Score:{" "}
-                                <span className="text-orange-500">{totalRating}/100</span>
-                                <p className={`mt-2 text-lg font-semibold ${performanceMessage.color}`}>
-                                    ({performanceMessage.text})
-                                </p>
-                            </div>
+                                <div>
+                                    <Label htmlFor="supervisorComments">Supervisor Comments</Label>
+                                    <Textarea
+                                        name="supervisorComments"
+                                        placeholder="Supervisor Comments"
+                                        value={formData.supervisorComments}
+                                        onChange={handleChange}
+                                        className="h-20"
+                                    />
+                                </div>
 
-                            <DialogFooter>
-                                <Button type="submit" disabled={isSubmitting}>
-                                    Submit Appraisal
-                                </Button>
-                            </DialogFooter>
-                        </form>
+                                <div>
+                                    <Label htmlFor="accomplishments">Accomplishments</Label>
+                                    <Textarea
+                                        name="accomplishments"
+                                        placeholder="Accomplishments of Position Duties"
+                                        value={formData.accomplishments}
+                                        onChange={handleChange}
+                                        className="h-20"
+                                    />
+                                </div>
+
+                                {/* Ratings Section */}
+                                <div>
+                                    <h3 className="text-xl font-bold text-gray-800 mb-4">Performance Ratings</h3>
+                                    {ratingFields.map((field) => (
+                                        <div key={field.key} className="p-4 bg-gray-100 rounded-lg shadow mt-4">
+                                            <Label className="text-lg font-semibold text-gray-700 capitalize">
+                                                {field.label}
+                                            </Label>
+                                            <p className="text-sm text-gray-600 mt-1">{field.description}</p>
+                                            <div className="flex flex-col gap-3 mt-2">
+                                                {Object.entries(field.descriptions).map(([score, desc]) => (
+                                                    <label
+                                                        key={score}
+                                                        className="flex items-start gap-2 bg-gray-200 px-3 py-2 rounded-lg shadow cursor-pointer hover:bg-gray-300 transition"
+                                                    >
+                                                        <input
+                                                            type="radio"
+                                                            name={field.key}
+                                                            value={score}
+                                                            checked={ratings[field.key] === score}
+                                                            onChange={handleRatingChange}
+                                                            className="w-5 h-5 accent-orange-500 mt-1 cursor-pointer"
+                                                        />
+                                                        <div>
+                                                            <span className="font-semibold text-gray-800">
+                                                                Rating {score}
+                                                            </span>
+                                                            <p className="text-sm text-gray-700">{desc}</p>
+                                                        </div>
+                                                    </label>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {/* Display Total Rating */}
+                                <div className="text-center text-xl font-extrabold mt-4">
+                                    Total Rating Score:{" "}
+                                    <span className="text-orange-500">{totalRating}/100</span>
+                                    <p className={`mt-2 text-lg font-semibold ${performanceMessage.color}`}>
+                                        ({performanceMessage.text})
+                                    </p>
+                                </div>
+
+                                <DialogFooter>
+                                    <Button type="submit" disabled={isSubmitting}>
+                                        Submit Appraisal
+                                    </Button>
+                                </DialogFooter>
+                            </form>
+                        </div>
                     </DialogContent>
                 </Dialog>
             </div>
@@ -818,74 +838,80 @@ const EmployeeAddedAppraisals: React.FC = () => {
                         <DialogTitle>View Appraisal Details</DialogTitle>
                     </DialogHeader>
                     {selectedAppraisal && (
-                        <div className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <Label className="font-bold">Employee</Label>
-                                    <p>{selectedAppraisal.employeeId.employeeId} - {selectedAppraisal.employeeId.name}</p>
+                        <div>
+                            <Button onClick={handlePrint} className="mb-4" variant="outline">
+                                <Printer className="h-4 w-4 mr-2" />
+                                Print
+                            </Button>
+                            <div ref={printRef} className="printable-appraisal">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <Label className="font-bold">Employee</Label>
+                                        <p>{selectedAppraisal.employeeId.employeeId} - {selectedAppraisal.employeeId.name}</p>
+                                    </div>
+                                    <div>
+                                        <Label className="font-bold">Department</Label>
+                                        <p>{selectedAppraisal.department.departmentName}</p>
+                                    </div>
                                 </div>
                                 <div>
-                                    <Label className="font-bold">Department</Label>
-                                    <p>{selectedAppraisal.department.departmentName}</p>
+                                    <Label className="font-bold">Period</Label>
+                                    <p>{formatDate(selectedAppraisal.createdAt)}</p>
                                 </div>
-                            </div>
-                            <div>
-                                <Label className="font-bold">Period</Label>
-                                <p>{formatDate(selectedAppraisal.createdAt)}</p>
-                            </div>
-                            <div>
-                                <Label className="font-bold">Supervisors</Label>
-                                <p className="text-sm text-gray-600">
-                                    {selectedAppraisal.supervisor && selectedAppraisal.supervisor.length > 0
-                                        ? selectedAppraisal.supervisor.map((sup: any) => sup.name).join(', ')
-                                        : '-'}
-                                </p>
-                            </div>
-                            <div>
-                                <Label className="font-bold">Supervisor Comments</Label>
-                                <p className="text-sm text-gray-600">{selectedAppraisal.supervisorComments || 'No comments'}</p>
-                            </div>
-                            <div>
-                                <Label className="font-bold">Accomplishments</Label>
-                                <p className="text-sm text-gray-600">{selectedAppraisal.accomplishments || 'No accomplishments listed'}</p>
-                            </div>
-                            {/* Ratings Section */}
-                            <div>
-                                <Label className="font-semibold text-lg mb-2">Ratings</Label>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
-                                    {selectedAppraisal.ratings && Object.entries(selectedAppraisal.ratings).map(([key, value]) => {
-                                        const numValue = Number(value);
-                                        let color = 'text-red-500';
-                                        let bar = 'bg-red-200';
-                                        if (numValue >= 4.5) { color = 'text-green-600'; bar = 'bg-green-200'; }
-                                        else if (numValue >= 4) { color = 'text-blue-600'; bar = 'bg-blue-200'; }
-                                        else if (numValue >= 3.5) { color = 'text-yellow-600'; bar = 'bg-yellow-200'; }
-                                        const field = ratingFields.find(f => f.key === key);
-                                        const label = field ? field.label : key;
-                                        return (
-                                            <div key={key} className={`rounded-xl shadow border border-blue-100 bg-white p-3 flex flex-col items-start gap-1 transition-all hover:shadow-lg`}>
-                                                <div className="flex items-center gap-2 w-full justify-between">
-                                                    <span className="font-semibold text-gray-700 flex items-center gap-1">
-                                                        <svg width="18" height="18" fill="currentColor" className={`${color}`} viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.967a1 1 0 00.95.69h4.175c.969 0 1.371 1.24.588 1.81l-3.38 2.455a1 1 0 00-.364 1.118l1.287 3.966c.3.922-.755 1.688-1.54 1.118l-3.38-2.454a1 1 0 00-1.175 0l-3.38 2.454c-.784.57-1.838-.196-1.54-1.118l1.287-3.966a1 1 0 00-.364-1.118L2.05 9.394c-.783-.57-.38-1.81.588-1.81h4.175a1 1 0 00.95-.69l1.286-3.967z" /></svg>
-                                                        {key}
-                                                    </span>
-                                                    <span className={`text-base font-bold ${color}`}>{String(value) || '-'}<span className="text-xs text-gray-400">/5</span></span>
-                                                </div>
-                                                <div className="w-full h-2 mt-1 rounded bg-gray-100 overflow-hidden">
-                                                    <div className={`${bar} h-2 rounded`} style={{ width: `${(numValue / 5) * 100 || 0}%` }}></div>
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
+                                <div>
+                                    <Label className="font-bold">Supervisors</Label>
+                                    <p className="text-sm text-gray-600">
+                                        {selectedAppraisal.supervisor && selectedAppraisal.supervisor.length > 0
+                                            ? selectedAppraisal.supervisor.map((sup: any) => sup.name).join(', ')
+                                            : '-'}
+                                    </p>
                                 </div>
-                            </div>
-                            <div>
-                                <Label className="font-bold">Total Rating</Label>
-                                <div className="flex items-center gap-2 text-base">
-                                    {renderRating(selectedAppraisal.totalRating)}
-                                    <Badge variant={getPerformanceMessage(selectedAppraisal.totalRating || 0).badge as any}>
-                                        {getPerformanceMessage(selectedAppraisal.totalRating || 0).text}
-                                    </Badge>
+                                <div>
+                                    <Label className="font-bold">Supervisor Comments</Label>
+                                    <p className="text-sm text-gray-600">{selectedAppraisal.supervisorComments || 'No comments'}</p>
+                                </div>
+                                <div>
+                                    <Label className="font-bold">Accomplishments</Label>
+                                    <p className="text-sm text-gray-600">{selectedAppraisal.accomplishments || 'No accomplishments listed'}</p>
+                                </div>
+                                {/* Ratings Section */}
+                                <div>
+                                    <Label className="font-semibold text-lg mb-2">Ratings</Label>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
+                                        {selectedAppraisal.ratings && Object.entries(selectedAppraisal.ratings).map(([key, value]) => {
+                                            const numValue = Number(value);
+                                            let color = 'text-red-500';
+                                            let bar = 'bg-red-200';
+                                            if (numValue >= 4.5) { color = 'text-green-600'; bar = 'bg-green-200'; }
+                                            else if (numValue >= 4) { color = 'text-blue-600'; bar = 'bg-blue-200'; }
+                                            else if (numValue >= 3.5) { color = 'text-yellow-600'; bar = 'bg-yellow-200'; }
+                                            const field = ratingFields.find(f => f.key === key);
+                                            const label = field ? field.label : key;
+                                            return (
+                                                <div key={key} className={`rounded-xl shadow border border-blue-100 bg-white p-3 flex flex-col items-start gap-1 transition-all hover:shadow-lg`}>
+                                                    <div className="flex items-center gap-2 w-full justify-between">
+                                                        <span className="font-semibold text-gray-700 flex items-center gap-1">
+                                                            <svg width="18" height="18" fill="currentColor" className={`${color}`} viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.967a1 1 0 00.95.69h4.175c.969 0 1.371 1.24.588 1.81l-3.38 2.455a1 1 0 00-.364 1.118l1.287 3.966c.3.922-.755 1.688-1.54 1.118l-3.38-2.454a1 1 0 00-1.175 0l-3.38 2.454c-.784.57-1.838-.196-1.54-1.118l1.287-3.966a1 1 0 00-.364-1.118L2.05 9.394c-.783-.57-.38-1.81.588-1.81h4.175a1 1 0 00.95-.69l1.286-3.967z" /></svg>
+                                                            {key}
+                                                        </span>
+                                                        <span className={`text-base font-bold ${color}`}>{String(value) || '-'}<span className="text-xs text-gray-400">/5</span></span>
+                                                    </div>
+                                                    <div className="w-full h-2 mt-1 rounded bg-gray-100 overflow-hidden">
+                                                        <div className={`${bar} h-2 rounded`} style={{ width: `${(numValue / 5) * 100 || 0}%` }}></div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                                <div>
+                                    <Label className="font-bold">Total Rating</Label>
+                                    <div className="flex items-center gap-2 text-base">
+                                        {renderRating(selectedAppraisal.totalRating)}
+                                        <Badge variant={getPerformanceMessage(selectedAppraisal.totalRating || 0).badge as any}>
+                                            {getPerformanceMessage(selectedAppraisal.totalRating || 0).text}
+                                        </Badge>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1086,6 +1112,13 @@ const EmployeeAddedAppraisals: React.FC = () => {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+            <style>{`
+                @media print {
+                    body * { visibility: hidden; }
+                    .printable-appraisal, .printable-appraisal * { visibility: visible; }
+                    .printable-appraisal { position: absolute; left: 0; top: 0; width: 100vw; background: white; z-index: 9999; }
+                }
+            `}</style>
         </div>
     );
 };

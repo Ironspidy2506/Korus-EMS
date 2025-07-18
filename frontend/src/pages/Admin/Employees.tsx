@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { UserPlus, Search, Edit, Trash2, Eye, Download, Clock, CheckCircle, Users } from 'lucide-react';
+import { UserPlus, Search, Edit, Trash2, Eye, Download, Clock, CheckCircle, Users, Printer } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getAllDepartments } from '@/utils/Department';
 import axios from 'axios';
@@ -70,6 +70,18 @@ const AdminEmployees: React.FC = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [employeeToDelete, setEmployeeToDelete] = useState<Employee | null>(null);
   const printRef = useRef<HTMLDivElement>(null);
+
+  // Print handler
+  const handlePrint = () => {
+    if (printRef.current) {
+      const printContents = printRef.current.innerHTML;
+      const originalContents = document.body.innerHTML;
+      document.body.innerHTML = printContents;
+      window.print();
+      document.body.innerHTML = originalContents;
+      window.location.reload(); // reload to restore event listeners
+    }
+  };
 
   const [formData, setFormData] = useState<EmployeeFormData>({
     employeeId: '',
@@ -785,101 +797,92 @@ const AdminEmployees: React.FC = () => {
             <DialogTitle>Employee Details</DialogTitle>
             <DialogDescription>View complete employee information</DialogDescription>
           </DialogHeader>
-          <div className="flex justify-end mb-2">
-            <Button variant="outline" className="mb-2" onClick={() => {
-              if (!printRef.current) return;
-              const printContents = printRef.current.innerHTML;
-              const originalContents = document.body.innerHTML;
-              document.body.innerHTML = printContents;
-              window.print();
-              document.body.innerHTML = originalContents;
-              window.location.reload(); // reload to restore event listeners and state
-            }}>
-              Print Profile
-            </Button>
-          </div>
           {selectedEmployee && (
-            <div className="space-y-6" ref={printRef}>
-              {/* Profile Image */}
-              {selectedEmployee.userId.profileImage && typeof selectedEmployee.userId.profileImage === 'string' && (
-                <div className="flex justify-center mb-4">
-                  <img
-                    src={selectedEmployee.userId.profileImage}
-                    alt="Profile"
-                    className="w-32 h-32 rounded-full object-cover border"
-                  />
+            <div>
+              <Button onClick={handlePrint} className="mb-4" variant="outline">
+                <Printer className="h-4 w-4 mr-2" />
+                Print
+              </Button>
+              <div className="space-y-6 printable-employee-profile" ref={printRef}>
+                {/* Profile Image */}
+                {selectedEmployee.userId.profileImage && typeof selectedEmployee.userId.profileImage === 'string' && (
+                  <div className="flex justify-center mb-4">
+                    <img
+                      src={selectedEmployee.userId.profileImage}
+                      alt="Profile"
+                      className="w-32 h-32 rounded-full object-cover border"
+                    />
+                  </div>
+                )}
+                {/* Personal Information */}
+                <div className="mb-4">
+                  <h3 className="text-lg font-semibold mb-2">Personal Information</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {renderViewField('Employee ID', selectedEmployee.employeeId)}
+                    {renderViewField('Name', selectedEmployee.name)}
+                    {renderViewField('Date of Birth', formatDate(selectedEmployee.dob))}
+                    {renderViewField('Gender', selectedEmployee.gender)}
+                    {renderViewField('Marital Status', selectedEmployee.maritalStatus)}
+                    {renderViewField('Nationality', selectedEmployee.nationality)}
+                  </div>
                 </div>
-              )}
-
-
-              {/* Personal Information */}
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold mb-2">Personal Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {renderViewField('Employee ID', selectedEmployee.employeeId)}
-                  {renderViewField('Name', selectedEmployee.name)}
-                  {renderViewField('Date of Birth', formatDate(selectedEmployee.dob))}
-                  {renderViewField('Gender', selectedEmployee.gender)}
-                  {renderViewField('Marital Status', selectedEmployee.maritalStatus)}
-                  {renderViewField('Nationality', selectedEmployee.nationality)}
+                {/* Contact Information */}
+                <div className="mb-4">
+                  <h3 className="text-lg font-semibold mb-2">Contact Information</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {renderViewField('Email', selectedEmployee.email)}
+                    {renderViewField('Korus Email', selectedEmployee.korusEmail)}
+                    {renderViewField('Contact No.', selectedEmployee.contactNo)}
+                    {renderViewField('Alternate Contact No.', selectedEmployee.altContactNo)}
+                    {renderViewField('Permanent Address', selectedEmployee.permanentAddress)}
+                    {renderViewField('Local Address', selectedEmployee.localAddress)}
+                  </div>
                 </div>
-              </div>
-              {/* Contact Information */}
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold mb-2">Contact Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {renderViewField('Email', selectedEmployee.email)}
-                  {renderViewField('Korus Email', selectedEmployee.korusEmail)}
-                  {renderViewField('Contact No.', selectedEmployee.contactNo)}
-                  {renderViewField('Alternate Contact No.', selectedEmployee.altContactNo)}
-                  {renderViewField('Permanent Address', selectedEmployee.permanentAddress)}
-                  {renderViewField('Local Address', selectedEmployee.localAddress)}
+                {/* Employment Information */}
+                <div className="mb-4">
+                  <h3 className="text-lg font-semibold mb-2">Employment Information</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {renderViewField('Designation', selectedEmployee.designation)}
+                    {renderViewField('Department', typeof selectedEmployee.department === 'object' ? selectedEmployee.department.departmentName : '')}
+                    {renderViewField('HOD', selectedEmployee.hod)}
+                    {renderViewField('Qualification', selectedEmployee.qualification)}
+                    {renderViewField('Year of Passing', selectedEmployee.yop)}
+                    {renderViewField('Date of Joining', selectedEmployee.doj ? formatDate(selectedEmployee.doj) : null)}
+                    {renderViewField('Reporting Person', selectedEmployee.repperson)}
+                    {renderViewField('Role', selectedEmployee.role.slice(0, 1).toUpperCase() + selectedEmployee.role.slice(1, selectedEmployee.role.length).toLowerCase())}
+                  </div>
                 </div>
-              </div>
-              {/* Employment Information */}
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold mb-2">Employment Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {renderViewField('Designation', selectedEmployee.designation)}
-                  {renderViewField('Department', typeof selectedEmployee.department === 'object' ? selectedEmployee.department.departmentName : '')}
-                  {renderViewField('HOD', selectedEmployee.hod)}
-                  {renderViewField('Qualification', selectedEmployee.qualification)}
-                  {renderViewField('Year of Passing', selectedEmployee.yop)}
-                  {renderViewField('Date of Joining', selectedEmployee.doj ? formatDate(selectedEmployee.doj) : null)}
-                  {renderViewField('Reporting Person', selectedEmployee.repperson)}
-                  {renderViewField('Role', selectedEmployee.role.slice(0, 1).toUpperCase() + selectedEmployee.role.slice(1, selectedEmployee.role.length).toLowerCase())}
+                {/* Bank Information */}
+                <div className="mb-4">
+                  <h3 className="text-lg font-semibold mb-2">Bank Information</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {renderViewField('Bank', selectedEmployee.bank)}
+                    {renderViewField('Branch Name', selectedEmployee.branch)}
+                    {renderViewField('IFSC Code', selectedEmployee.ifsc)}
+                    {renderViewField('Account No.', selectedEmployee.accountNo)}
+                  </div>
                 </div>
-              </div>
-              {/* Bank Information */}
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold mb-2">Bank Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {renderViewField('Bank', selectedEmployee.bank)}
-                  {renderViewField('Branch Name', selectedEmployee.branch)}
-                  {renderViewField('IFSC Code', selectedEmployee.ifsc)}
-                  {renderViewField('Account No.', selectedEmployee.accountNo)}
+                {/* Statutory Information */}
+                <div className="mb-4">
+                  <h3 className="text-lg font-semibold mb-2">Statutory Information</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {renderViewField('Aadhar No.', selectedEmployee.aadharNo)}
+                    {renderViewField('PAN No.', selectedEmployee.pan)}
+                    {renderViewField('UAN No.', selectedEmployee.uan)}
+                    {renderViewField('EPF No.', selectedEmployee.pfNo)}
+                    {renderViewField('ESI No.', selectedEmployee.esiNo)}
+                  </div>
                 </div>
-              </div>
-              {/* Statutory Information */}
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold mb-2">Statutory Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {renderViewField('Aadhar No.', selectedEmployee.aadharNo)}
-                  {renderViewField('PAN No.', selectedEmployee.pan)}
-                  {renderViewField('UAN No.', selectedEmployee.uan)}
-                  {renderViewField('EPF No.', selectedEmployee.pfNo)}
-                  {renderViewField('ESI No.', selectedEmployee.esiNo)}
-                </div>
-              </div>
-              {/* Passport Information */}
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold mb-2">Passport Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {renderViewField('Passport No.', selectedEmployee.passportNo)}
-                  {renderViewField('Passport Type', selectedEmployee.passportType)}
-                  {renderViewField('Passport Place of Issue', selectedEmployee.passportpoi)}
-                  {renderViewField('Passport Date of Issue', selectedEmployee.passportdoi ? formatDate(selectedEmployee.passportdoi) : null)}
-                  {renderViewField('Passport Date of Expiry', selectedEmployee.passportdoe ? formatDate(selectedEmployee.passportdoe) : null)}
+                {/* Passport Information */}
+                <div className="mb-4">
+                  <h3 className="text-lg font-semibold mb-2">Passport Information</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {renderViewField('Passport No.', selectedEmployee.passportNo)}
+                    {renderViewField('Passport Type', selectedEmployee.passportType)}
+                    {renderViewField('Passport Place of Issue', selectedEmployee.passportpoi)}
+                    {renderViewField('Passport Date of Issue', selectedEmployee.passportdoi ? formatDate(selectedEmployee.passportdoi) : null)}
+                    {renderViewField('Passport Date of Expiry', selectedEmployee.passportdoe ? formatDate(selectedEmployee.passportdoe) : null)}
+                  </div>
                 </div>
               </div>
             </div>
@@ -908,6 +911,13 @@ const AdminEmployees: React.FC = () => {
           </div>
         </DialogContent>
       </Dialog>
+      <style>{`
+        @media print {
+          body * { visibility: hidden; }
+          .printable-employee-profile, .printable-employee-profile * { visibility: visible; }
+          .printable-employee-profile { position: absolute; left: 0; top: 0; width: 100vw; background: white; z-index: 9999; }
+        }
+      `}</style>
     </div>
   );
 }

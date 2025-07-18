@@ -9,11 +9,12 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { UserPlus, Search, Edit, Trash2, Eye, Plus, Clock, CheckCircle, Users, Download } from 'lucide-react';
+import { UserPlus, Search, Edit, Trash2, Eye, Plus, Clock, CheckCircle, Users, Download, Printer, FilePlus2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getAllDepartments } from '@/utils/Department';
 import axios from 'axios';
 import * as XLSX from 'xlsx';
+import { useNavigate } from 'react-router-dom';
 
 interface EmployeeFormData {
   employeeId: string;
@@ -67,6 +68,8 @@ const HREmployees: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [employeeToDelete, setEmployeeToDelete] = useState<Employee | null>(null);
+  const printRef = React.useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
 
   const [formData, setFormData] = useState<EmployeeFormData>({
     employeeId: '',
@@ -424,6 +427,18 @@ const HREmployees: React.FC = () => {
     XLSX.writeFile(workbook, 'employees.xlsx');
   };
 
+  // Print handler
+  const handlePrint = () => {
+    if (printRef.current) {
+      const printContents = printRef.current.innerHTML;
+      const originalContents = document.body.innerHTML;
+      document.body.innerHTML = printContents;
+      window.print();
+      document.body.innerHTML = originalContents;
+      window.location.reload(); // reload to restore event listeners
+    }
+  };
+
   if (isLoading) {
     return <div className="flex justify-center items-center h-96">Loading...</div>;
   }
@@ -435,132 +450,140 @@ const HREmployees: React.FC = () => {
           <h1 className="text-3xl font-bold text-gray-900">Employee Management</h1>
           <p className="text-gray-600">Manage and view all employee information</p>
         </div>
-
-
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-primary hover:bg-primary/90">
-              <UserPlus className="h-4 w-4 mr-2" />
-              Add Employee
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Add New Employee</DialogTitle>
-              <DialogDescription>Add a new employee to the system</DialogDescription>
-            </DialogHeader>
-            <form onSubmit={handleAddEmployee} className="space-y-6">
-              {/* Personal Information */}
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold mb-2">Personal Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {renderFormField('name', 'Name', 'text', true, 'Enter Employee Name')}
-                  {renderFormField('dob', 'Date of Birth', 'date', true)}
-                  {renderFormField('gender', 'Gender', 'select', true, undefined, [
-                    { value: 'Male', label: 'Male' },
-                    { value: 'Female', label: 'Female' },
-                    { value: 'Transgender', label: 'Transgender' }
-                  ])}
-                  {renderFormField('maritalStatus', 'Marital Status', 'select', true, undefined, [
-                    { value: 'Single', label: 'Single' },
-                    { value: 'Married', label: 'Married' },
-                    { value: 'Divorced', label: 'Divorced' },
-                    { value: 'Widowed', label: 'Widowed' },
-                    { value: 'Others', label: 'Others' }
-                  ])}
-                  {renderFormField('nationality', 'Nationality', 'text', false, 'Enter Nationality')}
+        <div className="flex gap-3 items-center">
+          <Button
+            variant="outline"
+            className="flex items-center gap-2 h-10 border-primary text-primary hover:bg-primary/10"
+            onClick={() => navigate('/joining-form')}
+          >
+            <FilePlus2 className="h-5 w-5" />
+            Joining Form
+          </Button>
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="flex items-center gap-2 h-10 bg-primary text-white hover:bg-primary/90">
+                <UserPlus className="h-5 w-5" />
+                Add Employee
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Add New Employee</DialogTitle>
+                <DialogDescription>Add a new employee to the system</DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleAddEmployee} className="space-y-6">
+                {/* Personal Information */}
+                <div className="mb-4">
+                  <h3 className="text-lg font-semibold mb-2">Personal Information</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {renderFormField('name', 'Name', 'text', true, 'Enter Employee Name')}
+                    {renderFormField('dob', 'Date of Birth', 'date', true)}
+                    {renderFormField('gender', 'Gender', 'select', true, undefined, [
+                      { value: 'Male', label: 'Male' },
+                      { value: 'Female', label: 'Female' },
+                      { value: 'Transgender', label: 'Transgender' }
+                    ])}
+                    {renderFormField('maritalStatus', 'Marital Status', 'select', true, undefined, [
+                      { value: 'Single', label: 'Single' },
+                      { value: 'Married', label: 'Married' },
+                      { value: 'Divorced', label: 'Divorced' },
+                      { value: 'Widowed', label: 'Widowed' },
+                      { value: 'Others', label: 'Others' }
+                    ])}
+                    {renderFormField('nationality', 'Nationality', 'text', false, 'Enter Nationality')}
+                  </div>
                 </div>
-              </div>
 
-              {/* Contact Information */}
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold mb-2">Contact Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {renderFormField('email', 'Email', 'email', true, 'Enter Personal Email')}
-                  {renderFormField('korusEmail', 'Korus Email', 'email', false, 'Enter Korus Email (If Available)')}
-                  {renderFormField('contactNo', 'Contact No.', 'number', true, 'Enter Contact No.')}
-                  {renderFormField('altContactNo', 'Alternate Contact No.', 'number', false, 'Enter Alternate Contact No. (If Available)')}
-                  {renderFormField('permanentAddress', 'Permanent Address', 'textarea', false, 'Enter Permanent Address')}
-                  {renderFormField('localAddress', 'Local Address', 'textarea', false, 'Enter Local Address')}
+                {/* Contact Information */}
+                <div className="mb-4">
+                  <h3 className="text-lg font-semibold mb-2">Contact Information</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {renderFormField('email', 'Email', 'email', true, 'Enter Personal Email')}
+                    {renderFormField('korusEmail', 'Korus Email', 'email', false, 'Enter Korus Email (If Available)')}
+                    {renderFormField('contactNo', 'Contact No.', 'number', true, 'Enter Contact No.')}
+                    {renderFormField('altContactNo', 'Alternate Contact No.', 'number', false, 'Enter Alternate Contact No. (If Available)')}
+                    {renderFormField('permanentAddress', 'Permanent Address', 'textarea', false, 'Enter Permanent Address')}
+                    {renderFormField('localAddress', 'Local Address', 'textarea', false, 'Enter Local Address')}
+                  </div>
                 </div>
-              </div>
 
-              {/* Employment Information */}
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold mb-2">Employment Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {renderFormField('employeeId', 'Employee ID', 'text', true, 'Enter Employee ID')}
-                  {renderFormField('designation', 'Designation', 'text', true, 'Enter Designation')}
-                  {renderFormField('department', 'Department', 'select', true, undefined,
-                    departments.map(dep => ({ value: dep._id, label: dep.departmentName }))
-                  )}
-                  {renderFormField('hod', 'HOD', 'text', false, 'Enter Head of Department Name (If Available)')}
-                  {renderFormField('qualification', 'Qualification', 'text', true, 'Enter Highest Qualification')}
-                  {renderFormField('yop', 'Year of Passing', 'text', false, 'Enter Year of Passing of Highest Qualification')}
-                  {renderFormField('doj', 'Date of Joining', 'date', true)}
-                  {renderFormField('repperson', 'Reporting Person', 'text', false, 'Enter Reporting Person (If Available)')}
-                  {renderFormField('role', 'Role', 'select', true, undefined, [
-                    { value: 'Employee', label: 'Employee' }
-                  ])}
-                  {renderFormField('password', 'Password', 'password', true, 'Enter Password')}
+                {/* Employment Information */}
+                <div className="mb-4">
+                  <h3 className="text-lg font-semibold mb-2">Employment Information</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {renderFormField('employeeId', 'Employee ID', 'text', true, 'Enter Employee ID')}
+                    {renderFormField('designation', 'Designation', 'text', true, 'Enter Designation')}
+                    {renderFormField('department', 'Department', 'select', true, undefined,
+                      departments.map(dep => ({ value: dep._id, label: dep.departmentName }))
+                    )}
+                    {renderFormField('hod', 'HOD', 'text', false, 'Enter Head of Department Name (If Available)')}
+                    {renderFormField('qualification', 'Qualification', 'text', true, 'Enter Highest Qualification')}
+                    {renderFormField('yop', 'Year of Passing', 'text', false, 'Enter Year of Passing of Highest Qualification')}
+                    {renderFormField('doj', 'Date of Joining', 'date', true)}
+                    {renderFormField('repperson', 'Reporting Person', 'text', false, 'Enter Reporting Person (If Available)')}
+                    {renderFormField('role', 'Role', 'select', true, undefined, [
+                      { value: 'Employee', label: 'Employee' }
+                    ])}
+                    {renderFormField('password', 'Password', 'password', true, 'Enter Password')}
+                  </div>
                 </div>
-              </div>
 
-              {/* Bank Information */}
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold mb-2">Bank Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {renderFormField('bank', 'Bank', 'text', true, 'Enter Bank Name')}
-                  {renderFormField('branch', 'Branch Name', 'text', true, 'Enter Bank Branch Name')}
-                  {renderFormField('ifsc', 'IFSC Code', 'text', true, 'Enter Bank IFSC Code')}
-                  {renderFormField('accountNo', 'Account No.', 'text', true, 'Enter Account No.')}
+                {/* Bank Information */}
+                <div className="mb-4">
+                  <h3 className="text-lg font-semibold mb-2">Bank Information</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {renderFormField('bank', 'Bank', 'text', true, 'Enter Bank Name')}
+                    {renderFormField('branch', 'Branch Name', 'text', true, 'Enter Bank Branch Name')}
+                    {renderFormField('ifsc', 'IFSC Code', 'text', true, 'Enter Bank IFSC Code')}
+                    {renderFormField('accountNo', 'Account No.', 'text', true, 'Enter Account No.')}
+                  </div>
                 </div>
-              </div>
 
-              {/* Statutory Information */}
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold mb-2">Statutory Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {renderFormField('aadharNo', 'Aadhar No.', 'text', true, 'Enter Aadhar No.')}
-                  {renderFormField('pan', 'PAN No.', 'text', true, 'Enter PAN No.')}
-                  {renderFormField('uan', 'UAN No.', 'text', false, 'Enter UAN No.')}
-                  {renderFormField('pfNo', 'EPF No.', 'text', false, 'Enter EPF Account No.')}
-                  {renderFormField('esiNo', 'ESI No.', 'text', false, 'Enter ESI No.')}
+                {/* Statutory Information */}
+                <div className="mb-4">
+                  <h3 className="text-lg font-semibold mb-2">Statutory Information</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {renderFormField('aadharNo', 'Aadhar No.', 'text', true, 'Enter Aadhar No.')}
+                    {renderFormField('pan', 'PAN No.', 'text', true, 'Enter PAN No.')}
+                    {renderFormField('uan', 'UAN No.', 'text', false, 'Enter UAN No.')}
+                    {renderFormField('pfNo', 'EPF No.', 'text', false, 'Enter EPF Account No.')}
+                    {renderFormField('esiNo', 'ESI No.', 'text', false, 'Enter ESI No.')}
+                  </div>
                 </div>
-              </div>
 
-              {/* Passport Information */}
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold mb-2">Passport Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {renderFormField('passportNo', 'Passport No.', 'text', false, 'Enter Passport No. (If Available)')}
-                  {renderFormField('passportType', 'Passport Type', 'select', false, undefined, [
-                    { value: 'P', label: 'P (Personal/Private)' },
-                    { value: 'D', label: 'D (Diplomatic)' },
-                    { value: 'O', label: 'O (Official/Service Passport)' },
-                    { value: 'S', label: 'S (Special Passport)' },
-                    { value: 'X', label: 'X (Stateless or Emergency Passport)' }
-                  ])}
-                  {renderFormField('passportpoi', 'Passport Place of Issue', 'text', false, 'Enter Passport Place of Issue (If Available)')}
-                  {renderFormField('passportdoi', 'Passport Date of Issue', 'date', false)}
-                  {renderFormField('passportdoe', 'Passport Date of Expiry', 'date', false)}
+                {/* Passport Information */}
+                <div className="mb-4">
+                  <h3 className="text-lg font-semibold mb-2">Passport Information</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {renderFormField('passportNo', 'Passport No.', 'text', false, 'Enter Passport No. (If Available)')}
+                    {renderFormField('passportType', 'Passport Type', 'select', false, undefined, [
+                      { value: 'P', label: 'P (Personal/Private)' },
+                      { value: 'D', label: 'D (Diplomatic)' },
+                      { value: 'O', label: 'O (Official/Service Passport)' },
+                      { value: 'S', label: 'S (Special Passport)' },
+                      { value: 'X', label: 'X (Stateless or Emergency Passport)' }
+                    ])}
+                    {renderFormField('passportpoi', 'Passport Place of Issue', 'text', false, 'Enter Passport Place of Issue (If Available)')}
+                    {renderFormField('passportdoi', 'Passport Date of Issue', 'date', false)}
+                    {renderFormField('passportdoe', 'Passport Date of Expiry', 'date', false)}
+                  </div>
                 </div>
-              </div>
 
-              {/* Profile Image */}
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold mb-2">Profile Image</h3>
-                {renderFormField('profileImage', 'Profile Image', 'file', false)}
-              </div>
+                {/* Profile Image */}
+                <div className="mb-4">
+                  <h3 className="text-lg font-semibold mb-2">Profile Image</h3>
+                  {renderFormField('profileImage', 'Profile Image', 'file', false)}
+                </div>
 
-              <DialogFooter>
-                <Button type="submit" disabled={isSubmitting}>
-                  Add Employee
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
+                <DialogFooter>
+                  <Button type="submit" disabled={isSubmitting}>
+                    Add Employee
+                  </Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -788,87 +811,95 @@ const HREmployees: React.FC = () => {
             <DialogDescription>View complete employee information</DialogDescription>
           </DialogHeader>
           {selectedEmployee && (
-            <div className="space-y-6">
-              {/* Profile Image */}
-              {selectedEmployee.userId.profileImage && typeof selectedEmployee.userId.profileImage === 'string' && (
-                <div className="flex justify-center mb-4">
-                  <img
-                    src={selectedEmployee.userId.profileImage}
-                    alt="Profile"
-                    className="w-32 h-32 rounded-full object-cover border"
-                  />
-                </div>
-              )}
+            <div>
+              <Button onClick={handlePrint} className="mb-4" variant="outline">
+                <Printer className="h-4 w-4 mr-2" />
+                Print
+              </Button>
+              <div ref={printRef} className="printable-employee-profile">
+                <div className="space-y-6">
+                  {/* Profile Image */}
+                  {selectedEmployee.userId.profileImage && typeof selectedEmployee.userId.profileImage === 'string' && (
+                    <div className="flex justify-center mb-4">
+                      <img
+                        src={selectedEmployee.userId.profileImage}
+                        alt="Profile"
+                        className="w-32 h-32 rounded-full object-cover border"
+                      />
+                    </div>
+                  )}
 
-              
-              {/* Personal Information */}
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold mb-2">Personal Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {renderViewField('Employee ID', selectedEmployee.employeeId)}
-                  {renderViewField('Name', selectedEmployee.name)}
-                  {renderViewField('Date of Birth', formatDate(selectedEmployee.dob))}
-                  {renderViewField('Gender', selectedEmployee.gender)}
-                  {renderViewField('Marital Status', selectedEmployee.maritalStatus)}
-                  {renderViewField('Nationality', selectedEmployee.nationality)}
-                </div>
-              </div>
-              {/* Contact Information */}
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold mb-2">Contact Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {renderViewField('Email', selectedEmployee.email)}
-                  {renderViewField('Korus Email', selectedEmployee.korusEmail)}
-                  {renderViewField('Contact No.', selectedEmployee.contactNo)}
-                  {renderViewField('Alternate Contact No.', selectedEmployee.altContactNo)}
-                  {renderViewField('Permanent Address', selectedEmployee.permanentAddress)}
-                  {renderViewField('Local Address', selectedEmployee.localAddress)}
-                </div>
-              </div>
-              {/* Employment Information */}
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold mb-2">Employment Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {renderViewField('Designation', selectedEmployee.designation)}
-                  {renderViewField('Department', typeof selectedEmployee.department === 'object' ? selectedEmployee.department.departmentName : '')}
-                  {renderViewField('HOD', selectedEmployee.hod)}
-                  {renderViewField('Qualification', selectedEmployee.qualification)}
-                  {renderViewField('Year of Passing', selectedEmployee.yop)}
-                  {renderViewField('Date of Joining', selectedEmployee.doj ? formatDate(selectedEmployee.doj) : null)}
-                  {renderViewField('Reporting Person', selectedEmployee.repperson)}
-                  {renderViewField('Role', selectedEmployee.role.slice(0,1).toUpperCase() + selectedEmployee.role.slice(1, selectedEmployee.role.length).toLowerCase())}
-                </div>
-              </div>
-              {/* Bank Information */}
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold mb-2">Bank Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {renderViewField('Bank', selectedEmployee.bank)}
-                  {renderViewField('Branch Name', selectedEmployee.branch)}
-                  {renderViewField('IFSC Code', selectedEmployee.ifsc)}
-                  {renderViewField('Account No.', selectedEmployee.accountNo)}
-                </div>
-              </div>
-              {/* Statutory Information */}
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold mb-2">Statutory Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {renderViewField('Aadhar No.', selectedEmployee.aadharNo)}
-                  {renderViewField('PAN No.', selectedEmployee.pan)}
-                  {renderViewField('UAN No.', selectedEmployee.uan)}
-                  {renderViewField('EPF No.', selectedEmployee.pfNo)}
-                  {renderViewField('ESI No.', selectedEmployee.esiNo)}
-                </div>
-              </div>
-              {/* Passport Information */}
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold mb-2">Passport Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {renderViewField('Passport No.', selectedEmployee.passportNo)}
-                  {renderViewField('Passport Type', selectedEmployee.passportType)}
-                  {renderViewField('Passport Place of Issue', selectedEmployee.passportpoi)}
-                  {renderViewField('Passport Date of Issue', selectedEmployee.passportdoi ? formatDate(selectedEmployee.passportdoi) : null)}
-                  {renderViewField('Passport Date of Expiry', selectedEmployee.passportdoe ? formatDate(selectedEmployee.passportdoe) : null)}
+                  
+                  {/* Personal Information */}
+                  <div className="mb-4">
+                    <h3 className="text-lg font-semibold mb-2">Personal Information</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {renderViewField('Employee ID', selectedEmployee.employeeId)}
+                      {renderViewField('Name', selectedEmployee.name)}
+                      {renderViewField('Date of Birth', formatDate(selectedEmployee.dob))}
+                      {renderViewField('Gender', selectedEmployee.gender)}
+                      {renderViewField('Marital Status', selectedEmployee.maritalStatus)}
+                      {renderViewField('Nationality', selectedEmployee.nationality)}
+                    </div>
+                  </div>
+                  {/* Contact Information */}
+                  <div className="mb-4">
+                    <h3 className="text-lg font-semibold mb-2">Contact Information</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {renderViewField('Email', selectedEmployee.email)}
+                      {renderViewField('Korus Email', selectedEmployee.korusEmail)}
+                      {renderViewField('Contact No.', selectedEmployee.contactNo)}
+                      {renderViewField('Alternate Contact No.', selectedEmployee.altContactNo)}
+                      {renderViewField('Permanent Address', selectedEmployee.permanentAddress)}
+                      {renderViewField('Local Address', selectedEmployee.localAddress)}
+                    </div>
+                  </div>
+                  {/* Employment Information */}
+                  <div className="mb-4">
+                    <h3 className="text-lg font-semibold mb-2">Employment Information</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {renderViewField('Designation', selectedEmployee.designation)}
+                      {renderViewField('Department', typeof selectedEmployee.department === 'object' ? selectedEmployee.department.departmentName : '')}
+                      {renderViewField('HOD', selectedEmployee.hod)}
+                      {renderViewField('Qualification', selectedEmployee.qualification)}
+                      {renderViewField('Year of Passing', selectedEmployee.yop)}
+                      {renderViewField('Date of Joining', selectedEmployee.doj ? formatDate(selectedEmployee.doj) : null)}
+                      {renderViewField('Reporting Person', selectedEmployee.repperson)}
+                      {renderViewField('Role', selectedEmployee.role.slice(0,1).toUpperCase() + selectedEmployee.role.slice(1, selectedEmployee.role.length).toLowerCase())}
+                    </div>
+                  </div>
+                  {/* Bank Information */}
+                  <div className="mb-4">
+                    <h3 className="text-lg font-semibold mb-2">Bank Information</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {renderViewField('Bank', selectedEmployee.bank)}
+                      {renderViewField('Branch Name', selectedEmployee.branch)}
+                      {renderViewField('IFSC Code', selectedEmployee.ifsc)}
+                      {renderViewField('Account No.', selectedEmployee.accountNo)}
+                    </div>
+                  </div>
+                  {/* Statutory Information */}
+                  <div className="mb-4">
+                    <h3 className="text-lg font-semibold mb-2">Statutory Information</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {renderViewField('Aadhar No.', selectedEmployee.aadharNo)}
+                      {renderViewField('PAN No.', selectedEmployee.pan)}
+                      {renderViewField('UAN No.', selectedEmployee.uan)}
+                      {renderViewField('EPF No.', selectedEmployee.pfNo)}
+                      {renderViewField('ESI No.', selectedEmployee.esiNo)}
+                    </div>
+                  </div>
+                  {/* Passport Information */}
+                  <div className="mb-4">
+                    <h3 className="text-lg font-semibold mb-2">Passport Information</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {renderViewField('Passport No.', selectedEmployee.passportNo)}
+                      {renderViewField('Passport Type', selectedEmployee.passportType)}
+                      {renderViewField('Passport Place of Issue', selectedEmployee.passportpoi)}
+                      {renderViewField('Passport Date of Issue', selectedEmployee.passportdoi ? formatDate(selectedEmployee.passportdoi) : null)}
+                      {renderViewField('Passport Date of Expiry', selectedEmployee.passportdoe ? formatDate(selectedEmployee.passportdoe) : null)}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -897,6 +928,13 @@ const HREmployees: React.FC = () => {
           </div>
         </DialogContent>
       </Dialog>
+      <style>{`
+        @media print {
+          body * { visibility: hidden; }
+          .printable-employee-profile, .printable-employee-profile * { visibility: visible; }
+          .printable-employee-profile { position: absolute; left: 0; top: 0; width: 100vw; background: white; z-index: 9999; }
+        }
+      `}</style>
     </div>
   );
 }
