@@ -22,6 +22,7 @@ import AdminSalary from "@/pages/Admin/Salary";
 import AdminCTC from "@/pages/Admin/CTC";
 import AdminFixedAllowances from "@/pages/Admin/FixedAllowances";
 import AdminAllowances from "@/pages/Admin/Allowances";
+import AdminTravelExpenditure from "@/pages/Admin/TravelExpenditure";
 
 // HR Pages
 import HREmployees from "@/pages/HR/Employees";
@@ -33,6 +34,7 @@ import HRAppraisal from "@/pages/HR/Appraisal";
 import HROnboarding from "@/pages/HR/Onboarding";
 import HRMessages from "@/pages/HR/Messages";
 import HRHelpdesk from "@/pages/HR/Helpdesk";
+import HRTravelExpenditure from "@/pages/HR/TravelExpenditure";
 
 // Employee Pages
 import EmployeeHolidays from "@/pages/Employee/Holidays";
@@ -123,6 +125,11 @@ const App = () => (
                   <AdminAllowances />
                 </ProtectedRoute>
               } />
+              <Route path="admin-dashboard/travel-expenditure" element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <AdminTravelExpenditure />
+                </ProtectedRoute>
+              } />
 
 
               {/* Accounts Routes */}
@@ -174,6 +181,11 @@ const App = () => (
               <Route path="accounts-dashboard/allowances" element={
                 <ProtectedRoute allowedRoles={['accounts']}>
                   <AdminAllowances />
+                </ProtectedRoute>
+              } />
+              <Route path="accounts-dashboard/travel-expenditure" element={
+                <ProtectedRoute allowedRoles={['accounts']}>
+                  <AdminTravelExpenditure />
                 </ProtectedRoute>
               } />
 
@@ -231,6 +243,11 @@ const App = () => (
               <Route path="hr-dashboard/helpdesk" element={
                 <ProtectedRoute allowedRoles={['hr']}>
                   <HRHelpdesk />
+                </ProtectedRoute>
+              } />
+              <Route path="hr-dashboard/travel-expenditure" element={
+                <ProtectedRoute allowedRoles={['hr']}>
+                  <HRTravelExpenditure />
                 </ProtectedRoute>
               } />
 

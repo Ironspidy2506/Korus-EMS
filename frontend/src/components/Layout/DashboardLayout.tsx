@@ -24,7 +24,8 @@ import {
   Gift,
   Lock,
   User,
-  Award
+  Award,
+  Plane
 } from 'lucide-react';
 
 const DashboardLayout: React.FC = () => {
@@ -53,7 +54,8 @@ const DashboardLayout: React.FC = () => {
           { icon: DollarSign, label: 'Salary', path: '/admin-dashboard/salary' },
           { icon: Briefcase, label: 'CTC', path: '/admin-dashboard/ctc' },
           { icon: Gift, label: 'Fixed Allowances', path: '/admin-dashboard/fixed-allowances' },
-          { icon: Award, label: 'Variable Allowances', path: '/admin-dashboard/allowances' }
+          { icon: Award, label: 'Variable Allowances', path: '/admin-dashboard/allowances' },
+          { icon: Plane, label: 'Travel Expenditure', path: '/admin-dashboard/travel-expenditure' }
         ];
       case 'accounts':
         return [
@@ -65,7 +67,8 @@ const DashboardLayout: React.FC = () => {
           { icon: DollarSign, label: 'Salary', path: '/accounts-dashboard/salary' },
           { icon: Briefcase, label: 'CTC', path: '/accounts-dashboard/ctc' },
           { icon: Gift, label: 'Fixed Allowances', path: '/accounts-dashboard/fixed-allowances' },
-          { icon: Award, label: 'Variable Allowances', path: '/accounts-dashboard/allowances' }
+          { icon: Award, label: 'Variable Allowances', path: '/accounts-dashboard/allowances' },
+          { icon: Plane, label: 'Travel Expenditure', path: '/accounts-dashboard/travel-expenditure' }
         ];
       case 'hr':
         return [
@@ -78,7 +81,8 @@ const DashboardLayout: React.FC = () => {
           { icon: Star, label: 'Appraisal', path: '/hr-dashboard/appraisal' },
           { icon: UserPlus, label: 'Onboarding/Offboarding', path: '/hr-dashboard/onboarding' },
           { icon: MessageSquare, label: 'Messages', path: '/hr-dashboard/messages' },
-          { icon: HelpCircle, label: 'Helpdesk', path: '/hr-dashboard/helpdesk' }
+          { icon: HelpCircle, label: 'Helpdesk', path: '/hr-dashboard/helpdesk' },
+          { icon: Plane, label: 'Travel Expenditure', path: '/hr-dashboard/travel-expenditure' }
         ];
       case 'employee':
         return [
