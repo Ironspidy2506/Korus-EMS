@@ -1,3 +1,4 @@
+import { Department } from "./Department";
 import { Employee } from "./Employee";
 import axios from "axios";
 
@@ -11,7 +12,7 @@ export interface TravelExpenditure {
   _id?: string;
   employeeId: Employee;
   designation: string;
-  department: string;
+  department: Department;
   accompaniedTeamMembers: string[];
   placeOfVisit: string;
   clientName: string;

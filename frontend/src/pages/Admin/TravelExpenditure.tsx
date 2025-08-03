@@ -10,10 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
-import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from '@/components/ui/command';
-import { ChevronsUpDown, Check, Calendar } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Calendar } from 'lucide-react';
 import { Employee } from '@/utils/Employee';
 import { getAllDepartments, Department } from '@/utils/Department';
 import { toast } from 'sonner';
@@ -21,6 +18,7 @@ import * as XLSX from 'xlsx';
 import { format } from 'date-fns';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { Calendar as DateCalendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 const getStatusBadgeColor = (status: string) => {
   switch (status) {
@@ -69,15 +67,18 @@ const AdminTravelExpenditure: React.FC = () => {
   const [isEdit, setIsEdit] = useState(false);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
-  const [isOpen, setIsOpen] = useState(false);
   const [employeeError, setEmployeeError] = useState<string | null>(null);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [tableSearchTerm, setTableSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
   const [voucherLoadingId, setVoucherLoadingId] = useState<string | null>(null);
   const [voucherInput, setVoucherInput] = useState<{ [key: string]: string }>({});
   const [voucherEditId, setVoucherEditId] = useState<string | null>(null);
-  const [teamMemberInput, setTeamMemberInput] = useState('');
   const [expenseInputs, setExpenseInputs] = useState([{ date: '', description: '', amount: '' }]);
+  const [employeeSearchTerm, setEmployeeSearchTerm] = useState('');
+  const [teamMemberSearchTerm, setTeamMemberSearchTerm] = useState('');
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [travelExpenditureToDelete, setTravelExpenditureToDelete] = useState<string | null>(null);
 
   // Needed for input to work
   const handleVoucherChange = (id: string, value: string) => {
@@ -95,9 +96,12 @@ const AdminTravelExpenditure: React.FC = () => {
       setLoading(true);
       const data = await getAllTravelExpenditures();
       setTravelExpenditures(data);
-    } catch (error) {
-      setError('Failed to fetch travel expenditures');
+      setError(null);
+    } catch (error: any) {
       console.error('Error:', error);
+      toast.error(error.response?.data?.message || 'Failed to fetch travel expenditures');
+      setTravelExpenditures([]);
+      setError(null);
     } finally {
       setLoading(false);
     }
@@ -125,16 +129,19 @@ const AdminTravelExpenditure: React.FC = () => {
     const employee = employees.find(emp => emp._id === employeeId);
     if (employee) {
       setSelectedEmployee(employee);
+      // Find the department details
+      const department = departments.find(dept => dept._id === employee.department._id);
       setFormData(prev => ({
         ...prev,
         employeeId: employee._id,
         empName: employee.name,
         designation: employee.designation,
-        department: employee.department
+        department: employee.department,
+        departmentName: department?.departmentName || '',
+        departmentCode: department?.departmentId || ''
       }));
       setEmployeeError(null);
     }
-    setIsOpen(false);
   };
 
   const openAddModal = () => {
@@ -142,6 +149,8 @@ const AdminTravelExpenditure: React.FC = () => {
     setIsEdit(false);
     setShowModal(true);
     setSelectedEmployee(null);
+    setEmployeeSearchTerm('');
+    setTeamMemberSearchTerm('');
     setExpenseInputs([{ date: '', description: '', amount: '' }]);
   };
 
@@ -157,15 +166,7 @@ const AdminTravelExpenditure: React.FC = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleTeamMemberAdd = () => {
-    if (teamMemberInput.trim()) {
-      setFormData(prev => ({
-        ...prev,
-        accompaniedTeamMembers: [...prev.accompaniedTeamMembers, teamMemberInput.trim()]
-      }));
-      setTeamMemberInput('');
-    }
-  };
+
 
   const handleTeamMemberRemove = (index: number) => {
     setFormData(prev => ({
@@ -183,14 +184,14 @@ const AdminTravelExpenditure: React.FC = () => {
   };
 
   const handleExpenseChange = (index: number, field: string, value: string) => {
-    setExpenseInputs(prev => prev.map((expense, i) => 
+    setExpenseInputs(prev => prev.map((expense, i) =>
       i === index ? { ...expense, [field]: value } : expense
     ));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validate expenses
     const validExpenses = expenseInputs
       .filter(expense => expense.date && expense.description && expense.amount)
@@ -208,11 +209,19 @@ const AdminTravelExpenditure: React.FC = () => {
     const formDataToSend = new FormData();
     Object.keys(formData).forEach(key => {
       if (key === 'accompaniedTeamMembers') {
-        formDataToSend.append(key, JSON.stringify(formData[key]));
+        // Convert team members to just names for backend compatibility
+        const teamMemberNames = formData[key].map((member: any) => member.name);
+        formDataToSend.append(key, JSON.stringify(teamMemberNames));
       } else if (key === 'expenses') {
         formDataToSend.append(key, JSON.stringify(validExpenses));
       } else if (key === 'attachment' && formData[key]) {
         formDataToSend.append(key, formData[key]);
+      } else if (key === 'department' && typeof formData[key] === 'object') {
+        // Handle department object properly - use the department ID
+        formDataToSend.append('department', formData[key]._id || '');
+      } else if (key === 'employeeId' && selectedEmployee) {
+        // Send the employee ID correctly
+        formDataToSend.append('employeeId', selectedEmployee._id);
       } else if (key !== 'attachment') {
         formDataToSend.append(key, formData[key]);
       }
@@ -234,13 +243,21 @@ const AdminTravelExpenditure: React.FC = () => {
   };
 
   const handleDelete = async (_id: string) => {
-    if (window.confirm('Are you sure you want to delete this travel expenditure?')) {
+    setTravelExpenditureToDelete(_id);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (travelExpenditureToDelete) {
       try {
-        await deleteTravelExpenditure(_id);
+        await deleteTravelExpenditure(travelExpenditureToDelete);
         toast.success('Travel expenditure deleted successfully');
         fetchTravelExpenditures();
       } catch (error: any) {
         toast.error(error.response?.data?.message || 'An error occurred');
+      } finally {
+        setDeleteDialogOpen(false);
+        setTravelExpenditureToDelete(null);
       }
     }
   };
@@ -290,8 +307,8 @@ const AdminTravelExpenditure: React.FC = () => {
   const exportToExcel = () => {
     const exportData = travelExpenditures.map(te => ({
       'Employee Name': te.employeeId.name,
-      'Designation': te.designation,
-      'Department': te.department,
+      'Designation': te.employeeId.designation,
+      'Department': te.department.departmentName,
       'Place of Visit': te.placeOfVisit,
       'Client Name': te.clientName,
       'Project No': te.projectNo,
@@ -313,33 +330,44 @@ const AdminTravelExpenditure: React.FC = () => {
     XLSX.writeFile(wb, 'travel_expenditures.xlsx');
   };
 
-  const filteredTravelExpenditures = travelExpenditures.filter(te =>
-    te.employeeId.name.toLowerCase().includes(tableSearchTerm.toLowerCase()) ||
-    te.placeOfVisit.toLowerCase().includes(tableSearchTerm.toLowerCase()) ||
-    te.clientName.toLowerCase().includes(tableSearchTerm.toLowerCase()) ||
-    te.projectNo.toLowerCase().includes(tableSearchTerm.toLowerCase())
-  );
+  const filteredTravelExpenditures = travelExpenditures.filter(te => {
+    const searchTerm = tableSearchTerm.toLowerCase();
+    const employeeIdStr = te.employeeId.employeeId.toString();
+    const employeeName = te.employeeId.name.toLowerCase();
+    const status = te.status || 'pending';
+
+    // Filter by search term
+    const matchesSearch = employeeIdStr.includes(tableSearchTerm) || employeeName.includes(searchTerm);
+
+    // Filter by status
+    const matchesStatus = statusFilter === 'all' || status === statusFilter;
+
+    return matchesSearch && matchesStatus;
+  });
 
   if (loading) {
     return <div className="flex justify-center items-center h-64">Loading...</div>;
   }
 
   if (error) {
-    return <div className="text-red-500 text-center">{error}</div>;
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="text-center">
+          <div className="text-gray-500 text-lg mb-2">No travel expenditures found</div>
+          <div className="text-gray-400 text-sm">Try adding a new travel expenditure</div>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="container mx-auto p-6">
+    <div className="space-y-6">
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-3xl font-bold">Travel Expenditure Management</h1>
           <p className="text-gray-600">Manage travel expenditure requests and approvals</p>
         </div>
         <div className="flex gap-2">
-          <Button onClick={exportToExcel} variant="outline">
-            <Download className="h-4 w-4 mr-2" />
-            Export
-          </Button>
           <Button onClick={openAddModal}>
             <Plus className="h-4 w-4 mr-2" />
             Add Travel Expenditure
@@ -354,152 +382,227 @@ const AdminTravelExpenditure: React.FC = () => {
               <CardTitle>Travel Expenditures</CardTitle>
               <CardDescription>View and manage all travel expenditure requests</CardDescription>
             </div>
-            <div className="flex items-center space-x-2">
-              <Search className="h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Search travel expenditures..."
-                value={tableSearchTerm}
-                onChange={(e) => setTableSearchTerm(e.target.value)}
-                className="w-64"
-              />
-            </div>
+
           </div>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Employee</TableHead>
-                <TableHead>Visit Details</TableHead>
-                <TableHead>Travel Info</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Voucher</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredTravelExpenditures.map((te) => {
-                const TravelModeIcon = getTravelModeIcon(te.travelMode);
-                return (
-                  <TableRow key={te._id}>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">{te.employeeId.name}</div>
-                        <div className="text-sm text-gray-500">{te.designation}</div>
-                        <div className="text-sm text-gray-500">{te.department}</div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">{te.placeOfVisit}</div>
-                        <div className="text-sm text-gray-500">{te.clientName}</div>
-                        <div className="text-sm text-gray-500">Project: {te.projectNo}</div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <TravelModeIcon className="h-4 w-4" />
-                        <span>{te.travelMode}</span>
-                      </div>
-                      <div className="text-sm text-gray-500">{te.ticketProvidedBy}</div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="font-medium">₹{te.totalAmount.toLocaleString()}</div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={getStatusBadgeColor(te.status || 'pending')}>
-                        {te.status || 'pending'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {voucherEditId === te._id ? (
-                        <div className="flex items-center gap-2">
-                          <Input
-                            value={voucherInput[te._id!] || ''}
-                            onChange={(e) => handleVoucherChange(te._id!, e.target.value)}
-                            className="w-24"
-                          />
-                          <Button
-                            size="sm"
-                            onClick={() => handleVoucherSave(te)}
-                            disabled={voucherLoadingId === te._id}
-                          >
-                            {voucherLoadingId === te._id ? 'Saving...' : 'Save'}
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setVoucherEditId(null)}
-                          >
-                            <X className="h-3 w-3" />
-                          </Button>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <Search className="h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Search by Employee ID or Name..."
+                  value={tableSearchTerm}
+                  onChange={(e) => setTableSearchTerm(e.target.value)}
+                  className="w-80"
+                />
+              </div>
+              <div className="flex items-center space-x-2">
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-32">
+                    <SelectValue placeholder="Search by Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="approved">Approved</SelectItem>
+                    <SelectItem value="rejected">Rejected</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <Button onClick={exportToExcel} variant="outline">
+              <Download className="h-4 w-4 mr-2" />
+              Download as Excel
+            </Button>
+          </div>
+          <div className="mt-4">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Employee ID</TableHead>
+                  <TableHead>Employee Name</TableHead>
+                  <TableHead>Department</TableHead>
+                  <TableHead>Place of Visit</TableHead>
+                  <TableHead>Client Name</TableHead>
+                  <TableHead>Project No</TableHead>
+                  <TableHead>Travel Info</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Voucher</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredTravelExpenditures.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={11} className="text-center py-8">
+                      <div className="text-center">
+                        <div className="text-gray-500 text-lg mb-2">
+                          {tableSearchTerm ? 'No travel expenditures found matching your search' : 'No travel expenditures found'}
                         </div>
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm">{te.voucherNo || 'Not set'}</span>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleVoucherEditClick(te._id!, te.voucherNo || '')}
-                          >
-                            <Edit className="h-3 w-3" />
-                          </Button>
+                        <div className="text-gray-400 text-sm">
+                          {tableSearchTerm ? 'Try adjusting your search terms' : 'Try adding a new travel expenditure'}
                         </div>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        {te.status === 'pending' && (
-                          <>
-                            <Button
-                              size="sm"
-                              onClick={() => handleApprove(te._id!)}
-                              className="bg-green-600 hover:bg-green-700"
-                            >
-                              <CheckCircle className="h-3 w-3" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              onClick={() => handleReject(te._id!)}
-                              className="bg-red-600 hover:bg-red-700"
-                            >
-                              <XCircle className="h-3 w-3" />
-                            </Button>
-                          </>
-                        )}
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            setFormData(te);
-                            setIsEdit(true);
-                            setShowModal(true);
-                            setSelectedEmployee(te.employeeId);
-                            setExpenseInputs(te.expenses.map(exp => ({
-                              date: exp.date,
-                              description: exp.description,
-                              amount: exp.amount.toString()
-                            })));
-                          }}
-                        >
-                          <Edit className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleDelete(te._id!)}
-                          className="text-red-600 hover:text-red-700"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+                ) : (
+                  filteredTravelExpenditures.map((te) => {
+                    const TravelModeIcon = getTravelModeIcon(te.travelMode);
+                    return (
+                      <TableRow key={te._id}>
+                        <TableCell>
+                          <div className="font-medium">{te.employeeId.employeeId}</div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="font-medium">{te.employeeId.name}</div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="font-medium text-gray-500">{te.department?.departmentName || 'N/A'}</div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="font-medium text-gray-500">{te.placeOfVisit}</div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="font-medium text-gray-500">{te.clientName}</div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="font-medium text-gray-500">{te.projectNo}</div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <TravelModeIcon className="h-4 w-4" />
+                            <span>{te.travelMode}</span>
+                          </div>
+                          <div className="text-sm text-gray-500">{te.ticketProvidedBy}</div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="font-medium">₹{te.totalAmount.toLocaleString()}</div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={getStatusBadgeColor(te.status || 'pending')}>
+                            {(te.status || 'pending').charAt(0).toUpperCase() + (te.status || 'pending').slice(1)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {voucherEditId === te._id ? (
+                            <div className="flex items-center gap-2">
+                              <Input
+                                value={voucherInput[te._id!] || ''}
+                                onChange={(e) => handleVoucherChange(te._id!, e.target.value)}
+                                className="w-24"
+                              />
+                              <Button
+                                size="sm"
+                                onClick={() => handleVoucherSave(te)}
+                                disabled={voucherLoadingId === te._id}
+                              >
+                                {voucherLoadingId === te._id ? 'Saving...' : 'Save'}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setVoucherEditId(null)}
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm">{te.voucherNo || ''}</span>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleVoucherEditClick(te._id!, te.voucherNo || '')}
+                              >
+                                <Edit className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            {te.status === 'pending' && (
+                              <>
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleApprove(te._id!)}
+                                  className="bg-green-600 hover:bg-green-700"
+                                >
+                                  <CheckCircle className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleReject(te._id!)}
+                                  className="bg-red-600 hover:bg-red-700"
+                                >
+                                  <XCircle className="h-3 w-3" />
+                                </Button>
+                              </>
+                            )}
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setFormData(te);
+                                setIsEdit(true);
+                                setShowModal(true);
+                                // Set the selected employee correctly using the employee object
+                                setSelectedEmployee(te.employeeId);
+                                // Set department details from the populated data
+                                if (te.department) {
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    departmentCode: te.department.departmentId || '',
+                                    departmentName: te.department.departmentName || ''
+                                  }));
+                                }
+                                // Clear search terms when editing
+                                setEmployeeSearchTerm('');
+                                setTeamMemberSearchTerm('');
+                                setExpenseInputs(te.expenses.map(exp => ({
+                                  date: exp.date ? exp.date.slice(0, 10) : '',
+                                  description: exp.description,
+                                  amount: exp.amount.toString()
+                                })));
+                                // Convert team member names to objects for the new format
+                                if (te.accompaniedTeamMembers && Array.isArray(te.accompaniedTeamMembers)) {
+                                  const teamMembers = te.accompaniedTeamMembers.map((memberName: string) => {
+                                    // Try to find the actual employee by name
+                                    const actualEmployee = employees.find(emp => emp.name === memberName);
+                                    return {
+                                      _id: actualEmployee?._id || `temp_${Math.random()}`,
+                                      name: memberName,
+                                      employeeId: actualEmployee?.employeeId || 0
+                                    };
+                                  });
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    accompaniedTeamMembers: teamMembers
+                                  }));
+                                }
+                              }}
+                            >
+                              <Edit className="h-3 w-3" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleDelete(te._id!)}
+                              className="text-red-600 hover:text-red-700"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
 
@@ -517,45 +620,51 @@ const AdminTravelExpenditure: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="employeeId">Employee</Label>
-                <Popover open={isOpen} onOpenChange={setIsOpen}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      role="combobox"
-                      aria-expanded={isOpen}
-                      className="w-full justify-between"
-                    >
-                      {selectedEmployee ? selectedEmployee.name : "Select employee..."}
-                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-full p-0">
-                    <Command>
-                      <CommandInput placeholder="Search employee..." />
-                      <CommandList>
-                        <CommandEmpty>No employee found.</CommandEmpty>
-                        <CommandGroup>
-                          {employees.map((employee) => (
-                            <CommandItem
-                              key={employee._id}
-                              value={employee.name}
-                              onSelect={() => handleEmployeeSelect(employee._id)}
-                            >
-                              <Check
-                                className={cn(
-                                  "mr-2 h-4 w-4",
-                                  selectedEmployee?._id === employee._id ? "opacity-100" : "opacity-0"
-                                )}
-                              />
-                              {employee.name} - {employee.designation}
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
+                <div className="flex gap-2">
+                  <Select
+                    value={selectedEmployee?._id || ''}
+                    onValueChange={(value) => handleEmployeeSelect(value)}
+                  >
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder="Search and select employee..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <div className="p-2">
+                        <Input
+                          placeholder="Search by ID or name..."
+                          value={employeeSearchTerm}
+                          onChange={(e) => setEmployeeSearchTerm(e.target.value)}
+                          onKeyDown={(e) => e.stopPropagation()}
+                          onClick={(e) => e.stopPropagation()}
+                          className="mb-2"
+                        />
+                      </div>
+                      {employees
+                        .filter(emp =>
+                          emp.employeeId.toString().includes(employeeSearchTerm) ||
+                          emp.name.toLowerCase().includes(employeeSearchTerm.toLowerCase())
+                        )
+                        .sort((a, b) => a.employeeId - b.employeeId)
+                        .map((employee) => (
+                          <SelectItem key={employee._id} value={employee._id}>
+                            {employee.employeeId} - {employee.name}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+
+                </div>
                 {employeeError && <p className="text-red-500 text-sm">{employeeError}</p>}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="department">Department</Label>
+                <Input
+                  placeholder="Department"
+                  value={selectedEmployee ? `${formData.departmentCode} - ${formData.departmentName}` : ''}
+                  disabled
+                  className="w-48"
+                />
               </div>
 
               <div className="space-y-2">
@@ -691,19 +800,53 @@ const AdminTravelExpenditure: React.FC = () => {
 
             <div className="space-y-2">
               <Label>Accompanied Team Members</Label>
-              <div className="flex gap-2">
-                <Input
-                  value={teamMemberInput}
-                  onChange={(e) => setTeamMemberInput(e.target.value)}
-                  placeholder="Enter team member name"
-                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleTeamMemberAdd())}
-                />
-                <Button type="button" onClick={handleTeamMemberAdd}>Add</Button>
-              </div>
+              <Select
+                onValueChange={(value) => {
+                  const employee = employees.find(emp => emp._id === value);
+                  if (employee && !formData.accompaniedTeamMembers.some(member => member._id === employee._id)) {
+                    setFormData(prev => ({
+                      ...prev,
+                      accompaniedTeamMembers: [...prev.accompaniedTeamMembers, {
+                        _id: employee._id,
+                        name: employee.name,
+                        employeeId: employee.employeeId
+                      }]
+                    }));
+                  }
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select team members..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <div className="p-2">
+                    <Input
+                      placeholder="Search by ID or name..."
+                      value={teamMemberSearchTerm}
+                      onChange={(e) => setTeamMemberSearchTerm(e.target.value)}
+                      onKeyDown={(e) => e.stopPropagation()}
+                      onClick={(e) => e.stopPropagation()}
+                      className="mb-2"
+                    />
+                  </div>
+                  {employees
+                    .filter(emp =>
+                      emp.employeeId.toString().includes(teamMemberSearchTerm) ||
+                      emp.name.toLowerCase().includes(teamMemberSearchTerm.toLowerCase())
+                    )
+                    .filter(emp => !formData.accompaniedTeamMembers.some(member => member._id === emp._id))
+                    .sort((a, b) => a.employeeId - b.employeeId)
+                    .map((employee) => (
+                      <SelectItem key={employee._id} value={employee._id}>
+                        {employee.employeeId} - {employee.name}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
               <div className="flex flex-wrap gap-2 mt-2">
                 {formData.accompaniedTeamMembers.map((member, index) => (
                   <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                    {member}
+                    {member.employeeId} - {member.name}
                     <X className="h-3 w-3 cursor-pointer" onClick={() => handleTeamMemberRemove(index)} />
                   </Badge>
                 ))}
@@ -731,7 +874,7 @@ const AdminTravelExpenditure: React.FC = () => {
                         placeholder="Expense description"
                       />
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 items-end">
                       <div className="flex-1">
                         <Label>Amount (₹)</Label>
                         <Input
@@ -747,6 +890,7 @@ const AdminTravelExpenditure: React.FC = () => {
                           variant="outline"
                           size="sm"
                           onClick={() => handleExpenseRemove(index)}
+                          className="h-10"
                         >
                           <X className="h-4 w-4" />
                         </Button>
@@ -780,6 +924,35 @@ const AdminTravelExpenditure: React.FC = () => {
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Delete</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this travel expenditure? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setDeleteDialogOpen(false);
+                setTravelExpenditureToDelete(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
+            >
+              Delete
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

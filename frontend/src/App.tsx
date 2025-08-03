@@ -54,6 +54,8 @@ import EmployeeApproveRejectLeave from "./pages/Employee/ApproveRejectLeave";
 import EmployeeFixedAllowances from "./pages/Employee/FixedAllowances";
 import EmployeeAddedAppraisals from "./pages/Employee/AddedAppraisals";
 import JoiningReport from "./pages/JoiningReport";
+import HRLTC from "./pages/HR/LTC";
+import AdminLTC from "./pages/Admin/LTC";
 
 const queryClient = new QueryClient();
 
@@ -130,7 +132,11 @@ const App = () => (
                   <AdminTravelExpenditure />
                 </ProtectedRoute>
               } />
-
+              <Route path="admin-dashboard/ltc" element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <AdminLTC />
+                </ProtectedRoute>
+              } />
 
               {/* Accounts Routes */}
               <Route path="accounts-dashboard" element={
@@ -186,6 +192,11 @@ const App = () => (
               <Route path="accounts-dashboard/travel-expenditure" element={
                 <ProtectedRoute allowedRoles={['accounts']}>
                   <AdminTravelExpenditure />
+                </ProtectedRoute>
+              } />
+              <Route path="accounts-dashboard/ltc" element={
+                <ProtectedRoute allowedRoles={['accounts']}>
+                  <AdminLTC />
                 </ProtectedRoute>
               } />
 
@@ -248,6 +259,11 @@ const App = () => (
               <Route path="hr-dashboard/travel-expenditure" element={
                 <ProtectedRoute allowedRoles={['hr']}>
                   <HRTravelExpenditure />
+                </ProtectedRoute>
+              } />
+              <Route path="hr-dashboard/ltc" element={
+                <ProtectedRoute allowedRoles={['hr']}>
+                  <HRLTC />
                 </ProtectedRoute>
               } />
 

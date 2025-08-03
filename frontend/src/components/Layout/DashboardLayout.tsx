@@ -25,7 +25,8 @@ import {
   Lock,
   User,
   Award,
-  Plane
+  Plane,
+  MapPin
 } from 'lucide-react';
 
 const DashboardLayout: React.FC = () => {
@@ -55,6 +56,7 @@ const DashboardLayout: React.FC = () => {
           { icon: Briefcase, label: 'CTC', path: '/admin-dashboard/ctc' },
           { icon: Gift, label: 'Fixed Allowances', path: '/admin-dashboard/fixed-allowances' },
           { icon: Award, label: 'Variable Allowances', path: '/admin-dashboard/allowances' },
+          { icon: MapPin, label: 'LTC', path: '/admin-dashboard/ltc' },
           { icon: Plane, label: 'Travel Expenditure', path: '/admin-dashboard/travel-expenditure' }
         ];
       case 'accounts':
@@ -68,6 +70,7 @@ const DashboardLayout: React.FC = () => {
           { icon: Briefcase, label: 'CTC', path: '/accounts-dashboard/ctc' },
           { icon: Gift, label: 'Fixed Allowances', path: '/accounts-dashboard/fixed-allowances' },
           { icon: Award, label: 'Variable Allowances', path: '/accounts-dashboard/allowances' },
+          { icon: MapPin, label: 'LTC', path: '/accounts-dashboard/ltc' },
           { icon: Plane, label: 'Travel Expenditure', path: '/accounts-dashboard/travel-expenditure' }
         ];
       case 'hr':
@@ -79,10 +82,11 @@ const DashboardLayout: React.FC = () => {
           { icon: Calendar, label: 'Leave', path: '/hr-dashboard/leave' },
           { icon: CalendarCheck, label: 'Holiday', path: '/hr-dashboard/holiday' },
           { icon: Star, label: 'Appraisal', path: '/hr-dashboard/appraisal' },
+          { icon: MapPin, label: 'LTC', path: '/hr-dashboard/ltc' },
+          { icon: Plane, label: 'Travel Expenditure', path: '/hr-dashboard/travel-expenditure' },
           { icon: UserPlus, label: 'Onboarding/Offboarding', path: '/hr-dashboard/onboarding' },
           { icon: MessageSquare, label: 'Messages', path: '/hr-dashboard/messages' },
           { icon: HelpCircle, label: 'Helpdesk', path: '/hr-dashboard/helpdesk' },
-          { icon: Plane, label: 'Travel Expenditure', path: '/hr-dashboard/travel-expenditure' }
         ];
       case 'employee':
         return [
