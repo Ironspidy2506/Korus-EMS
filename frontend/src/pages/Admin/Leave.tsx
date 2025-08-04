@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Search, Filter, ChevronLeft, ChevronRight, Eye, FileText, Calendar, Clock, User, Download, CheckCircle, XCircle, Paperclip, MessageSquare } from 'lucide-react';
+import { Search, Filter, ChevronLeft, ChevronRight, Eye, FileText, Calendar, Clock, User, Download, CheckCircle, XCircle, Paperclip, MessageSquare, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getAllLeaves, approveOrRejectLeave, updateReasonOfRejection } from '@/utils/Leave';
 import { useNavigate } from 'react-router-dom';
@@ -18,6 +18,7 @@ const ITEMS_PER_PAGE = 20; // Show 20 items per page for better performance
 
 const AdminLeave: React.FC = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [leaveRequests, setLeaveRequests] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -29,6 +30,10 @@ const AdminLeave: React.FC = () => {
   const [editingRejectionId, setEditingRejectionId] = useState(null);
   const [rejectionReason, setRejectionReason] = useState('');
   const [isUpdatingRejection, setIsUpdatingRejection] = useState(false);
+  const [isDeleteAllDialogOpen, setIsDeleteAllDialogOpen] = useState(false);
+  const [isDeletingAll, setIsDeletingAll] = useState(false);
+  const [isDeleteRejectedDialogOpen, setIsDeleteRejectedDialogOpen] = useState(false);
+  const [isDeletingRejected, setIsDeletingRejected] = useState(false);
 
   const getLeaveTypeLabel = useCallback((type: string) => {
     const typeMap: { [key: string]: string } = {
@@ -226,6 +231,120 @@ const AdminLeave: React.FC = () => {
     setRejectionReason('');
   }, []);
 
+  const handleDeleteAllApproved = useCallback(async () => {
+    setIsDeletingAll(true);
+    try {
+      const approvedLeaves = leaveRequests.filter((leave: any) => leave.status === 'approved');
+
+      if (approvedLeaves.length === 0) {
+        toast({
+          title: "Info",
+          description: "No approved leaves to delete",
+        });
+        setIsDeleteAllDialogOpen(false);
+        return;
+      }
+
+      const deletePromises = approvedLeaves.map((leave: any) =>
+        fetch(`https://korus-ems-backend.vercel.app/api/leaves/${leave._id}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        })
+      );
+
+      const responses = await Promise.all(deletePromises);
+      const failedDeletions = responses.filter(response => !response.ok);
+
+      if (failedDeletions.length === 0) {
+        toast({
+          title: "Success",
+          description: `Successfully deleted ${approvedLeaves.length} approved leave requests`,
+        });
+      } else {
+        toast({
+          title: "Partial Success",
+          description: `Deleted ${approvedLeaves.length - failedDeletions.length} out of ${approvedLeaves.length} approved leave requests`,
+          variant: "destructive",
+        });
+      }
+
+      setIsDeleteAllDialogOpen(false);
+      fetchLeaves(); // Refresh the list
+    } catch (error) {
+      console.error("Error deleting all approved leaves:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete approved leave requests",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeletingAll(false);
+    }
+  }, [leaveRequests, toast]);
+
+  const handleCancelDeleteAll = useCallback(() => {
+    setIsDeleteAllDialogOpen(false);
+  }, []);
+
+  const handleDeleteAllRejected = useCallback(async () => {
+    setIsDeletingRejected(true);
+    try {
+      const rejectedLeaves = leaveRequests.filter((leave: any) => leave.status === 'rejected');
+
+      if (rejectedLeaves.length === 0) {
+        toast({
+          title: "Info",
+          description: "No rejected leaves to delete",
+        });
+        setIsDeleteRejectedDialogOpen(false);
+        return;
+      }
+
+      const deletePromises = rejectedLeaves.map((leave: any) =>
+        fetch(`https://korus-ems-backend.vercel.app/api/leaves/${leave._id}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        })
+      );
+
+      const responses = await Promise.all(deletePromises);
+      const failedDeletions = responses.filter(response => !response.ok);
+
+      if (failedDeletions.length === 0) {
+        toast({
+          title: "Success",
+          description: `Successfully deleted ${rejectedLeaves.length} rejected leave requests`,
+        });
+      } else {
+        toast({
+          title: "Partial Success",
+          description: `Deleted ${rejectedLeaves.length - failedDeletions.length} out of ${rejectedLeaves.length} rejected leave requests`,
+          variant: "destructive",
+        });
+      }
+
+      setIsDeleteRejectedDialogOpen(false);
+      fetchLeaves(); // Refresh the list
+    } catch (error) {
+      console.error("Error deleting all rejected leaves:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete rejected leave requests",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeletingRejected(false);
+    }
+  }, [leaveRequests, toast]);
+
+  const handleCancelDeleteRejected = useCallback(() => {
+    setIsDeleteRejectedDialogOpen(false);
+  }, []);
+
   const handleView = useCallback((leave: any) => {
     setSelectedLeave(leave);
     setIsViewDialogOpen(true);
@@ -287,6 +406,30 @@ const AdminLeave: React.FC = () => {
           <h1 className="text-3xl font-bold text-gray-900">Leave Management</h1>
           <p className="text-gray-600">Review and manage employee leave requests</p>
         </div>
+      </div>
+
+      {/* Quick Action Buttons */}
+      <div className="flex gap-4">
+        <Button variant="outline" className="flex items-center gap-2" onClick={() => navigate('/admin-dashboard/leave-balances')}>
+          <Calendar className="h-4 w-4" />
+          Leave Balances
+        </Button>
+        <Button
+          variant="destructive"
+          className="flex items-center gap-2"
+          onClick={() => setIsDeleteAllDialogOpen(true)}
+        >
+          <Trash2 className="h-4 w-4" />
+          Delete All Approved
+        </Button>
+        <Button
+          variant="destructive"
+          className="flex items-center gap-2"
+          onClick={() => setIsDeleteRejectedDialogOpen(true)}
+        >
+          <Trash2 className="h-4 w-4" />
+          Delete All Rejected
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -714,6 +857,70 @@ const AdminLeave: React.FC = () => {
               )}
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete All Approved Confirmation Dialog */}
+      <Dialog open={isDeleteAllDialogOpen} onOpenChange={setIsDeleteAllDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Delete All Approved Leaves</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete all approved leave requests?
+              <br />
+              <span className="text-sm text-gray-600">
+                This will delete {leaveRequests.filter((leave: any) => leave.status === 'approved').length} approved leave requests.
+              </span>
+              <br />
+              <span className="text-red-600 font-semibold">
+                This action cannot be undone and will permanently remove all approved leave records.
+              </span>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-2 mt-4">
+            <Button variant="outline" onClick={handleCancelDeleteAll}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteAllApproved}
+              disabled={isDeletingAll}
+            >
+              {isDeletingAll ? 'Deleting...' : 'Delete All Approved'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete All Rejected Confirmation Dialog */}
+      <Dialog open={isDeleteRejectedDialogOpen} onOpenChange={setIsDeleteRejectedDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Delete All Rejected Leaves</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete all rejected leave requests?
+              <br />
+              <span className="text-sm text-gray-600">
+                This will delete {leaveRequests.filter((leave: any) => leave.status === 'rejected').length} rejected leave requests.
+              </span>
+              <br />
+              <span className="text-red-600 font-semibold">
+                This action cannot be undone and will permanently remove all rejected leave records.
+              </span>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-2 mt-4">
+            <Button variant="outline" onClick={handleCancelDeleteRejected}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteAllRejected}
+              disabled={isDeletingRejected}
+            >
+              {isDeletingRejected ? 'Deleting...' : 'Delete All Rejected'}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
 

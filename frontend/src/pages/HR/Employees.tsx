@@ -213,7 +213,7 @@ const HREmployees: React.FC = () => {
       delete employeeToAdd._id;
       const result = await addEmployee(employeeToAdd);
       console.log(result);
-      
+
       if (result) {
         toast({ title: 'Success', description: 'Employee added successfully' });
         setIsAddDialogOpen(false);
@@ -272,7 +272,7 @@ const HREmployees: React.FC = () => {
 
   const handleView = (employee: Employee) => {
     console.log(employee);
-    
+
     setSelectedEmployee(employee);
     setIsViewDialogOpen(true);
   };
@@ -642,6 +642,7 @@ const HREmployees: React.FC = () => {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>S.No</TableHead>
                 <TableHead>Emp ID</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Email</TableHead>
@@ -652,8 +653,9 @@ const HREmployees: React.FC = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredEmployees.map((employee) => (
+              {filteredEmployees.map((employee, index) => (
                 <TableRow key={employee._id}>
+                  <TableCell className="font-medium">{index + 1}</TableCell>
                   <TableCell className="font-medium">{employee.employeeId}</TableCell>
                   <TableCell className="font-medium">{employee.name}</TableCell>
                   <TableCell>{employee.email}</TableCell>
@@ -829,7 +831,7 @@ const HREmployees: React.FC = () => {
                     </div>
                   )}
 
-                  
+
                   {/* Personal Information */}
                   <div className="mb-4">
                     <h3 className="text-lg font-semibold mb-2">Personal Information</h3>
@@ -865,7 +867,7 @@ const HREmployees: React.FC = () => {
                       {renderViewField('Year of Passing', selectedEmployee.yop)}
                       {renderViewField('Date of Joining', selectedEmployee.doj ? formatDate(selectedEmployee.doj) : null)}
                       {renderViewField('Reporting Person', selectedEmployee.repperson)}
-                      {renderViewField('Role', selectedEmployee.role.slice(0,1).toUpperCase() + selectedEmployee.role.slice(1, selectedEmployee.role.length).toLowerCase())}
+                      {renderViewField('Role', selectedEmployee.role.slice(0, 1).toUpperCase() + selectedEmployee.role.slice(1, selectedEmployee.role.length).toLowerCase())}
                     </div>
                   </div>
                   {/* Bank Information */}
