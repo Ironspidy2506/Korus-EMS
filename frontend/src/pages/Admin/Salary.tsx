@@ -88,7 +88,7 @@ const AdminSalary: React.FC = () => {
     const grossSalary = parseFloat(formData.grossSalary) || 0;
     const employeeType = formData.employeeType;
     if (grossSalary) {
-      const basic = employeeType === 'Employee'
+      const basic = employeeType === 'employee'
         ? (grossSalary * 0.45)
         : (grossSalary * 0.6);
       // Update basicSalary
@@ -180,7 +180,7 @@ const AdminSalary: React.FC = () => {
   };
 
   const stats = {
-    totalEmployees: salaryRecords.length,
+    totalRecords: salaryRecords.length,
     totalPayroll: salaryRecords.reduce((sum, record) => sum + getTotalSalary(record), 0),
     avgSalary: salaryRecords.length > 0 ? salaryRecords.reduce((sum, record) => sum + getTotalSalary(record), 0) / salaryRecords.length : 0,
     departments: new Set(salaryRecords.map(record => (record.employeeId && typeof record.employeeId === 'object' && record.employeeId.department ? record.employeeId.department.departmentName : ''))).size
@@ -390,11 +390,11 @@ const AdminSalary: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Employees</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Salary Records</CardTitle>
             <Users className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalEmployees}</div>
+            <div className="text-2xl font-bold">{stats.totalRecords}</div>
           </CardContent>
         </Card>
         <Card>
