@@ -16,6 +16,7 @@ import holidayRouter from "./routes/holiday.js";
 import appraisalRouter from "./routes/appraisal.js";
 import travelExpenditureRouter from "./routes/travelExpenditure.js";
 import ltcRouter from "./routes/ltc.js";
+import salaryPasswordRouter from "./routes/salaryPassword.js";
 
 const app = express();
 config({ path: ".env" });
@@ -47,6 +48,7 @@ app.use("/api/fixed-allowances", fixedallowanceRouter);
 app.use("/api/travel-expenditures", travelExpenditureRouter);
 app.use("/api/ltc", ltcRouter);
 app.use("/api/message", messageRouter);
+app.use("/api/salary-password", salaryPasswordRouter);
 
 app.get("/", (req, res) => {
   res.send("Hello");

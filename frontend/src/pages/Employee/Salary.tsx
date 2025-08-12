@@ -1,22 +1,46 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { DollarSign, Eye, Download } from 'lucide-react';
+import { DollarSign, Eye, EyeOff, Download, Lock, Key, Mail } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { useAuth } from '@/contexts/AuthContext';
 import { getUserSalaries } from '@/utils/Salary';
+import {
+  verifySalaryPassword,
+  setSalaryPassword,
+  sendSalaryPasswordResetOtp,
+  resetSalaryPassword
+} from '@/utils/SalaryPassword';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useToast } from '@/hooks/use-toast';
 
 const EmployeeSalary: React.FC = () => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [selectedYear, setSelectedYear] = useState('all');
   const [selectedMonth, setSelectedMonth] = useState('all');
   const [salaryHistory, setSalaryHistory] = useState<any[]>([]);
   const [currentSalary, setCurrentSalary] = useState<any | null>(null);
   const [viewSlip, setViewSlip] = useState<any | null>(null);
   const slipRef = useRef<HTMLDivElement>(null);
+
+  // Password protection states
+  const [isPasswordVerified, setIsPasswordVerified] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showSetPasswordModal, setShowSetPasswordModal] = useState(false);
+  const [showResetPasswordModal, setShowResetPasswordModal] = useState(false);
+  const [salaryPass, setSalaryPass] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [otp, setOtp] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [showSalaryPass, setShowSalaryPass] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Get unique years and months from salaryHistory
   const years = Array.from(new Set(salaryHistory.map((s: any) => s.paymentYear))).sort((a, b) => b - a);
@@ -26,8 +50,15 @@ const EmployeeSalary: React.FC = () => {
   ];
 
   useEffect(() => {
+    // Check if user has access to salary
+    if (user?._id && !isPasswordVerified) {
+      setShowPasswordModal(true);
+    }
+  }, [user?._id, isPasswordVerified]);
+
+  useEffect(() => {
     const fetchSalary = async () => {
-      if (!user?._id) return;
+      if (!user?._id || !isPasswordVerified) return;
       try {
         const data = await getUserSalaries(user._id);
         setSalaryHistory(data.salaries || []);
@@ -39,7 +70,200 @@ const EmployeeSalary: React.FC = () => {
       }
     };
     fetchSalary();
-  }, [user?._id, selectedYear]);
+  }, [user?._id, selectedYear, isPasswordVerified]);
+
+  // Password verification handler
+  const handlePasswordVerification = async () => {
+    if (!salaryPass.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter your salary password",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const result = await verifySalaryPassword(salaryPass);
+      if (result && result.success) {
+        if (result.requiresPasswordSet) {
+          setShowPasswordModal(false);
+          setShowSetPasswordModal(true);
+        } else {
+          setIsPasswordVerified(true);
+          setShowPasswordModal(false);
+          setSalaryPass('');
+          toast({
+            title: "Success",
+            description: "Salary password verified successfully",
+          });
+        }
+      } else {
+        toast({
+          title: "Error",
+          description: (result && result.message) || "Incorrect password",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An error occurred during verification",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Set password handler
+  const handleSetPassword = async () => {
+    if (!newPassword.trim() || !confirmPassword.trim()) {
+      toast({
+        title: "Error",
+        description: "Please fill in all fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast({
+        title: "Error",
+        description: "Passwords do not match",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      toast({
+        title: "Error",
+        description: "Password must be at least 6 characters long",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const result = await setSalaryPassword(newPassword);
+      if (result && result.success) {
+        setIsPasswordVerified(true);
+        setShowSetPasswordModal(false);
+        setNewPassword('');
+        setConfirmPassword('');
+        toast({
+          title: "Success",
+          description: "Salary password set successfully",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: (result && result.message) || "Failed to set password",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An error occurred while setting password",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Send reset OTP handler
+  const handleSendResetOtp = async () => {
+    setIsLoading(true);
+    try {
+      const result = await sendSalaryPasswordResetOtp();
+      if (result && result.success) {
+        toast({
+          title: "Success",
+          description: result.message,
+        });
+        setShowResetPasswordModal(true);
+      } else {
+        toast({
+          title: "Error",
+          description: (result && result.message) || "Failed to send OTP",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An error occurred while sending OTP",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Reset password handler
+  const handleResetPassword = async () => {
+    if (!otp.trim() || !newPassword.trim() || !confirmPassword.trim()) {
+      toast({
+        title: "Error",
+        description: "Please fill in all fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast({
+        title: "Error",
+        description: "Passwords do not match",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      toast({
+        title: "Error",
+        description: "Password must be at least 6 characters long",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const result = await resetSalaryPassword(otp, newPassword);
+      if (result && result.success) {
+        setIsPasswordVerified(true);
+        setShowResetPasswordModal(false);
+        setOtp('');
+        setNewPassword('');
+        setConfirmPassword('');
+        toast({
+          title: "Success",
+          description: "Salary password reset successfully",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: (result && result.message) || "Failed to reset password",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An error occurred while resetting password",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handlePrintSlip = () => {
     if (slipRef.current) {
@@ -78,6 +302,233 @@ const EmployeeSalary: React.FC = () => {
     XLSX.writeFile(workbook, 'salary_history.xlsx');
   };
 
+  // If password is not verified, show password modal
+  if (!isPasswordVerified) {
+    return (
+      <>
+        {/* Password Verification Modal */}
+        <Dialog open={showPasswordModal} onOpenChange={setShowPasswordModal}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Lock className="h-5 w-5 text-blue-600" />
+                Salary Access Required
+              </DialogTitle>
+              <DialogDescription>
+                Please enter your salary password to access your salary information.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="salaryPassword">Salary Password</Label>
+                <div className="relative">
+                  <Input
+                    id="salaryPassword"
+                    type={showSalaryPass ? 'text' : 'password'}
+                    placeholder="Enter your salary password"
+                    value={salaryPass}
+                    onChange={(e) => setSalaryPass(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handlePasswordVerification()}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-2 top-1/2 -translate-y-1/2"
+                    onClick={() => setShowSalaryPass((v) => !v)}
+                  >
+                    {showSalaryPass ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  onClick={handlePasswordVerification}
+                  disabled={isLoading}
+                  className="flex-1"
+                >
+                  {isLoading ? "Verifying..." : "Verify"}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleSendResetOtp}
+                  disabled={isLoading}
+                >
+                  <Mail className="h-4 w-4 mr-2" />
+                  Reset
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Set Password Modal */}
+        <Dialog open={showSetPasswordModal} onOpenChange={setShowSetPasswordModal}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Key className="h-5 w-5 text-green-600" />
+                Set Salary Password
+              </DialogTitle>
+              <DialogDescription>
+                Please set a password to protect your salary information.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="newPassword">New Password</Label>
+                <div className="relative">
+                  <Input
+                    id="newPassword"
+                    type={showNewPassword ? 'text' : 'password'}
+                    placeholder="Enter new password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-2 top-1/2 -translate-y-1/2"
+                    onClick={() => setShowNewPassword((v) => !v)}
+                  >
+                    {showNewPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <div className="relative">
+                  <Input
+                    id="confirmPassword"
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    placeholder="Confirm new password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleSetPassword()}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-2 top-1/2 -translate-y-1/2"
+                    onClick={() => setShowConfirmPassword((v) => !v)}
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+              <Button
+                onClick={handleSetPassword}
+                disabled={isLoading}
+                className="w-full"
+              >
+                {isLoading ? "Setting..." : "Set Password"}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Reset Password Modal */}
+        <Dialog open={showResetPasswordModal} onOpenChange={setShowResetPasswordModal}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Key className="h-5 w-5 text-orange-600" />
+                Reset Salary Password
+              </DialogTitle>
+              <DialogDescription>
+                Enter the OTP sent to your email and set a new password.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="otp">OTP</Label>
+                <Input
+                  id="otp"
+                  placeholder="Enter 6-digit OTP"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="resetNewPassword">New Password</Label>
+                <div className="relative">
+                  <Input
+                    id="resetNewPassword"
+                    type={showNewPassword ? 'text' : 'password'}
+                    placeholder="Enter new password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-2 top-1/2 -translate-y-1/2"
+                    onClick={() => setShowNewPassword((v) => !v)}
+                  >
+                    {showNewPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="resetConfirmPassword">Confirm Password</Label>
+                <div className="relative">
+                  <Input
+                    id="resetConfirmPassword"
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    placeholder="Confirm new password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleResetPassword()}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-2 top-1/2 -translate-y-1/2"
+                    onClick={() => setShowConfirmPassword((v) => !v)}
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+              <Button
+                onClick={handleResetPassword}
+                disabled={isLoading}
+                className="w-full"
+              >
+                {isLoading ? "Resetting..." : "Reset Password"}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </>
+    );
+  }
+
+  // Main salary content (only shown after password verification)
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -85,6 +536,16 @@ const EmployeeSalary: React.FC = () => {
           <h1 className="text-3xl font-bold text-gray-900">Salary Information</h1>
           <p className="text-gray-600">View your salary details and history</p>
         </div>
+        <Button
+          variant="outline"
+          onClick={() => {
+            setIsPasswordVerified(false);
+            setShowPasswordModal(true);
+          }}
+        >
+          <Lock className="h-4 w-4 mr-2" />
+          Change Password
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
