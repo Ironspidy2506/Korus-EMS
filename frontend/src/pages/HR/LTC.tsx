@@ -387,14 +387,16 @@ const HRLTC: React.FC = () => {
                               onClick={() => handleApprove(ltc._id)}
                               className="bg-green-600 hover:bg-green-700"
                             >
-                              <CheckCircle className="h-3 w-3" />
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                              Approve
                             </Button>
                             <Button
                               size="sm"
                               onClick={() => handleReject(ltc._id)}
                               className="bg-red-600 hover:bg-red-700"
                             >
-                              <XCircle className="h-3 w-3" />
+                              <XCircle className="h-3 w-3 mr-1" />
+                              Reject
                             </Button>
                           </>
                         )}
@@ -438,6 +440,9 @@ const HRLTC: React.FC = () => {
 
       <Dialog open={showModal} onOpenChange={setShowModal}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <div className="flex justify-center">
+            <img src="/uploads/Korus.png" alt="Korus logo" className="h-12 w-auto mb-4" />
+          </div>
           <DialogHeader>
             <DialogTitle>
               {isEdit ? 'Edit LTC Request' : 'Add New LTC Request'}

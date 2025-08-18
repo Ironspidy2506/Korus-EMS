@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { getAllEmployees } from '@/utils/Employee';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -44,7 +45,7 @@ const initialForm = {
   empName: '',
   designation: '',
   department: '',
-  accompaniedTeamMembers: [],
+  
   placeOfVisit: '',
   clientName: '',
   projectNo: '',
@@ -76,9 +77,10 @@ const AdminTravelExpenditure: React.FC = () => {
   const [voucherEditId, setVoucherEditId] = useState<string | null>(null);
   const [expenseInputs, setExpenseInputs] = useState([{ date: '', description: '', amount: '' }]);
   const [employeeSearchTerm, setEmployeeSearchTerm] = useState('');
-  const [teamMemberSearchTerm, setTeamMemberSearchTerm] = useState('');
+  
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [travelExpenditureToDelete, setTravelExpenditureToDelete] = useState<string | null>(null);
+  const [claimedFromClient, setClaimedFromClient] = useState<boolean>(false);
 
   // Needed for input to work
   const handleVoucherChange = (id: string, value: string) => {
@@ -150,8 +152,9 @@ const AdminTravelExpenditure: React.FC = () => {
     setShowModal(true);
     setSelectedEmployee(null);
     setEmployeeSearchTerm('');
-    setTeamMemberSearchTerm('');
+    
     setExpenseInputs([{ date: '', description: '', amount: '' }]);
+    setClaimedFromClient(false);
   };
 
   const closeModal = () => {
@@ -168,12 +171,7 @@ const AdminTravelExpenditure: React.FC = () => {
 
 
 
-  const handleTeamMemberRemove = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      accompaniedTeamMembers: prev.accompaniedTeamMembers.filter((_, i) => i !== index)
-    }));
-  };
+  
 
   const handleExpenseAdd = () => {
     setExpenseInputs(prev => [...prev, { date: '', description: '', amount: '' }]);
@@ -208,11 +206,7 @@ const AdminTravelExpenditure: React.FC = () => {
 
     const formDataToSend = new FormData();
     Object.keys(formData).forEach(key => {
-      if (key === 'accompaniedTeamMembers') {
-        // Convert team members to just names for backend compatibility
-        const teamMemberNames = formData[key].map((member: any) => member.name);
-        formDataToSend.append(key, JSON.stringify(teamMemberNames));
-      } else if (key === 'expenses') {
+      if (key === 'expenses') {
         formDataToSend.append(key, JSON.stringify(validExpenses));
       } else if (key === 'attachment' && formData[key]) {
         formDataToSend.append(key, formData[key]);
@@ -226,6 +220,7 @@ const AdminTravelExpenditure: React.FC = () => {
         formDataToSend.append(key, formData[key]);
       }
     });
+    formDataToSend.append('claimedFromClient', String(claimedFromClient));
 
     try {
       if (isEdit) {
@@ -319,6 +314,7 @@ const AdminTravelExpenditure: React.FC = () => {
       'Ticket Provided By': te.ticketProvidedBy,
       'Deputation Charges': te.deputationCharges,
       'Total Amount': te.totalAmount,
+      'Claimed From Client': te.claimedFromClient ? 'Yes' : 'No',
       'Status': te.status,
       'Voucher No': te.voucherNo || '',
       'Created At': te.createdAt ? new Date(te.createdAt).toLocaleDateString() : '',
@@ -428,6 +424,7 @@ const AdminTravelExpenditure: React.FC = () => {
                   <TableHead>Project No</TableHead>
                   <TableHead>Travel Info</TableHead>
                   <TableHead>Amount</TableHead>
+                  <TableHead>Client Claim</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Voucher</TableHead>
                   <TableHead>Actions</TableHead>
@@ -436,7 +433,7 @@ const AdminTravelExpenditure: React.FC = () => {
               <TableBody>
                 {filteredTravelExpenditures.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={11} className="text-center py-8">
+                    <TableCell colSpan={12} className="text-center py-8">
                       <div className="text-center">
                         <div className="text-gray-500 text-lg mb-2">
                           {tableSearchTerm ? 'No travel expenditures found matching your search' : 'No travel expenditures found'}
@@ -479,6 +476,11 @@ const AdminTravelExpenditure: React.FC = () => {
                         </TableCell>
                         <TableCell>
                           <div className="font-medium">₹{te.totalAmount.toLocaleString()}</div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={te.claimedFromClient ? 'secondary' : 'outline'}>
+                            {te.claimedFromClient ? 'Yes' : 'No'}
+                          </Badge>
                         </TableCell>
                         <TableCell>
                           <Badge variant={getStatusBadgeColor(te.status || 'pending')}>
@@ -530,14 +532,16 @@ const AdminTravelExpenditure: React.FC = () => {
                                   onClick={() => handleApprove(te._id!)}
                                   className="bg-green-600 hover:bg-green-700"
                                 >
-                                  <CheckCircle className="h-3 w-3" />
+                                  <CheckCircle className="h-3 w-3 mr-1" />
+                                  Approve
                                 </Button>
                                 <Button
                                   size="sm"
                                   onClick={() => handleReject(te._id!)}
                                   className="bg-red-600 hover:bg-red-700"
                                 >
-                                  <XCircle className="h-3 w-3" />
+                                  <XCircle className="h-3 w-3 mr-1" />
+                                  Reject
                                 </Button>
                               </>
                             )}
@@ -558,30 +562,15 @@ const AdminTravelExpenditure: React.FC = () => {
                                     departmentName: te.department.departmentName || ''
                                   }));
                                 }
+                                setClaimedFromClient(!!te.claimedFromClient);
                                 // Clear search terms when editing
                                 setEmployeeSearchTerm('');
-                                setTeamMemberSearchTerm('');
                                 setExpenseInputs(te.expenses.map(exp => ({
                                   date: exp.date ? exp.date.slice(0, 10) : '',
                                   description: exp.description,
                                   amount: exp.amount.toString()
                                 })));
-                                // Convert team member names to objects for the new format
-                                if (te.accompaniedTeamMembers && Array.isArray(te.accompaniedTeamMembers)) {
-                                  const teamMembers = te.accompaniedTeamMembers.map((memberName: string) => {
-                                    // Try to find the actual employee by name
-                                    const actualEmployee = employees.find(emp => emp.name === memberName);
-                                    return {
-                                      _id: actualEmployee?._id || `temp_${Math.random()}`,
-                                      name: memberName,
-                                      employeeId: actualEmployee?.employeeId || 0
-                                    };
-                                  });
-                                  setFormData(prev => ({
-                                    ...prev,
-                                    accompaniedTeamMembers: teamMembers
-                                  }));
-                                }
+                                
                               }}
                             >
                               <Edit className="h-3 w-3" />
@@ -608,6 +597,9 @@ const AdminTravelExpenditure: React.FC = () => {
 
       <Dialog open={showModal} onOpenChange={setShowModal}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <div className="flex justify-center">
+            <img src="/uploads/Korus.png" alt="Korus logo" className="h-12 w-auto mb-4" />
+          </div>
           <DialogHeader>
             <DialogTitle>
               {isEdit ? 'Edit Travel Expenditure' : 'Add New Travel Expenditure'}
@@ -785,6 +777,11 @@ const AdminTravelExpenditure: React.FC = () => {
                   </SelectContent>
                 </Select>
               </div>
+
+              <div className="flex items-center gap-2 mt-2">
+                <Checkbox id="claimedFromClient" checked={claimedFromClient} onCheckedChange={(v) => setClaimedFromClient(Boolean(v))} />
+                <Label htmlFor="claimedFromClient">Claimed from Client</Label>
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -798,60 +795,7 @@ const AdminTravelExpenditure: React.FC = () => {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label>Accompanied Team Members</Label>
-              <Select
-                onValueChange={(value) => {
-                  const employee = employees.find(emp => emp._id === value);
-                  if (employee && !formData.accompaniedTeamMembers.some(member => member._id === employee._id)) {
-                    setFormData(prev => ({
-                      ...prev,
-                      accompaniedTeamMembers: [...prev.accompaniedTeamMembers, {
-                        _id: employee._id,
-                        name: employee.name,
-                        employeeId: employee.employeeId
-                      }]
-                    }));
-                  }
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select team members..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <div className="p-2">
-                    <Input
-                      placeholder="Search by ID or name..."
-                      value={teamMemberSearchTerm}
-                      onChange={(e) => setTeamMemberSearchTerm(e.target.value)}
-                      onKeyDown={(e) => e.stopPropagation()}
-                      onClick={(e) => e.stopPropagation()}
-                      className="mb-2"
-                    />
-                  </div>
-                  {employees
-                    .filter(emp =>
-                      emp.employeeId.toString().includes(teamMemberSearchTerm) ||
-                      emp.name.toLowerCase().includes(teamMemberSearchTerm.toLowerCase())
-                    )
-                    .filter(emp => !formData.accompaniedTeamMembers.some(member => member._id === emp._id))
-                    .sort((a, b) => a.employeeId - b.employeeId)
-                    .map((employee) => (
-                      <SelectItem key={employee._id} value={employee._id}>
-                        {employee.employeeId} - {employee.name}
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
-              <div className="flex flex-wrap gap-2 mt-2">
-                {formData.accompaniedTeamMembers.map((member, index) => (
-                  <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                    {member.employeeId} - {member.name}
-                    <X className="h-3 w-3 cursor-pointer" onClick={() => handleTeamMemberRemove(index)} />
-                  </Badge>
-                ))}
-              </div>
-            </div>
+            
 
             <div className="space-y-2">
               <Label>Expenses</Label>

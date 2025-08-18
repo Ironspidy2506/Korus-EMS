@@ -13,7 +13,6 @@ export interface TravelExpenditure {
   employeeId: Employee;
   designation: string;
   department: Department;
-  accompaniedTeamMembers: string[];
   placeOfVisit: string;
   clientName: string;
   projectNo: string;
@@ -25,6 +24,7 @@ export interface TravelExpenditure {
   deputationCharges: 'Yes' | 'No';
   expenses: Expense[];
   totalAmount: number;
+  claimedFromClient?: boolean;
   status?: 'pending' | 'approved' | 'rejected';
   voucherNo?: string;
   attachment?: {

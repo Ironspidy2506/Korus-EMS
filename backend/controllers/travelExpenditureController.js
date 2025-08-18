@@ -44,7 +44,6 @@ export const addTravelExpenditure = async (req, res) => {
       department,
       departmentCode,
       departmentName,
-      accompaniedTeamMembers,
       placeOfVisit,
       clientName,
       projectNo,
@@ -54,7 +53,8 @@ export const addTravelExpenditure = async (req, res) => {
       travelMode,
       ticketProvidedBy,
       deputationCharges,
-      expenses
+      expenses,
+      claimedFromClient
     } = req.body;
 
     // Parse expenses if it's a string
@@ -63,11 +63,6 @@ export const addTravelExpenditure = async (req, res) => {
       parsedExpenses = JSON.parse(expenses);
     }
 
-    // Parse accompaniedTeamMembers if it's a string
-    let parsedTeamMembers = accompaniedTeamMembers;
-    if (typeof accompaniedTeamMembers === 'string') {
-      parsedTeamMembers = JSON.parse(accompaniedTeamMembers);
-    }
 
     // Calculate total amount from expenses
     const totalAmount = parsedExpenses.reduce((sum, expense) => sum + (expense.amount || 0), 0);
@@ -75,7 +70,6 @@ export const addTravelExpenditure = async (req, res) => {
     const travelExpenditure = new TravelExpenditure({
       employeeId,
       department,
-      accompaniedTeamMembers: parsedTeamMembers || [],
       placeOfVisit,
       clientName,
       projectNo,
@@ -87,6 +81,7 @@ export const addTravelExpenditure = async (req, res) => {
       deputationCharges,
       expenses: parsedExpenses,
       totalAmount,
+      claimedFromClient: claimedFromClient === true || claimedFromClient === 'true',
       attachment: req.file ? {
         fileName: req.file.originalname,
         fileType: req.file.mimetype,
@@ -118,14 +113,15 @@ export const updateTravelExpenditure = async (req, res) => {
       updateData.expenses = JSON.parse(updateData.expenses);
     }
 
-    // Parse accompaniedTeamMembers if it's a string
-    if (updateData.accompaniedTeamMembers && typeof updateData.accompaniedTeamMembers === 'string') {
-      updateData.accompaniedTeamMembers = JSON.parse(updateData.accompaniedTeamMembers);
-    }
 
     // Calculate total amount from expenses
     if (updateData.expenses && Array.isArray(updateData.expenses)) {
       updateData.totalAmount = updateData.expenses.reduce((sum, expense) => sum + (expense.amount || 0), 0);
+    }
+
+    // Normalize claimedFromClient to boolean when present
+    if (typeof updateData.claimedFromClient !== 'undefined') {
+      updateData.claimedFromClient = updateData.claimedFromClient === true || updateData.claimedFromClient === 'true';
     }
 
 

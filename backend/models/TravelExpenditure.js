@@ -27,9 +27,6 @@ const travelExpenditureSchema = new mongoose.Schema({
     ref: 'department',
     required: true
   },
-  accompaniedTeamMembers: [{
-    type: String
-  }],
   placeOfVisit: {
     type: String,
     required: true
@@ -81,6 +78,10 @@ const travelExpenditureSchema = new mongoose.Schema({
   },
   voucherNo: {
     type: String
+  },
+  claimedFromClient: {
+    type: Boolean,
+    default: false
   },
   attachment: {
     fileName: String,
