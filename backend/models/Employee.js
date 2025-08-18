@@ -159,8 +159,8 @@ const employeeSchema = new mongoose.Schema({
     type: String,
   },
   leaveBalance: {
-    el: { type: Number, default: 30 },
-    sl: { type: Number, default: 6 },
+    el: { type: Number, default: 30, max: 75 },
+    sl: { type: Number, default: 6, max: 15 },
     cl: { type: Number, default: 6 },
     od: { type: Number, default: 0 },
     lwp: { type: Number, default: 0 },

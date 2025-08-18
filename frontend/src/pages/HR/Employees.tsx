@@ -522,7 +522,8 @@ const HREmployees: React.FC = () => {
                     {renderFormField('doj', 'Date of Joining', 'date', true)}
                     {renderFormField('repperson', 'Reporting Person', 'text', false, 'Enter Reporting Person (If Available)')}
                     {renderFormField('role', 'Role', 'select', true, undefined, [
-                      { value: 'Employee', label: 'Employee' }
+                      { value: 'employee', label: 'Employee' },
+                      { value: 'lead', label: 'Lead' }
                     ])}
                     {renderFormField('password', 'Password', 'password', true, 'Enter Password')}
                   </div>
@@ -743,7 +744,8 @@ const HREmployees: React.FC = () => {
                 {renderFormField('doj', 'Date of Joining', 'date', true)}
                 {renderFormField('repperson', 'Reporting Person', 'text', false, 'Enter Reporting Person (If Available)')}
                 {renderFormField('role', 'Role', 'select', true, undefined, [
-                  { value: 'Employee', label: 'Employee' }
+                  { value: 'employee', label: 'Employee' },
+                  { value: 'lead', label: 'Lead' }
                 ])}
                 {renderFormField('password', 'Password', 'password', false, 'Enter New Password (Leave empty to keep current)')}
               </div>
