@@ -15,6 +15,9 @@ export interface LTC {
   reimbursementAmount: number;
   status: string;
   approvedBy: string;
+  adminRemarks?: string;
+  accountsRemarks?: string;
+  paymentStatus?: 'Fully Paid' | 'Partially Paid';
   attachment?: {
     fileName: string;
     fileType: string;

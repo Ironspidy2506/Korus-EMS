@@ -42,6 +42,21 @@ const ltcSchema = new mongoose.Schema({
         min: 0
     },
 
+    // Remarks and Payment Status
+    adminRemarks: {
+        type: String,
+        default: ''
+    },
+    accountsRemarks: {
+        type: String,
+        default: ''
+    },
+    paymentStatus: {
+        type: String,
+        enum: ['Not Paid', 'Partially Paid', 'Fully Paid'],
+        default: 'Not Paid'
+    },
+
     // Workflow and Approval Status
     status: {
         type: String,

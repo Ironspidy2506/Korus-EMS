@@ -6,7 +6,8 @@ import {
   addLTC,
   updateLTC,
   deleteLTC,
-  approveOrRejectLTC
+  approveOrRejectLTC,
+  getLTCAttachment
 } from '../controllers/ltcController.js';
 
 const router = express.Router();
@@ -31,5 +32,8 @@ router.post('/:id/approve', approveOrRejectLTC);
 
 // Reject LTC
 router.post('/:id/reject', approveOrRejectLTC);
+
+// Get attachment
+router.get('/:id/attachment', getLTCAttachment);
 
 export default router; 

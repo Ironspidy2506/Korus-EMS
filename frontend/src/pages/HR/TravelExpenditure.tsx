@@ -55,6 +55,7 @@ const initialForm = {
   ticketProvidedBy: '',
   deputationCharges: '',
   expenses: [],
+  dayCharges: [],
   attachment: null,
 };
 
@@ -75,11 +76,13 @@ const HRTravelExpenditure: React.FC = () => {
   const [voucherInput, setVoucherInput] = useState<{ [key: string]: string }>({});
   const [voucherEditId, setVoucherEditId] = useState<string | null>(null);
   const [expenseInputs, setExpenseInputs] = useState([{ date: '', description: '', amount: '' }]);
+  const [dayChargeInputs, setDayChargeInputs] = useState([{ date: '', description: '', amount: '' }]);
   const [employeeSearchTerm, setEmployeeSearchTerm] = useState('');
-  
+
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [travelExpenditureToDelete, setTravelExpenditureToDelete] = useState<string | null>(null);
   const [claimedFromClient, setClaimedFromClient] = useState<boolean>(false);
+
 
   // Needed for input to work
   const handleVoucherChange = (id: string, value: string) => {
@@ -151,8 +154,9 @@ const HRTravelExpenditure: React.FC = () => {
     setShowModal(true);
     setSelectedEmployee(null);
     setEmployeeSearchTerm('');
-    
+
     setExpenseInputs([{ date: '', description: '', amount: '' }]);
+    setDayChargeInputs([{ date: '', description: '', amount: '' }]);
     setClaimedFromClient(false);
   };
 
@@ -161,6 +165,8 @@ const HRTravelExpenditure: React.FC = () => {
     setFormData(initialForm);
     setSelectedEmployee(null);
     setEmployeeError(null);
+    setExpenseInputs([{ date: '', description: '', amount: '' }]);
+    setDayChargeInputs([{ date: '', description: '', amount: '' }]);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -170,7 +176,7 @@ const HRTravelExpenditure: React.FC = () => {
 
 
 
-  
+
 
   const handleExpenseAdd = () => {
     setExpenseInputs(prev => [...prev, { date: '', description: '', amount: '' }]);
@@ -186,6 +192,20 @@ const HRTravelExpenditure: React.FC = () => {
     ));
   };
 
+  const handleDayChargeAdd = () => {
+    setDayChargeInputs(prev => [...prev, { date: '', description: '', amount: '' }]);
+  };
+
+  const handleDayChargeRemove = (index: number) => {
+    setDayChargeInputs(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleDayChargeChange = (index: number, field: string, value: string) => {
+    setDayChargeInputs(prev => prev.map((charge, i) =>
+      i === index ? { ...charge, [field]: value } : charge
+    ));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -198,17 +218,36 @@ const HRTravelExpenditure: React.FC = () => {
         amount: parseFloat(expense.amount)
       }));
 
-    if (validExpenses.length === 0) {
-      toast.error('Please add at least one expense');
+    // Validate day charges
+    const validDayCharges = dayChargeInputs
+      .filter(charge => charge.date && charge.description && charge.amount)
+      .map(charge => ({
+        date: charge.date,
+        description: charge.description,
+        amount: parseFloat(charge.amount)
+      }));
+
+    if (validExpenses.length === 0 && validDayCharges.length === 0) {
+      toast.error('Please add at least one expense or day charge');
       return;
     }
 
     const formDataToSend = new FormData();
+
+    // Always add expenses and dayCharges first
+    formDataToSend.append('expenses', JSON.stringify(validExpenses));
+    formDataToSend.append('dayCharges', JSON.stringify(validDayCharges));
+
     Object.keys(formData).forEach(key => {
-      if (key === 'expenses') {
-        formDataToSend.append(key, JSON.stringify(validExpenses));
-      } else if (key === 'attachment' && formData[key]) {
-        formDataToSend.append(key, formData[key]);
+      if (key === 'expenses' || key === 'dayCharges') {
+        // Skip these as we already added them above
+        return;
+      } else if (key === 'attachment') {
+        // Only send attachment if it's a new file (not existing data)
+        if (formData[key] instanceof File) {
+          formDataToSend.append(key, formData[key]);
+        }
+        // Skip existing attachment data to prevent validation errors
       } else if (key === 'department' && typeof formData[key] === 'object') {
         // Handle department object properly - use the department ID
         formDataToSend.append('department', formData[key]._id || '');
@@ -220,6 +259,16 @@ const HRTravelExpenditure: React.FC = () => {
       }
     });
     formDataToSend.append('claimedFromClient', String(claimedFromClient));
+
+    // Debug logging
+    console.log('Frontend - Valid expenses:', validExpenses);
+    console.log('Frontend - Valid day charges:', validDayCharges);
+    console.log('Frontend - Form data keys:', Object.keys(formData));
+
+    // Log what's being sent
+    for (let [key, value] of formDataToSend.entries()) {
+      console.log(`Frontend - Sending ${key}:`, value);
+    }
 
     try {
       if (isEdit) {
@@ -299,25 +348,32 @@ const HRTravelExpenditure: React.FC = () => {
   };
 
   const exportToExcel = () => {
-    const exportData = travelExpenditures.map(te => ({
-      'Employee Name': te.employeeId.name,
-      'Designation': te.employeeId.designation,
-      'Department': te.department.departmentName,
-      'Place of Visit': te.placeOfVisit,
-      'Client Name': te.clientName,
-      'Project No': te.projectNo,
-      'Start Date': te.startDate,
-      'Return Date': te.returnDate,
-      'Purpose of Visit': te.purposeOfVisit,
-      'Travel Mode': te.travelMode,
-      'Ticket Provided By': te.ticketProvidedBy,
-      'Deputation Charges': te.deputationCharges,
-      'Total Amount': te.totalAmount,
-      'Claimed From Client': te.claimedFromClient ? 'Yes' : 'No',
-      'Status': te.status,
-      'Voucher No': te.voucherNo || '',
-      'Created At': te.createdAt ? new Date(te.createdAt).toLocaleDateString() : '',
-    }));
+    const exportData = travelExpenditures.map(te => {
+      const expensesTotal = te.expenses ? te.expenses.reduce((sum, exp) => sum + exp.amount, 0) : 0;
+      const dayChargesTotal = te.dayCharges ? te.dayCharges.reduce((sum, charge) => sum + charge.amount, 0) : 0;
+
+      return {
+        'Employee Name': te.employeeId.name,
+        'Designation': te.employeeId.designation,
+        'Department': te.department.departmentName,
+        'Place of Visit': te.placeOfVisit,
+        'Client Name': te.clientName,
+        'Project No': te.projectNo,
+        'Start Date': te.startDate,
+        'Return Date': te.returnDate,
+        'Purpose of Visit': te.purposeOfVisit,
+        'Travel Mode': te.travelMode,
+        'Ticket Provided By': te.ticketProvidedBy,
+        'Deputation Charges': te.deputationCharges,
+        'Expenses Total': expensesTotal,
+        'Day Charges Total': dayChargesTotal,
+        'Total Amount': te.totalAmount,
+        'Claimed From Client': te.claimedFromClient ? 'Yes' : 'No',
+        'Status': te.status,
+        'Voucher No': te.voucherNo || '',
+        'Created At': te.createdAt ? new Date(te.createdAt).toLocaleDateString() : '',
+      };
+    });
 
     const ws = XLSX.utils.json_to_sheet(exportData);
     const wb = XLSX.utils.book_new();
@@ -356,7 +412,7 @@ const HRTravelExpenditure: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 bg-gray-50 min-h-screen">
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-3xl font-bold">Travel Expenditure Management</h1>
@@ -422,10 +478,11 @@ const HRTravelExpenditure: React.FC = () => {
                   <TableHead>Client Name</TableHead>
                   <TableHead>Project No</TableHead>
                   <TableHead>Travel Info</TableHead>
-                  <TableHead>Amount</TableHead>
+                  <TableHead>Amount (Expenses + Day Charges)</TableHead>
                   <TableHead>Client Claim</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Voucher</TableHead>
+                  <TableHead>Attachment</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -461,6 +518,10 @@ const HRTravelExpenditure: React.FC = () => {
                       </TableCell>
                       <TableCell>
                         <div className="font-medium">₹{te.totalAmount.toLocaleString()}</div>
+                        <div className="text-xs text-gray-500">
+                          <div>Expenses: ₹{te.expenses ? te.expenses.reduce((sum, exp) => sum + exp.amount, 0).toLocaleString() : '0'}</div>
+                          <div>Day Charges: ₹{te.dayCharges ? te.dayCharges.reduce((sum, charge) => sum + charge.amount, 0).toLocaleString() : '0'}</div>
+                        </div>
                       </TableCell>
                       <TableCell>
                         <Badge variant={te.claimedFromClient ? 'secondary' : 'outline'}>
@@ -506,6 +567,23 @@ const HRTravelExpenditure: React.FC = () => {
                               <Edit className="h-3 w-3" />
                             </Button>
                           </div>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {te.attachment ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              window.open(`https://korus-ems-backend.vercel.app/api/travel-expenditures/attachment/${te._id}`, "_blank")
+                            }
+                            className="flex items-center gap-1"
+                          >
+                            <Download className="h-3 w-3" />
+                            View
+                          </Button>
+                        ) : (
+                          <span className="text-sm text-gray-500">No Attachment</span>
                         )}
                       </TableCell>
                       <TableCell>
@@ -555,7 +633,12 @@ const HRTravelExpenditure: React.FC = () => {
                                 description: exp.description,
                                 amount: exp.amount.toString()
                               })));
-                              
+                              setDayChargeInputs((te.dayCharges || []).map(charge => ({
+                                date: charge.date ? charge.date.slice(0, 10) : '',
+                                description: charge.description,
+                                amount: charge.amount.toString()
+                              })));
+
                             }}
                           >
                             <Edit className="h-3 w-3" />
@@ -779,8 +862,6 @@ const HRTravelExpenditure: React.FC = () => {
               />
             </div>
 
-            
-
             <div className="space-y-2">
               <Label>Expenses</Label>
               <div className="space-y-4">
@@ -834,6 +915,89 @@ const HRTravelExpenditure: React.FC = () => {
             </div>
 
             <div className="space-y-2">
+              <Label>Day Charges</Label>
+              <div className="space-y-4">
+                {dayChargeInputs.map((charge, index) => (
+                  <div key={index} className="grid grid-cols-3 gap-2 items-end">
+                    <div>
+                      <Label>Date</Label>
+                      <Input
+                        type="date"
+                        value={charge.date}
+                        onChange={(e) => handleDayChargeChange(index, 'date', e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <Label>Description</Label>
+                      <Input
+                        value={charge.description}
+                        onChange={(e) => handleDayChargeChange(index, 'description', e.target.value)}
+                        placeholder="Day charge description"
+                      />
+                    </div>
+                    <div className="flex gap-2 items-end">
+                      <div className="flex-1">
+                        <Label>Amount (₹)</Label>
+                        <Input
+                          type="number"
+                          value={charge.amount}
+                          onChange={(e) => handleDayChargeChange(index, 'amount', e.target.value)}
+                          placeholder="0.00"
+                        />
+                      </div>
+                      {dayChargeInputs.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDayChargeRemove(index)}
+                          className="h-10"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                <Button type="button" variant="outline" onClick={handleDayChargeAdd}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Day Charge
+                </Button>
+              </div>
+            </div>
+
+            {/* Total Amount Display */}
+            <div className="space-y-2">
+              <Label>Total Amount</Label>
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <div className="flex justify-between items-center">
+                  <span className="font-medium">Total Amount:</span>
+                  <span className="text-2xl font-bold text-green-600">
+                    ₹{(() => {
+                      const expensesTotal = expenseInputs
+                        .filter(exp => exp.amount)
+                        .reduce((sum, exp) => sum + parseFloat(exp.amount || '0'), 0);
+                      const dayChargesTotal = dayChargeInputs
+                        .filter(charge => charge.amount)
+                        .reduce((sum, charge) => sum + parseFloat(charge.amount || '0'), 0);
+                      return (expensesTotal + dayChargesTotal).toLocaleString();
+                    })()}
+                  </span>
+                </div>
+                <div className="mt-2 text-sm text-gray-600">
+                  <div>Expenses: ₹{expenseInputs
+                    .filter(exp => exp.amount)
+                    .reduce((sum, exp) => sum + parseFloat(exp.amount || '0'), 0)
+                    .toLocaleString()}</div>
+                  <div>Day Charges: ₹{dayChargeInputs
+                    .filter(charge => charge.amount)
+                    .reduce((sum, charge) => sum + parseFloat(charge.amount || '0'), 0)
+                    .toLocaleString()}</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="attachment">Attachment</Label>
               <Input
                 id="attachment"
@@ -883,6 +1047,8 @@ const HRTravelExpenditure: React.FC = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+
     </div>
   );
 };

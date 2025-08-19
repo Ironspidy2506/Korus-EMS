@@ -8,6 +8,12 @@ export interface Expense {
   amount: number;
 }
 
+export interface DayCharge {
+  date: string;
+  description: string;
+  amount: number;
+}
+
 export interface TravelExpenditure {
   _id?: string;
   employeeId: Employee;
@@ -23,6 +29,7 @@ export interface TravelExpenditure {
   ticketProvidedBy: 'Client' | 'KORUS';
   deputationCharges: 'Yes' | 'No';
   expenses: Expense[];
+  dayCharges: DayCharge[];
   totalAmount: number;
   claimedFromClient?: boolean;
   status?: 'pending' | 'approved' | 'rejected';
@@ -147,12 +154,12 @@ export const updateVoucherNo = async (_id: string, voucherNo: string) => {
   try {
     const token = localStorage.getItem('token');
     let headers: any = { Authorization: `Bearer ${token}` };
-    const response = await axios.put(`${API_BASE_URL}/add-voucher/${_id}`, { voucherNo }, {
+    const response = await axios.put(`${API_BASE_URL}/update-voucher/${_id}`, { voucherNo }, {
       headers
     });
     return response;
   } catch (error) {
-    console.error('Error updating travel expenditure:', error);
+    console.error('Error updating voucher number:', error);
     throw error;
   }
 }; 

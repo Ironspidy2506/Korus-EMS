@@ -9,7 +9,8 @@ import {
   deleteTravelExpenditure, 
   approveOrRejectTravelExpenditure, 
   addVoucherNo, 
-  getTravelExpenditureAttachment 
+  updateVoucherNo,
+  getTravelExpenditureAttachment
 } from '../controllers/travelExpenditureController.js';
 
 const router = express.Router();
@@ -35,7 +36,11 @@ router.post("/:action/:travelExpenditureId", authMiddleware, approveOrRejectTrav
 // Route to get the attachment for the travel expenditure
 router.get("/attachment/:_id", getTravelExpenditureAttachment);
 
+
 // Route to add voucher no for travel expenditure
 router.put('/add-voucher/:_id', authMiddleware, addVoucherNo);
+
+// Route to update voucher no for travel expenditure
+router.put('/update-voucher/:_id', authMiddleware, updateVoucherNo);
 
 export default router; 

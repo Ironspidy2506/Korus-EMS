@@ -16,6 +16,21 @@ const expenseSchema = new mongoose.Schema({
   }
 });
 
+const dayChargeSchema = new mongoose.Schema({
+  date: {
+    type: Date,
+    required: true
+  },
+  description: {
+    type: String,
+    required: true
+  },
+  amount: {
+    type: Number,
+    required: true
+  }
+});
+
 const travelExpenditureSchema = new mongoose.Schema({
   employeeId: {
     type: Schema.Types.ObjectId,
@@ -67,6 +82,7 @@ const travelExpenditureSchema = new mongoose.Schema({
     required: true
   },
   expenses: [expenseSchema],
+  dayCharges: [dayChargeSchema],
   totalAmount: {
     type: Number,
     default: 0
@@ -97,9 +113,19 @@ const travelExpenditureSchema = new mongoose.Schema({
 
 // Calculate total amount before saving
 travelExpenditureSchema.pre('save', function (next) {
+  let total = 0;
+
+  // Add expenses
   if (this.expenses && this.expenses.length > 0) {
-    this.totalAmount = this.expenses.reduce((sum, expense) => sum + expense.amount, 0);
+    total += this.expenses.reduce((sum, expense) => sum + expense.amount, 0);
   }
+
+  // Add day charges
+  if (this.dayCharges && this.dayCharges.length > 0) {
+    total += this.dayCharges.reduce((sum, charge) => sum + charge.amount, 0);
+  }
+
+  this.totalAmount = total;
   next();
 });
 

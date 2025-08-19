@@ -54,6 +54,7 @@ export const addTravelExpenditure = async (req, res) => {
       ticketProvidedBy,
       deputationCharges,
       expenses,
+      dayCharges,
       claimedFromClient
     } = req.body;
 
@@ -63,9 +64,20 @@ export const addTravelExpenditure = async (req, res) => {
       parsedExpenses = JSON.parse(expenses);
     }
 
+    // Parse day charges if it's a string
+    let parsedDayCharges = dayCharges;
+    if (typeof dayCharges === 'string') {
+      parsedDayCharges = JSON.parse(dayCharges);
+    }
 
-    // Calculate total amount from expenses
-    const totalAmount = parsedExpenses.reduce((sum, expense) => sum + (expense.amount || 0), 0);
+    // Calculate total amount from expenses and day charges
+    let totalAmount = 0;
+    if (parsedExpenses && parsedExpenses.length > 0) {
+      totalAmount += parsedExpenses.reduce((sum, expense) => sum + (expense.amount || 0), 0);
+    }
+    if (parsedDayCharges && parsedDayCharges.length > 0) {
+      totalAmount += parsedDayCharges.reduce((sum, charge) => sum + (charge.amount || 0), 0);
+    }
 
     const travelExpenditure = new TravelExpenditure({
       employeeId,
@@ -80,6 +92,7 @@ export const addTravelExpenditure = async (req, res) => {
       ticketProvidedBy,
       deputationCharges,
       expenses: parsedExpenses,
+      dayCharges: parsedDayCharges,
       totalAmount,
       claimedFromClient: claimedFromClient === true || claimedFromClient === 'true',
       attachment: req.file ? {
@@ -113,18 +126,15 @@ export const updateTravelExpenditure = async (req, res) => {
       updateData.expenses = JSON.parse(updateData.expenses);
     }
 
-
-    // Calculate total amount from expenses
-    if (updateData.expenses && Array.isArray(updateData.expenses)) {
-      updateData.totalAmount = updateData.expenses.reduce((sum, expense) => sum + (expense.amount || 0), 0);
+    // Parse day charges if it's a string
+    if (updateData.dayCharges && typeof updateData.dayCharges === 'string') {
+      updateData.dayCharges = JSON.parse(updateData.dayCharges);
     }
 
     // Normalize claimedFromClient to boolean when present
     if (typeof updateData.claimedFromClient !== 'undefined') {
       updateData.claimedFromClient = updateData.claimedFromClient === true || updateData.claimedFromClient === 'true';
     }
-
-
 
     // Handle file attachment
     if (req.file) {
@@ -135,18 +145,71 @@ export const updateTravelExpenditure = async (req, res) => {
       };
     }
 
-    const travelExpenditure = await TravelExpenditure.findByIdAndUpdate(
-      _id,
-      updateData,
-      { new: true }
-    ).populate('employeeId', 'name designation department')
-      .populate('department', 'departmentName departmentId');
-
-    if (!travelExpenditure) {
+    // First, find the existing document
+    const existingTravelExpenditure = await TravelExpenditure.findById(_id);
+    if (!existingTravelExpenditure) {
       return res.status(404).json({ message: 'Travel expenditure not found' });
     }
 
-    res.status(200).json(travelExpenditure);
+    // Explicitly set the fields instead of using Object.assign for arrays
+    if (updateData.expenses !== undefined) {
+      existingTravelExpenditure.expenses = updateData.expenses;
+    }
+    if (updateData.dayCharges !== undefined) {
+      existingTravelExpenditure.dayCharges = updateData.dayCharges;
+    }
+
+    // Set other fields
+    if (updateData.placeOfVisit !== undefined) {
+      existingTravelExpenditure.placeOfVisit = updateData.placeOfVisit;
+    }
+    if (updateData.clientName !== undefined) {
+      existingTravelExpenditure.clientName = updateData.clientName;
+    }
+    if (updateData.projectNo !== undefined) {
+      existingTravelExpenditure.projectNo = updateData.projectNo;
+    }
+    if (updateData.startDate !== undefined) {
+      existingTravelExpenditure.startDate = updateData.startDate;
+    }
+    if (updateData.returnDate !== undefined) {
+      existingTravelExpenditure.returnDate = updateData.returnDate;
+    }
+    if (updateData.purposeOfVisit !== undefined) {
+      existingTravelExpenditure.purposeOfVisit = updateData.purposeOfVisit;
+    }
+    if (updateData.travelMode !== undefined) {
+      existingTravelExpenditure.travelMode = updateData.travelMode;
+    }
+    if (updateData.ticketProvidedBy !== undefined) {
+      existingTravelExpenditure.ticketProvidedBy = updateData.ticketProvidedBy;
+    }
+    if (updateData.deputationCharges !== undefined) {
+      existingTravelExpenditure.deputationCharges = updateData.deputationCharges;
+    }
+    if (updateData.claimedFromClient !== undefined) {
+      existingTravelExpenditure.claimedFromClient = updateData.claimedFromClient;
+    }
+
+    // Only update attachment if a new file is uploaded
+    if (req.file) {
+      existingTravelExpenditure.attachment = {
+        fileName: req.file.originalname,
+        fileType: req.file.mimetype,
+        fileData: req.file.buffer
+      };
+    }
+    // Don't update attachment if no new file is uploaded (keep existing one)
+
+    // Save the document to trigger the pre-save middleware for totalAmount calculation
+    await existingTravelExpenditure.save();
+
+    // Fetch the updated document with populated fields
+    const updatedTravelExpenditure = await TravelExpenditure.findById(_id)
+      .populate('employeeId', 'name designation department')
+      .populate('department', 'departmentName departmentId');
+
+    res.status(200).json(updatedTravelExpenditure);
   } catch (error) {
     console.error('Error updating travel expenditure:', error);
     res.status(500).json({ message: 'Internal server error' });
@@ -234,6 +297,30 @@ export const addVoucherNo = async (req, res) => {
   }
 };
 
+// Update voucher number
+export const updateVoucherNo = async (req, res) => {
+  try {
+    const { _id } = req.params;
+    const { voucherNo } = req.body;
+
+    const travelExpenditure = await TravelExpenditure.findByIdAndUpdate(
+      _id,
+      { voucherNo },
+      { new: true }
+    ).populate('employeeId', 'name designation department')
+      .populate('department', 'departmentName departmentId');
+
+    if (!travelExpenditure) {
+      return res.status(404).json({ message: 'Travel expenditure not found' });
+    }
+
+    res.status(200).json(travelExpenditure);
+  } catch (error) {
+    console.error('Error updating voucher number:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
 // Get travel expenditure attachment
 export const getTravelExpenditureAttachment = async (req, res) => {
   try {
@@ -251,4 +338,23 @@ export const getTravelExpenditureAttachment = async (req, res) => {
     console.error('Error fetching attachment:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
-}; 
+};
+
+// View travel expenditure attachment inline in browser
+export const viewTravelExpenditureAttachment = async (req, res) => {
+  try {
+    const { _id } = req.params;
+    const travelExpenditure = await TravelExpenditure.findById(_id);
+
+    if (!travelExpenditure || !travelExpenditure.attachment) {
+      return res.status(404).json({ message: 'Attachment not found' });
+    }
+
+    res.set('Content-Type', travelExpenditure.attachment.fileType);
+    res.set('Content-Disposition', `inline; filename="${travelExpenditure.attachment.fileName}"`);
+    res.send(travelExpenditure.attachment.fileData);
+  } catch (error) {
+    console.error('Error viewing attachment inline:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};

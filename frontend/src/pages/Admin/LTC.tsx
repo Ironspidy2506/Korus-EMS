@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Employee } from '@/utils/Employee';
 import { getAllDepartments, Department } from '@/utils/Department';
@@ -75,6 +76,7 @@ const AdminLTC: React.FC = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [ltcToDelete, setLtcToDelete] = useState<string | null>(null);
   const [employeeSearchTerm, setEmployeeSearchTerm] = useState('');
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState<string>('all');
 
   useEffect(() => {
     fetchLTCs();
@@ -252,11 +254,13 @@ const AdminLTC: React.FC = () => {
     const employeeIdStr = ltc.employeeId.employeeId.toString();
     const employeeName = ltc.employeeId.name.toLowerCase();
     const status = ltc.status || 'pending';
+    const paymentStatus = (ltc as any).paymentStatus || 'Not Paid';
 
     const matchesSearch = employeeIdStr.includes(tableSearchTerm) || employeeName.includes(searchTerm);
     const matchesStatus = statusFilter === 'all' || status === statusFilter;
+    const matchesPayment = paymentStatusFilter === 'all' || paymentStatus === paymentStatusFilter;
 
-    return matchesSearch && matchesStatus;
+    return matchesSearch && matchesStatus && matchesPayment;
   });
 
   if (loading) {
@@ -266,7 +270,7 @@ const AdminLTC: React.FC = () => {
 
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 bg-gray-50 min-h-screen">
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-3xl font-bold">Leave Travel Concession (LTC)</h1>
@@ -313,6 +317,17 @@ const AdminLTC: React.FC = () => {
                     <SelectItem value="rejected">Rejected</SelectItem>
                   </SelectContent>
                 </Select>
+                <Select value={paymentStatusFilter} onValueChange={setPaymentStatusFilter}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue placeholder="Payment Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Payments</SelectItem>
+                    <SelectItem value="Not Paid">Not Paid</SelectItem>
+                    <SelectItem value="Partially Paid">Partially Paid</SelectItem>
+                    <SelectItem value="Fully Paid">Fully Paid</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             <Button onClick={exportToExcel} variant="outline">
@@ -320,7 +335,7 @@ const AdminLTC: React.FC = () => {
               Download as Excel
             </Button>
           </div>
-          <div className="mt-4">
+          <div className="mt-4 overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -330,6 +345,10 @@ const AdminLTC: React.FC = () => {
                   <TableHead>Service Period</TableHead>
                   <TableHead>Leave Period</TableHead>
                   <TableHead>Amount</TableHead>
+                  <TableHead className="w-[120px]">Admin Remarks</TableHead>
+                  <TableHead className="w-[120px]">Accounts Remarks</TableHead>
+                  <TableHead className="w-[120px]">Payment Status</TableHead>
+                  <TableHead className="w-[120px]">Attachment</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
@@ -372,6 +391,75 @@ const AdminLTC: React.FC = () => {
                     </TableCell>
                     <TableCell>
                       <div className="font-medium">₹{ltc.reimbursementAmount.toLocaleString()}</div>
+                    </TableCell>
+                    <TableCell className="min-w-[120px]">
+                      <Textarea
+                        value={(ltc as any).adminRemarks || ''}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setLtcs(prev => prev.map(x => x._id === ltc._id ? { ...x, adminRemarks: value } as any : x));
+                        }}
+                        onBlur={async (e) => {
+                          const form = new FormData();
+                          form.append('adminRemarks', e.target.value);
+                          await updateLTC(ltc._id, form);
+                        }}
+                        placeholder="Enter admin remarks"
+                        rows={3}
+                        className="min-h-[90px]"
+                      />
+                    </TableCell>
+                    <TableCell className="min-w-[120px]">
+                      <Textarea
+                        value={(ltc as any).accountsRemarks || ''}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setLtcs(prev => prev.map(x => x._id === ltc._id ? { ...x, accountsRemarks: value } as any : x));
+                        }}
+                        onBlur={async (e) => {
+                          const form = new FormData();
+                          form.append('accountsRemarks', e.target.value);
+                          await updateLTC(ltc._id, form);
+                        }}
+                        placeholder="Enter accounts remarks"
+                        rows={3}
+                        className="min-h-[90px]"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Select
+                        value={(ltc as any).paymentStatus || 'Not Paid'}
+                        onValueChange={async (value) => {
+                          setLtcs(prev => prev.map(x => x._id === ltc._id ? { ...x, paymentStatus: value as any } as any : x));
+                          const form = new FormData();
+                          form.append('paymentStatus', value);
+                          await updateLTC(ltc._id, form);
+                        }}
+                      >
+                        <SelectTrigger className="w-[120px]">
+                          <SelectValue placeholder="Payment Status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Not Paid">Not Paid</SelectItem>
+                          <SelectItem value="Fully Paid">Fully Paid</SelectItem>
+                          <SelectItem value="Partially Paid">Partially Paid</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell>
+                      {(ltc as any).attachment ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => window.open(`https://korus-ems-backend.vercel.app/api/ltc/${ltc._id}/attachment`, '_blank')}
+                          className="flex items-center gap-1"
+                        >
+                          <Download className="h-3 w-3" />
+                          View
+                        </Button>
+                      ) : (
+                        <span className="text-sm text-gray-500">No Attachment</span>
+                      )}
                     </TableCell>
                     <TableCell>
                       <Badge variant={getStatusBadgeColor(ltc.status)}>

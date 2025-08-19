@@ -1,6 +1,23 @@
 import Ltc from '../models/Ltc.js';
 import Employee from '../models/Employee.js';
 
+export const getLTCAttachment = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const ltc = await Ltc.findById(id);
+
+    if (!ltc || !ltc.attachment) {
+      return res.status(404).json({ message: 'Attachment not found' });
+    }
+
+    res.set('Content-Type', ltc.attachment.fileType);
+    res.send(ltc.attachment.fileData);
+  } catch (error) {
+    console.error('Error fetching LTC attachment:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
 export const getAllLTCs = async (req, res) => {
   try {
     const ltcs = await Ltc.find()
@@ -39,7 +56,10 @@ export const addLTC = async (req, res) => {
       serviceCompletionTo,
       leavePeriodFrom,
       leavePeriodTo,
-      reimbursementAmount
+      reimbursementAmount,
+      adminRemarks,
+      accountsRemarks,
+      paymentStatus
     } = req.body;
 
     // Validate required fields
@@ -66,6 +86,9 @@ export const addLTC = async (req, res) => {
       leavePeriodFrom,
       leavePeriodTo,
       reimbursementAmount: parseFloat(reimbursementAmount),
+      adminRemarks: adminRemarks || '',
+      accountsRemarks: accountsRemarks || '',
+      paymentStatus: paymentStatus || 'Not Paid',
       attachment
     });
 
@@ -100,6 +123,14 @@ export const updateLTC = async (req, res) => {
     // Convert string values to numbers where needed
     if (updateData.reimbursementAmount) {
       updateData.reimbursementAmount = parseFloat(updateData.reimbursementAmount);
+    }
+
+    // Normalize payment status if present
+    if (updateData.paymentStatus) {
+      const allowed = ['Not Paid', 'Partially Paid', 'Fully Paid'];
+      if (!allowed.includes(updateData.paymentStatus)) {
+        return res.status(400).json({ message: 'Invalid payment status' });
+      }
     }
 
     const ltc = await Ltc.findByIdAndUpdate(
