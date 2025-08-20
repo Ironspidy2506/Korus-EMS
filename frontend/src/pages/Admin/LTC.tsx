@@ -339,6 +339,7 @@ const AdminLTC: React.FC = () => {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>S.No.</TableHead>
                   <TableHead>Employee ID</TableHead>
                   <TableHead>Employee Name</TableHead>
                   <TableHead>Department</TableHead>
@@ -354,8 +355,11 @@ const AdminLTC: React.FC = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredLTCs.map((ltc) => (
+                {filteredLTCs.map((ltc, index) => (
                   <TableRow key={ltc._id}>
+                    <TableCell>
+                      <div className="font-medium">{index + 1}</div>
+                    </TableCell>
                     <TableCell>
                       <div className="font-medium">{ltc.employeeId.employeeId}</div>
                     </TableCell>

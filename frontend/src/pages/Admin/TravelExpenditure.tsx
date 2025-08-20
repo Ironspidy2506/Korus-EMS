@@ -463,6 +463,7 @@ const AdminTravelExpenditure: React.FC = () => {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>S.No.</TableHead>
                   <TableHead>Employee ID</TableHead>
                   <TableHead>Employee Name</TableHead>
                   <TableHead>Department</TableHead>
@@ -493,10 +494,13 @@ const AdminTravelExpenditure: React.FC = () => {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredTravelExpenditures.map((te) => {
+                  filteredTravelExpenditures.map((te, index) => {
                     const TravelModeIcon = getTravelModeIcon(te.travelMode);
                     return (
                       <TableRow key={te._id}>
+                        <TableCell>
+                          <div className="font-medium">{index + 1}</div>
+                        </TableCell>
                         <TableCell>
                           <div className="font-medium">{te.employeeId.employeeId}</div>
                         </TableCell>

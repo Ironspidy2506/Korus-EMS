@@ -774,6 +774,7 @@ const HRAppraisal: React.FC = () => {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>S.No.</TableHead>
                 <TableHead>Employee ID</TableHead>
                 <TableHead>Employee Name</TableHead>
                 <TableHead>Department</TableHead>
@@ -785,8 +786,11 @@ const HRAppraisal: React.FC = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredAppraisals.map((appraisal: any) => (
+              {filteredAppraisals.map((appraisal: any, index: number) => (
                 <TableRow key={appraisal._id}>
+                  <TableCell>
+                    <div className="font-medium">{index + 1}</div>
+                  </TableCell>
                   <TableCell className="font-medium">
                     {appraisal.employeeId.employeeId}
                   </TableCell>

@@ -23,8 +23,7 @@ const AdminSalary: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedSalary, setSelectedSalary] = useState<Salary | null>(null);
   const [showModal, setShowModal] = useState(false);
-  const [monthFilter, setMonthFilter] = useState('All');
-  const [yearFilter, setYearFilter] = useState('All');
+  const [monthYearFilter, setMonthYearFilter] = useState('All');
   const [showFormModal, setShowFormModal] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [formData, setFormData] = useState<any>({
@@ -149,9 +148,26 @@ const AdminSalary: React.FC = () => {
     )
     .sort((a, b) => Number(a.employeeId) - Number(b.employeeId));
 
-  // Get unique months and years from salary records
-  const months = Array.from(new Set(salaryRecords.map(r => r.paymentMonth))).filter(Boolean);
-  const years = Array.from(new Set(salaryRecords.map(r => r.paymentYear))).filter(Boolean);
+  // Get unique month-year combinations from salary records and sort chronologically
+  const monthYearCombinations = salaryRecords
+    .filter(r => r.paymentMonth && r.paymentYear)
+    .map(r => ({ month: r.paymentMonth, year: r.paymentYear, display: `${r.paymentMonth} ${r.paymentYear}` }))
+    .filter((item, index, self) => 
+      index === self.findIndex(t => t.month === item.month && t.year === item.year)
+    )
+    .sort((a, b) => {
+      // First sort by year
+      if (a.year !== b.year) {
+        return parseInt(a.year) - parseInt(b.year);
+      }
+      // Then sort by month within the same year
+      const monthsOrder = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+      ];
+      return monthsOrder.indexOf(a.month) - monthsOrder.indexOf(b.month);
+    })
+    .map(item => item.display);
 
   const filteredRecords = salaryRecords
     .filter(record => {
@@ -162,9 +178,11 @@ const AdminSalary: React.FC = () => {
         employeeIdStr.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (record.employeeType && record.employeeType.toLowerCase().includes(searchTerm.toLowerCase()));
       const matchesDepartment = departmentFilter === 'All' || departmentName === departmentFilter;
-      const matchesMonth = monthFilter === 'All' || record.paymentMonth === monthFilter;
-      const matchesYear = yearFilter === 'All' || record.paymentYear === yearFilter;
-      return matchesSearch && matchesDepartment && matchesMonth && matchesYear;
+
+      // Filter by month-year combination
+      const matchesMonthYear = monthYearFilter === 'All' || `${record.paymentMonth} ${record.paymentYear}` === monthYearFilter;
+
+      return matchesSearch && matchesDepartment && matchesMonthYear;
     })
     .sort((a, b) => {
       const aId = a.employeeId && typeof a.employeeId === 'object' ? a.employeeId.employeeId : 0;
@@ -180,13 +198,13 @@ const AdminSalary: React.FC = () => {
   };
 
   const stats = {
-    totalRecords: salaryRecords.length,
-    totalPayroll: salaryRecords.reduce((sum, record) => sum + getTotalSalary(record), 0),
-    avgSalary: salaryRecords.length > 0 ? salaryRecords.reduce((sum, record) => sum + getTotalSalary(record), 0) / salaryRecords.length : 0,
-    departments: new Set(salaryRecords.map(record => (record.employeeId && typeof record.employeeId === 'object' && record.employeeId.department ? record.employeeId.department.departmentName : ''))).size
+    totalRecords: filteredRecords.length,
+    totalPayroll: filteredRecords.reduce((sum, record) => sum + getTotalSalary(record), 0),
+    avgSalary: filteredRecords.length > 0 ? filteredRecords.reduce((sum, record) => sum + getTotalSalary(record), 0) / filteredRecords.length : 0,
+    departments: new Set(filteredRecords.map(record => (record.employeeId && typeof record.employeeId === 'object' && record.employeeId.department ? record.employeeId.department.departmentName : ''))).size
   };
 
-  const departments = Array.from(new Set(salaryRecords.map(record => (record.employeeId && typeof record.employeeId === 'object' && record.employeeId.department ? record.employeeId.department.departmentName : '')))).filter(Boolean);
+  const departments = Array.from(new Set(filteredRecords.map(record => (record.employeeId && typeof record.employeeId === 'object' && record.employeeId.department ? record.employeeId.department.departmentName : '')))).filter(Boolean);
 
   const handleViewDetails = (salary: Salary) => {
     setSelectedSalary(salary);
@@ -430,6 +448,47 @@ const AdminSalary: React.FC = () => {
         <CardHeader>
           <CardTitle>Salary Records</CardTitle>
           <CardDescription>View and manage employee compensation details</CardDescription>
+
+          {/* Month-Year Selector */}
+          <div className="flex items-center gap-4 mt-4 mb-4 p-4 bg-gray-50 rounded-lg border">
+            <div className="flex items-center gap-2">
+              <Label className="font-medium text-gray-700">View Records for:</Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Select value={monthYearFilter} onValueChange={setMonthYearFilter}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Select Month-Year" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="All">All Records</SelectItem>
+                  {monthYearCombinations.map(monthYear => (
+                    <SelectItem key={monthYear} value={monthYear}>{monthYear}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-2 ml-4">
+              <span className={`text-sm ${monthYearFilter !== 'All' ? 'text-green-600' : 'text-gray-600'}`}>
+                {monthYearFilter !== 'All'
+                  ? `Showing records for: ${monthYearFilter}`
+                  : 'Showing all salary records'
+                }
+              </span>
+              {monthYearFilter !== 'All' && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setMonthYearFilter('All');
+                  }}
+                  className="ml-2"
+                >
+                  Clear Filter
+                </Button>
+              )}
+            </div>
+          </div>
+
           <div className="flex items-center gap-2 mt-2 overflow-x-auto pb-2">
             <Input
               placeholder="Search employees by Id or Name..."
@@ -448,28 +507,7 @@ const AdminSalary: React.FC = () => {
                 ))}
               </SelectContent>
             </Select>
-            <Select value={monthFilter} onValueChange={setMonthFilter}>
-              <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder="Filter by month" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="All">All Months</SelectItem>
-                {months.map(month => (
-                  <SelectItem key={month} value={month}>{month}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={yearFilter} onValueChange={setYearFilter}>
-              <SelectTrigger className="w-[120px]">
-                <SelectValue placeholder="Filter by year" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="All">All Years</SelectItem>
-                {years.map(year => (
-                  <SelectItem key={year} value={year}>{year}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+
             <Button
               onClick={() => {
                 const tableData = filteredRecords.map((record: any) => {
@@ -521,6 +559,7 @@ const AdminSalary: React.FC = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead>S.No.</TableHead>
                     <TableHead>Employee ID</TableHead>
                     <TableHead>Employee Name</TableHead>
                     <TableHead>Department</TableHead>
@@ -539,7 +578,7 @@ const AdminSalary: React.FC = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredRecords.map((record) => {
+                  {filteredRecords.map((record, index) => {
                     const employeeName = record.employeeId && typeof record.employeeId === 'object' ? record.employeeId.name : '';
                     const department = record.employeeId && typeof record.employeeId === 'object' && record.employeeId.department ? record.employeeId.department.departmentName : '';
                     const position = record.employeeType || '';
@@ -550,6 +589,9 @@ const AdminSalary: React.FC = () => {
                     const netSalary = (record.grossSalary || 0) - deductions;
                     return (
                       <TableRow key={record._id}>
+                        <TableCell>
+                          <div className="font-medium">{index + 1}</div>
+                        </TableCell>
                         <TableCell>{record.employeeId.employeeId}</TableCell>
                         <TableCell>{employeeName}</TableCell>
                         <TableCell>{department}</TableCell>
@@ -660,7 +702,7 @@ const AdminSalary: React.FC = () => {
                       </div>
                       {/* Footer */}
                       <div className="relative z-10 text-center p-2 border-t border-gray-200 text-gray-700 text-xs md:text-base leading-relaxed bg-gradient-to-r from-white to-blue-50 mt-2">
-                        Korus Design & Skill Forum: Plot No. 32, Sector-4B, HSIIDC, Bahadurgarh, Haryana - 124507
+                        Plot No. 32, Sector-4B, HSIIDC, Bahadurgarh, Haryana - 124507
                       </div>
                       <div className="relative z-10 flex flex-col md:flex-row justify-between items-center mt-6 px-6 pb-6 gap-2 print:hidden">
                         <span className="italic text-gray-400 text-xs">*This is a computer generated slip and does not require signature</span>

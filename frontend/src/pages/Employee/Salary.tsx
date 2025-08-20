@@ -734,7 +734,7 @@ const EmployeeSalary: React.FC = () => {
 
               {/* Footer */}
               <div className="relative z-10 text-center p-2 border-t border-gray-200 text-gray-700 text-xs md:text-base leading-relaxed bg-gradient-to-r from-white to-blue-50 mt-2">
-                Korus Design & Skill Forum: Plot No. 32, Sector-4B, HSIIDC, Bahadurgarh, Haryana - 124507
+                Plot No. 32, Sector-4B, HSIIDC, Bahadurgarh, Haryana - 124507
               </div>
               <div className="relative z-10 flex flex-col md:flex-row justify-between items-center mt-6 px-6 pb-6 gap-2 print:hidden">
                 <span className="italic text-gray-400 text-xs">*This is a computer generated slip and does not require signature</span>
