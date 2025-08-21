@@ -202,6 +202,7 @@ const HRHelpdesk: React.FC = () => {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>S.No.</TableHead>
                 <TableHead>Ticket ID</TableHead>
                 <TableHead>Emp ID</TableHead>
                 <TableHead>Employee Name</TableHead>
@@ -213,8 +214,9 @@ const HRHelpdesk: React.FC = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredHelpdesks.map((helpdesk) => (
+              {filteredHelpdesks.map((helpdesk, index) => (
                 <TableRow key={helpdesk._id}>
+                  <TableCell><div className="font-medium">{index + 1}</div></TableCell>
                   <TableCell className="font-medium">{helpdesk.helpId}</TableCell>
                   <TableCell>{helpdesk.employeeId.employeeId}</TableCell>
                   <TableCell>{helpdesk.employeeId.name}</TableCell>
@@ -226,7 +228,7 @@ const HRHelpdesk: React.FC = () => {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <Badge 
+                    <Badge
                       variant={helpdesk.response ? 'info' : 'secondary'}
                       className={helpdesk.response ? 'cursor-pointer hover:bg-blue-600' : ''}
                       onClick={() => helpdesk.response && openResponseDialog(helpdesk)}
@@ -270,8 +272,8 @@ const HRHelpdesk: React.FC = () => {
               {selectedHelpdesk?.response ? 'Edit Response' : 'Add Response'}
             </DialogTitle>
             <DialogDescription>
-              {selectedHelpdesk?.response 
-                ? 'Edit the existing response for this helpdesk ticket' 
+              {selectedHelpdesk?.response
+                ? 'Edit the existing response for this helpdesk ticket'
                 : 'Add a response to the helpdesk ticket'
               }
             </DialogDescription>

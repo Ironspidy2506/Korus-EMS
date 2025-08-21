@@ -338,6 +338,7 @@ const HROnboarding: React.FC = () => {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>S.No.</TableHead>
                 <TableHead>Employee ID</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Department</TableHead>
@@ -348,8 +349,9 @@ const HROnboarding: React.FC = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredEmployees.map((employee) => (
+              {filteredEmployees.map((employee, index) => (
                 <TableRow key={employee._id}>
+                  <TableCell><div className="font-medium">{index + 1}</div></TableCell>
                   <TableCell className="font-medium">
                     {employee.employeeId}
                   </TableCell>

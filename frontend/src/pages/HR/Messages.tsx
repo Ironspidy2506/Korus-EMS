@@ -472,6 +472,7 @@ const HRMessages: React.FC = () => {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>S.No.</TableHead>
                 <TableHead>Emp ID</TableHead>
                 <TableHead>Emp Name</TableHead>
                 <TableHead>Department</TableHead>
@@ -484,8 +485,9 @@ const HRMessages: React.FC = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredMessages.map((message) => (
+              {filteredMessages.map((message, index) => (
                 <TableRow key={message._id}>
+                  <TableCell><div className="font-medium">{index + 1}</div></TableCell>
                   <TableCell className="font-medium">{message.employeeId?.employeeId}</TableCell>
                   <TableCell>{message.employeeId?.name}</TableCell>
                   <TableCell>{message.department?.departmentName}</TableCell>

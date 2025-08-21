@@ -336,6 +336,7 @@ const HRHoliday: React.FC = () => {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>S.No.</TableHead>
                 <TableHead>Holiday Name</TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead>Type</TableHead>
@@ -345,8 +346,9 @@ const HRHoliday: React.FC = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sortedHolidays.map((holiday) => (
+              {sortedHolidays.map((holiday, index) => (
                 <TableRow key={holiday._id}>
+                  <TableCell><div className="font-medium">{index + 1}</div></TableCell>
                   <TableCell className="font-medium">{holiday.name}</TableCell>
                   <TableCell>
                     {formatDate(holiday.date)}

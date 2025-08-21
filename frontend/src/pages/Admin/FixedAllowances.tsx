@@ -576,111 +576,113 @@ const AdminFixedAllowances: React.FC = () => {
             <div className="text-red-500">{error}</div>
           ) : (
             <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Employee ID</TableHead>
-                  <TableHead>Employee Name</TableHead>
-                  <TableHead>Allowance Type</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Month</TableHead>
-                  <TableHead>Year</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Voucher No.</TableHead>
-                  <TableHead>Attachment</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredAllowances.map((a) => (
-                  <TableRow key={a._id}>
-                    <TableCell>{a.employeeId && typeof a.employeeId === 'object' ? a.employeeId.employeeId : ''}</TableCell>
-                    <TableCell>{a.employeeId && typeof a.employeeId === 'object' ? a.employeeId.name : ''}</TableCell>
-                    <TableCell>{ALLOWANCE_TYPE_LABELS[a.allowanceType] || a.allowanceType}</TableCell>
-                    <TableCell>₹{a.allowanceAmount.toLocaleString('en-IN')}</TableCell>
-                    <TableCell>{a.allowanceMonth}</TableCell>
-                    <TableCell>{a.allowanceYear}</TableCell>
-                    <TableCell>
-                      <Badge variant={getStatusBadgeColor(a.status || 'pending')}>
-                        {a.status ? a.status.charAt(0).toUpperCase() + a.status.slice(1) : 'Pending'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className='flex justify-center items-center space-x-2'>
-                      {a.voucherNo === '' ? (
-                        <>
-                          {voucherEditId === a._id ? (
-                            <div className="flex items-center space-x-2">
-                              <Input
-                                value={voucherInput[a._id] !== undefined ? voucherInput[a._id] : (a.voucherNo || '')}
-                                onChange={e => handleVoucherChange(a._id, e.target.value)}
-                                className="max-w-[120px] h-8"
-                                disabled={voucherLoadingId === a._id}
-                              />
-                              <Button
-                                size="sm"
-                                className="h-8 px-3"
-                                disabled={voucherLoadingId === a._id}
-                                onClick={() => handleVoucherSave(a)}
-                              >
-                                {voucherLoadingId === a._id ? (
-                                  <span className="animate-spin h-4 w-4 text-gray-400"><svg viewBox="0 0 24 24" fill="none" className="w-4 h-4"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25" /><path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="4" className="opacity-75" /></svg></span>
-                                ) : 'Save'}
-                              </Button>
-                            </div>
-                          ) : (
+                          <TableHeader>
+              <TableRow>
+                <TableHead>S.No.</TableHead>
+                <TableHead>Employee ID</TableHead>
+                <TableHead>Employee Name</TableHead>
+                <TableHead>Allowance Type</TableHead>
+                <TableHead>Amount</TableHead>
+                <TableHead>Month</TableHead>
+                <TableHead>Year</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Voucher No.</TableHead>
+                <TableHead>Attachment</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredAllowances.map((a, index) => (
+                <TableRow key={a._id}>
+                  <TableCell><div className="font-medium">{index + 1}</div></TableCell>
+                  <TableCell>{a.employeeId && typeof a.employeeId === 'object' ? a.employeeId.employeeId : ''}</TableCell>
+                  <TableCell>{a.employeeId && typeof a.employeeId === 'object' ? a.employeeId.name : ''}</TableCell>
+                  <TableCell>{ALLOWANCE_TYPE_LABELS[a.allowanceType] || a.allowanceType}</TableCell>
+                  <TableCell>₹{a.allowanceAmount.toLocaleString('en-IN')}</TableCell>
+                  <TableCell>{a.allowanceMonth}</TableCell>
+                  <TableCell>{a.allowanceYear}</TableCell>
+                  <TableCell>
+                    <Badge variant={getStatusBadgeColor(a.status || 'pending')}>
+                      {a.status ? a.status.charAt(0).toUpperCase() + a.status.slice(1) : 'Pending'}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className='flex justify-center items-center space-x-2'>
+                    {a.voucherNo === '' ? (
+                      <>
+                        {voucherEditId === a._id ? (
+                          <div className="flex items-center space-x-2">
+                            <Input
+                              value={voucherInput[a._id] !== undefined ? voucherInput[a._id] : (a.voucherNo || '')}
+                              onChange={e => handleVoucherChange(a._id, e.target.value)}
+                              className="max-w-[120px] h-8"
+                              disabled={voucherLoadingId === a._id}
+                            />
                             <Button
                               size="sm"
-                              variant={a.voucherNo ? 'outline' : 'default'}
                               className="h-8 px-3"
-                              onClick={() => handleVoucherEditClick(a._id, a.voucherNo || '')}
+                              disabled={voucherLoadingId === a._id}
+                              onClick={() => handleVoucherSave(a)}
                             >
-                              {a.voucherNo ? 'Edit' : 'Add'}
+                              {voucherLoadingId === a._id ? (
+                                <span className="animate-spin h-4 w-4 text-gray-400"><svg viewBox="0 0 24 24" fill="none" className="w-4 h-4"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25" /><path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="4" className="opacity-75" /></svg></span>
+                              ) : 'Save'}
                             </Button>
-                          )}
-                        </>
-                      ) : (
-                        a.voucherNo || ''
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {a.attachment ? (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() =>
-                            window.open(
-                              `https://korus-ems-backend.vercel.app/api/fixed-allowances/attachment/${a._id}`,
-                              "_blank"
-                            )
-                          }
-                          className="flex items-center gap-1"
-                        >
-                          <Download className="h-3 w-3" />
-                          View
-                        </Button>
-                      ) : (
-                        <span className="text-gray-500">No Attachment</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <Button variant="ghost" size="sm" onClick={() => openEditModal(a)}>
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setDeleteId(a._id);
-                            setIsDeleteDialogOpen(true);
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
+                          </div>
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant={a.voucherNo ? 'outline' : 'default'}
+                            className="h-8 px-3"
+                            onClick={() => handleVoucherEditClick(a._id, a.voucherNo || '')}
+                          >
+                            {a.voucherNo ? 'Edit' : 'Add'}
+                          </Button>
+                        )}
+                      </>
+                    ) : (
+                      a.voucherNo || ''
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {a.attachment ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          window.open(
+                            `https://korus-ems-backend.vercel.app/api/fixed-allowances/attachment/${a._id}`,
+                            "_blank"
+                          )
+                        }
+                        className="flex items-center gap-1"
+                      >
+                        <Download className="h-3 w-3" />
+                        View
+                      </Button>
+                    ) : (
+                      <span className="text-gray-500">No Attachment</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center space-x-2">
+                      <Button variant="ghost" size="sm" onClick={() => openEditModal(a)}>
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setDeleteId(a._id);
+                          setIsDeleteDialogOpen(true);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
             </Table>
           )}
         </CardContent>

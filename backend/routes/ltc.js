@@ -34,6 +34,6 @@ router.post('/:id/approve', approveOrRejectLTC);
 router.post('/:id/reject', approveOrRejectLTC);
 
 // Get attachment
-router.get('/:id/attachment', getLTCAttachment);
+router.get('/attachment/:id', getLTCAttachment);
 
 export default router; 

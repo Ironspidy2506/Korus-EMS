@@ -264,6 +264,7 @@ const AdminDepartments: React.FC = () => {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>S.No.</TableHead>
                 <TableHead>Department ID</TableHead>
                 <TableHead>Department Name</TableHead>
                 <TableHead>Employees</TableHead>
@@ -272,8 +273,9 @@ const AdminDepartments: React.FC = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {departments.map((department) => (
+              {departments.map((department, index) => (
                 <TableRow key={department._id}>
+                  <TableCell><div className="font-medium">{index + 1}</div></TableCell>
                   <TableCell className="font-medium">{department.departmentId}</TableCell>
                   <TableCell className="font-medium">{department.departmentName}</TableCell>
                   <TableCell>{getEmployeeCount(department._id!)}</TableCell>

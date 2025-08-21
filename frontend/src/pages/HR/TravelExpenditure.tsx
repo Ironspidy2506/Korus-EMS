@@ -579,7 +579,10 @@ const HRTravelExpenditure: React.FC = () => {
                             variant="outline"
                             size="sm"
                             onClick={() =>
-                              window.open(`https://korus-ems-backend.vercel.app/api/travel-expenditures/attachment/${te._id}`, "_blank")
+                              window.open(
+                                `https://korus-ems-backend.vercel.app/api/travel-expenditures/attachment/${te._id}`,
+                                "_blank"
+                              )
                             }
                             className="flex items-center gap-1"
                           >
@@ -1007,8 +1010,12 @@ const HRTravelExpenditure: React.FC = () => {
                 id="attachment"
                 name="attachment"
                 type="file"
+                accept=".pdf"
                 onChange={(e) => setFormData(prev => ({ ...prev, attachment: e.target.files?.[0] || null }))}
               />
+              <p className="text-sm text-gray-500">
+                Note: Kindly upload only PDF files. Please scan all documents into a single PDF file before uploading.
+              </p>
             </div>
 
             <DialogFooter>

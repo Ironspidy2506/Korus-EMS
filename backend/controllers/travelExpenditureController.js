@@ -331,8 +331,10 @@ export const getTravelExpenditureAttachment = async (req, res) => {
       return res.status(404).json({ message: 'Attachment not found' });
     }
 
-    res.set('Content-Type', travelExpenditure.attachment.fileType);
-    res.set('Content-Disposition', `attachment; filename="${travelExpenditure.attachment.fileName}"`);
+    res.set({
+      "Content-Type": travelExpenditure.attachment.fileType,
+      "Content-Disposition": `inline; filename="${travelExpenditure.attachment.fileName || "attachment"}"`
+    });
     res.send(travelExpenditure.attachment.fileData);
   } catch (error) {
     console.error('Error fetching attachment:', error);
@@ -351,7 +353,6 @@ export const viewTravelExpenditureAttachment = async (req, res) => {
     }
 
     res.set('Content-Type', travelExpenditure.attachment.fileType);
-    res.set('Content-Disposition', `inline; filename="${travelExpenditure.attachment.fileName}"`);
     res.send(travelExpenditure.attachment.fileData);
   } catch (error) {
     console.error('Error viewing attachment inline:', error);

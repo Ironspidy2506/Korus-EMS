@@ -82,4 +82,18 @@ export const approveOrRejectLTC = async (action: 'approve' | 'reject', id: strin
     console.error('Error approving/rejecting LTC:', error);
     throw error;
   }
+};
+
+// Get LTC attachment
+export const getLTCAttachment = async (ltcId: string) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axios.get(`${API_BASE_URL}/attachment/${ltcId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching LTC attachment:', error);
+    throw error;
+  }
 }; 

@@ -455,7 +455,12 @@ const AdminLTC: React.FC = () => {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => window.open(`https://korus-ems-backend.vercel.app/api/ltc/${ltc._id}/attachment`, '_blank')}
+                          onClick={() =>
+                            window.open(
+                              `https://korus-ems-backend.vercel.app/api/ltc/attachment/${ltc._id}`,
+                              "_blank"
+                            )
+                          }
                           className="flex items-center gap-1"
                         >
                           <Download className="h-3 w-3" />
@@ -705,8 +710,12 @@ const AdminLTC: React.FC = () => {
                 id="attachment"
                 name="attachment"
                 type="file"
+                accept=".pdf"
                 onChange={(e) => setFormData(prev => ({ ...prev, attachment: e.target.files?.[0] || null }))}
               />
+              <p className="text-sm text-gray-500">
+                Note: Kindly upload only PDF files. Please scan all documents into a single PDF file before uploading.
+              </p>
             </div>
 
             <DialogFooter>

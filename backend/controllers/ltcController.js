@@ -10,13 +10,18 @@ export const getLTCAttachment = async (req, res) => {
       return res.status(404).json({ message: 'Attachment not found' });
     }
 
-    res.set('Content-Type', ltc.attachment.fileType);
+    res.set({
+      "Content-Type": ltc.attachment.fileType,
+      "Content-Disposition": `inline; filename="${ltc.attachment.fileName || "attachment"}"`
+    });
+
     res.send(ltc.attachment.fileData);
   } catch (error) {
     console.error('Error fetching LTC attachment:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 };
+
 
 export const getAllLTCs = async (req, res) => {
   try {

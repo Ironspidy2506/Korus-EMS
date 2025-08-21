@@ -383,52 +383,54 @@ const AdminCTC: React.FC = () => {
             </div>
           ) : (
             <Table>
-              <TableHeader>
+                          <TableHeader>
+              <TableRow>
+                <TableHead>S.No.</TableHead>
+                <TableHead>Employee ID</TableHead>
+                <TableHead>Employee Name</TableHead>
+                <TableHead>Department</TableHead>
+                <TableHead>Month</TableHead>
+                <TableHead>Year</TableHead>
+                <TableHead>Gross Salary</TableHead>
+                <TableHead>Basic Salary</TableHead>
+                <TableHead>Salary Allowances</TableHead>
+                <TableHead>Salary Deductions</TableHead>
+                <TableHead>Variable Allowances</TableHead>
+                <TableHead>Fixed Allowances</TableHead>
+                <TableHead>Total CTC</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredCTCData.length === 0 ? (
                 <TableRow>
-                  <TableHead>Employee ID</TableHead>
-                  <TableHead>Employee Name</TableHead>
-                  <TableHead>Department</TableHead>
-                  <TableHead>Month</TableHead>
-                  <TableHead>Year</TableHead>
-                  <TableHead>Gross Salary</TableHead>
-                  <TableHead>Basic Salary</TableHead>
-                  <TableHead>Salary Allowances</TableHead>
-                  <TableHead>Salary Deductions</TableHead>
-                  <TableHead>Variable Allowances</TableHead>
-                  <TableHead>Fixed Allowances</TableHead>
-                  <TableHead>Total CTC</TableHead>
+                  <TableCell colSpan={13} className="text-center py-8">
+                    <div className="text-gray-500">
+                      {searchTerm || monthFilter !== 'All' || yearFilter !== 'All'
+                        ? 'No CTC records match your search criteria.'
+                        : 'No CTC records found.'}
+                    </div>
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredCTCData.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={12} className="text-center py-8">
-                      <div className="text-gray-500">
-                        {searchTerm || monthFilter !== 'All' || yearFilter !== 'All'
-                          ? 'No CTC records match your search criteria.'
-                          : 'No CTC records found.'}
-                      </div>
-                    </TableCell>
+              ) : (
+                filteredCTCData.map((item, index) => (
+                  <TableRow key={`${item.employeeId}_${item.month}_${item.year}_${index}`}>
+                    <TableCell><div className="font-medium">{index + 1}</div></TableCell>
+                    <TableCell className="font-medium">{item.employeeId}</TableCell>
+                    <TableCell>{item.employeeName}</TableCell>
+                    <TableCell>{item.department}</TableCell>
+                    <TableCell>{item.month}</TableCell>
+                    <TableCell>{item.year}</TableCell>
+                    <TableCell>₹{item.grossSalary.toLocaleString('en-IN')}</TableCell>
+                    <TableCell>₹{item.basicSalary.toLocaleString('en-IN')}</TableCell>
+                    <TableCell className="text-green-600">+₹{item.salaryAllowances.toLocaleString('en-IN')}</TableCell>
+                    <TableCell className="text-red-600">-₹{item.salaryDeductions.toLocaleString('en-IN')}</TableCell>
+                    <TableCell>₹{item.variableAllowances.toLocaleString('en-IN')}</TableCell>
+                    <TableCell>₹{item.fixedAllowances.toLocaleString('en-IN')}</TableCell>
+                    <TableCell className="font-bold">₹{item.totalCTC.toLocaleString('en-IN')}</TableCell>
                   </TableRow>
-                ) : (
-                  filteredCTCData.map((item, index) => (
-                    <TableRow key={`${item.employeeId}_${item.month}_${item.year}_${index}`}>
-                      <TableCell className="font-medium">{item.employeeId}</TableCell>
-                      <TableCell>{item.employeeName}</TableCell>
-                      <TableCell>{item.department}</TableCell>
-                      <TableCell>{item.month}</TableCell>
-                      <TableCell>{item.year}</TableCell>
-                      <TableCell>₹{item.grossSalary.toLocaleString('en-IN')}</TableCell>
-                      <TableCell>₹{item.basicSalary.toLocaleString('en-IN')}</TableCell>
-                      <TableCell className="text-green-600">+₹{item.salaryAllowances.toLocaleString('en-IN')}</TableCell>
-                      <TableCell className="text-red-600">-₹{item.salaryDeductions.toLocaleString('en-IN')}</TableCell>
-                      <TableCell>₹{item.variableAllowances.toLocaleString('en-IN')}</TableCell>
-                      <TableCell>₹{item.fixedAllowances.toLocaleString('en-IN')}</TableCell>
-                      <TableCell className="font-bold">₹{item.totalCTC.toLocaleString('en-IN')}</TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
+                ))
+              )}
+            </TableBody>
             </Table>
           )}
         </CardContent>
