@@ -1,4 +1,5 @@
 import express from 'express';
+import authMiddleware from '../middleware/authMiddleware.js';
 import upload from '../config/multer.js';
 import {
   getAllLTCs,
@@ -13,25 +14,25 @@ import {
 const router = express.Router();
 
 // Get all LTCs
-router.get('/', getAllLTCs);
+router.get('/', authMiddleware, getAllLTCs);
 
 // Get LTCs for a specific user
-router.get('/user/:employeeId', getUserLTCs);
+router.get('/user/:userId', authMiddleware, getUserLTCs);
 
 // Add new LTC
-router.post('/', upload.single('attachment'), addLTC);
+router.post('/', authMiddleware, upload.single('attachment'), addLTC);
 
 // Update LTC
-router.put('/:id', upload.single('attachment'), updateLTC);
+router.put('/:id', authMiddleware, upload.single('attachment'), updateLTC);
 
 // Delete LTC
-router.delete('/:id', deleteLTC);
+router.delete('/:id', authMiddleware, deleteLTC);
 
 // Approve LTC
-router.post('/:id/approve', approveOrRejectLTC);
+router.post('/:id/approve', authMiddleware, approveOrRejectLTC);
 
 // Reject LTC
-router.post('/:id/reject', approveOrRejectLTC);
+router.post('/:id/reject', authMiddleware, approveOrRejectLTC);
 
 // Get attachment
 router.get('/attachment/:id', getLTCAttachment);

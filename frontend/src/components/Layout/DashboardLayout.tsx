@@ -98,6 +98,8 @@ const DashboardLayout: React.FC = () => {
           { icon: Gift, label: 'Fixed Allowances', path: '/employee-dashboard/fixed-allowances' },
           { icon: Award, label: 'Variable Allowances', path: '/employee-dashboard/allowances' },
           // { icon: Star, label: 'Appraisal', path: '/employee-dashboard/appraisal' },
+          { icon: Plane, label: 'Travel Expenditure', path: '/employee-dashboard/travel-expenditure' },
+          { icon: MapPin, label: 'LTC', path: '/employee-dashboard/ltc' },
           { icon: MessageSquare, label: 'Messages', path: '/employee-dashboard/messages' },
           { icon: HelpCircle, label: 'Helpdesk', path: '/employee-dashboard/helpdesk' }
         ];
@@ -108,10 +110,12 @@ const DashboardLayout: React.FC = () => {
           { icon: User, label: 'Profile', path: '/lead-dashboard/profile' },
           { icon: CalendarCheck, label: 'Holidays', path: '/lead-dashboard/holidays' },
           { icon: Calendar, label: 'Leave', path: '/lead-dashboard/leave' },
+          { icon: Star, label: 'Appraisal', path: '/lead-dashboard/appraisal' },
           { icon: DollarSign, label: 'Salary', path: '/lead-dashboard/salary' },
           { icon: Gift, label: 'Fixed Allowances', path: '/lead-dashboard/fixed-allowances' },
           { icon: Award, label: 'Variable Allowances', path: '/lead-dashboard/allowances' },
-          { icon: Star, label: 'Appraisal', path: '/lead-dashboard/appraisal' },
+          { icon: Plane, label: 'Travel Expenditure', path: '/lead-dashboard/travel-expenditure' },
+          { icon: MapPin, label: 'LTC', path: '/lead-dashboard/ltc' },
           { icon: MessageSquare, label: 'Messages', path: '/lead-dashboard/messages' },
           { icon: HelpCircle, label: 'Helpdesk', path: '/lead-dashboard/helpdesk' }
         ];

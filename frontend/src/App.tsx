@@ -43,8 +43,6 @@ import EmployeeProfile from "@/pages/Employee/Profile";
 import EmployeeSalary from "@/pages/Employee/Salary";
 import EmployeeAllowances from "@/pages/Employee/Allowances";
 import EmployeeAppraisal from "@/pages/Employee/Appraisal";
-import EmployeeWebmail from "@/pages/Employee/Webmail";
-import EmployeeChangePassword from "@/pages/Employee/ChangePassword";
 import EmployeeMessages from "@/pages/Employee/Messages";
 import EmployeeHelpdesk from "@/pages/Employee/Helpdesk";
 import HRLeaveBalance from "./pages/HR/LeaveBalance";
@@ -56,6 +54,8 @@ import EmployeeAddedAppraisals from "./pages/Employee/AddedAppraisals";
 import JoiningReport from "./pages/JoiningReport";
 import HRLTC from "./pages/HR/LTC";
 import AdminLTC from "./pages/Admin/LTC";
+import EmployeeLTC from "./pages/Employee/LTC";
+import EmployeeTravelExpenditure from "./pages/Employee/TravelExpenditure";
 
 const queryClient = new QueryClient();
 
@@ -308,14 +308,14 @@ const App = () => (
                   <EmployeeAppraisal />
                 </ProtectedRoute>
               } />
-              <Route path="employee-dashboard/webmail" element={
+              <Route path="employee-dashboard/travel-expenditure" element={
                 <ProtectedRoute allowedRoles={['employee']}>
-                  <EmployeeWebmail />
+                  <EmployeeTravelExpenditure />
                 </ProtectedRoute>
               } />
-              <Route path="employee-dashboard/change-password" element={
+              <Route path="employee-dashboard/ltc" element={
                 <ProtectedRoute allowedRoles={['employee']}>
-                  <EmployeeChangePassword />
+                  <EmployeeLTC />
                 </ProtectedRoute>
               } />
               <Route path="employee-dashboard/messages" element={
@@ -376,19 +376,14 @@ const App = () => (
                   <EmployeeAddedAppraisals />
                 </ProtectedRoute>
               } />
-              {/* <Route path="lead-dashboard/added-appraisals" element={
+              <Route path="lead-dashboard/travel-expenditure" element={
                 <ProtectedRoute allowedRoles={['lead']}>
-                  <EmployeeAddedAppraisals />
-                </ProtectedRoute>
-              } /> */}
-              <Route path="lead-dashboard/webmail" element={
-                <ProtectedRoute allowedRoles={['lead']}>
-                  <EmployeeWebmail />
+                  <EmployeeTravelExpenditure />
                 </ProtectedRoute>
               } />
-              <Route path="lead-dashboard/change-password" element={
+              <Route path="lead-dashboard/ltc" element={
                 <ProtectedRoute allowedRoles={['lead']}>
-                  <EmployeeChangePassword />
+                  <EmployeeLTC />
                 </ProtectedRoute>
               } />
               <Route path="lead-dashboard/messages" element={

@@ -29,7 +29,10 @@ export interface LTC {
 
 export const getAllLTCs = async (): Promise<LTC[]> => {
   try {
-    const response = await axios.get(`${API_BASE_URL}`);
+    const token = localStorage.getItem('token');
+    const response = await axios.get(`${API_BASE_URL}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
     return response.data;
   } catch (error) {
     console.error('Error fetching LTCs:', error);
@@ -37,11 +40,27 @@ export const getAllLTCs = async (): Promise<LTC[]> => {
   }
 };
 
+export const getUserLTCs = async (userId: string): Promise<LTC[]> => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axios.get(`${API_BASE_URL}/user/${userId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching user LTCs:', error);
+    throw error;
+  }
+};
+
 export const addLTC = async (formData: FormData): Promise<LTC> => {
   try {
+    const token = localStorage.getItem('token');
     const response = await axios.post(`${API_BASE_URL}`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
+        Authorization: `Bearer ${token}`
       },
     });
     return response.data;
@@ -53,11 +72,14 @@ export const addLTC = async (formData: FormData): Promise<LTC> => {
 
 export const updateLTC = async (id: string, formData: FormData): Promise<LTC> => {
   try {
+    const token = localStorage.getItem('token');
     const response = await axios.put(`${API_BASE_URL}/${id}`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
+        Authorization: `Bearer ${token}`
       },
     });
+    
     return response.data;
   } catch (error) {
     console.error('Error updating LTC:', error);
@@ -67,7 +89,10 @@ export const updateLTC = async (id: string, formData: FormData): Promise<LTC> =>
 
 export const deleteLTC = async (id: string): Promise<void> => {
   try {
-    await axios.delete(`${API_BASE_URL}/${id}`);
+    const token = localStorage.getItem('token');
+    await axios.delete(`${API_BASE_URL}/${id}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
   } catch (error) {
     console.error('Error deleting LTC:', error);
     throw error;
@@ -76,7 +101,10 @@ export const deleteLTC = async (id: string): Promise<void> => {
 
 export const approveOrRejectLTC = async (action: 'approve' | 'reject', id: string): Promise<LTC> => {
   try {
-    const response = await axios.post(`${API_BASE_URL}/${id}/${action}`);
+    const token = localStorage.getItem('token');
+    const response = await axios.post(`${API_BASE_URL}/${id}/${action}`, {}, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
     return response.data;
   } catch (error) {
     console.error('Error approving/rejecting LTC:', error);

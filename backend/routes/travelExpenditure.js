@@ -36,7 +36,6 @@ router.post("/:action/:travelExpenditureId", authMiddleware, approveOrRejectTrav
 // Route to get the attachment for the travel expenditure
 router.get("/attachment/:_id", getTravelExpenditureAttachment);
 
-
 // Route to add voucher no for travel expenditure
 router.put('/add-voucher/:_id', authMiddleware, addVoucherNo);
 

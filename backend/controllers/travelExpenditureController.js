@@ -22,6 +22,11 @@ export const getUserTravelExpenditures = async (req, res) => {
   try {
     const { userId } = req.params;
     const employee = await Employee.findOne({ userId });
+
+    if (!employee) {
+      return res.status(404).json({ message: 'Employee not found' });
+    }
+
     const travelExpenditures = await TravelExpenditure.find({ employeeId: employee._id })
       .populate('employeeId')
       .populate('department')
@@ -79,9 +84,8 @@ export const addTravelExpenditure = async (req, res) => {
       totalAmount += parsedDayCharges.reduce((sum, charge) => sum + (charge.amount || 0), 0);
     }
 
-    const travelExpenditure = new TravelExpenditure({
+    const travelExpenditureData = {
       employeeId,
-      department,
       placeOfVisit,
       clientName,
       projectNo,
@@ -100,7 +104,14 @@ export const addTravelExpenditure = async (req, res) => {
         fileType: req.file.mimetype,
         fileData: req.file.buffer
       } : null
-    });
+    };
+
+    // Only add department if it's provided and not empty
+    if (department && department.trim() !== '') {
+      travelExpenditureData.department = department;
+    }
+
+    const travelExpenditure = new TravelExpenditure(travelExpenditureData);
 
     await travelExpenditure.save();
 

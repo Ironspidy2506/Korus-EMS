@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plane, Train, Car, Users, Edit, Trash2, UserPlus, Search, XCircle, CheckCircle, Download, Plus, X } from 'lucide-react';
-import { getAllTravelExpenditures, addTravelExpenditure, updateTravelExpenditure, deleteTravelExpenditure, TravelExpenditure, updateVoucherNo, approveOrRejectTravelExpenditure } from '@/utils/TravelExpenditure';
+import { Plane, Train, Car, Edit, Trash2, Download, Plus, X } from 'lucide-react';
+import { getUserTravelExpenditures, addTravelExpenditure, updateTravelExpenditure, deleteTravelExpenditure, TravelExpenditure } from '@/utils/TravelExpenditure';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { getAllEmployees } from '@/utils/Employee';
@@ -20,6 +20,7 @@ import { format } from 'date-fns';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { Calendar as DateCalendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { useAuth } from '@/contexts/AuthContext';
 
 const getStatusBadgeColor = (status: string) => {
   switch (status) {
@@ -59,7 +60,8 @@ const initialForm = {
   attachment: null,
 };
 
-const HRTravelExpenditure: React.FC = () => {
+const EmployeeTravelExpenditure: React.FC = () => {
+  const { user } = useAuth();
   const [travelExpenditures, setTravelExpenditures] = useState<TravelExpenditure[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -72,9 +74,7 @@ const HRTravelExpenditure: React.FC = () => {
   const [departments, setDepartments] = useState<Department[]>([]);
   const [tableSearchTerm, setTableSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [voucherLoadingId, setVoucherLoadingId] = useState<string | null>(null);
-  const [voucherInput, setVoucherInput] = useState<{ [key: string]: string }>({});
-  const [voucherEditId, setVoucherEditId] = useState<string | null>(null);
+
   const [expenseInputs, setExpenseInputs] = useState([{ date: '', description: '', amount: '' }]);
   const [dayChargeInputs, setDayChargeInputs] = useState([{ date: '', description: '', amount: '' }]);
   const [employeeSearchTerm, setEmployeeSearchTerm] = useState('');
@@ -83,23 +83,23 @@ const HRTravelExpenditure: React.FC = () => {
   const [travelExpenditureToDelete, setTravelExpenditureToDelete] = useState<string | null>(null);
   const [claimedFromClient, setClaimedFromClient] = useState<boolean>(false);
 
-
-  // Needed for input to work
-  const handleVoucherChange = (id: string, value: string) => {
-    setVoucherInput((prev) => ({ ...prev, [id]: value }));
-  };
-
   useEffect(() => {
-    fetchTravelExpenditures();
-    fetchEmployees();
-    fetchDepartments();
+    const initializeData = async () => {
+      await Promise.all([
+        fetchEmployees(),
+        fetchDepartments()
+      ]);
+      fetchTravelExpenditures();
+    };
+    
+    initializeData();
   }, []);
 
   const fetchTravelExpenditures = async () => {
     try {
       setLoading(true);
-      const data = await getAllTravelExpenditures();
-      setTravelExpenditures(data);
+      const response = await getUserTravelExpenditures(user._id);
+      setTravelExpenditures(response.data);
       setError(null);
     } catch (error: any) {
       console.error('Error:', error);
@@ -149,10 +149,23 @@ const HRTravelExpenditure: React.FC = () => {
   };
 
   const openAddModal = () => {
-    setFormData(initialForm);
+    // Set the current user as the selected employee
+    const currentEmployee = employees.find(emp => emp.userId._id === user._id);
+    setSelectedEmployee(currentEmployee || null);
+    
+    // Initialize form data with employee information
+    setFormData({
+      ...initialForm,
+      employeeId: currentEmployee?._id || '',
+      empName: currentEmployee?.name || '',
+      designation: currentEmployee?.designation || '',
+      department: currentEmployee?.department || '',
+      departmentName: currentEmployee?.department?.departmentName || '',
+      departmentCode: currentEmployee?.department?.departmentId || ''
+    });
+    
     setIsEdit(false);
     setShowModal(true);
-    setSelectedEmployee(null);
     setEmployeeSearchTerm('');
 
     setExpenseInputs([{ date: '', description: '', amount: '' }]);
@@ -238,32 +251,39 @@ const HRTravelExpenditure: React.FC = () => {
     formDataToSend.append('expenses', JSON.stringify(validExpenses));
     formDataToSend.append('dayCharges', JSON.stringify(validDayCharges));
 
-    Object.keys(formData).forEach(key => {
-      if (key === 'expenses' || key === 'dayCharges') {
-        // Skip these as we already added them above
-        return;
-      } else if (key === 'attachment') {
-        // Only send attachment if it's a new file (not existing data)
-        if (formData[key] instanceof File) {
-          formDataToSend.append(key, formData[key]);
-        }
-        // Skip existing attachment data to prevent validation errors
-      } else if (key === 'department' && typeof formData[key] === 'object') {
-        // Handle department object properly - use the department ID
-        formDataToSend.append('department', formData[key]._id || '');
-      } else if (key === 'employeeId' && selectedEmployee) {
-        // Send the employee ID correctly
-        formDataToSend.append('employeeId', selectedEmployee._id);
-      } else if (key !== 'attachment') {
-        formDataToSend.append(key, formData[key]);
-      }
-    });
+    // Add all form fields explicitly
+    formDataToSend.append('placeOfVisit', formData.placeOfVisit || '');
+    formDataToSend.append('clientName', formData.clientName || '');
+    formDataToSend.append('projectNo', formData.projectNo || '');
+    formDataToSend.append('startDate', formData.startDate || '');
+    formDataToSend.append('returnDate', formData.returnDate || '');
+    formDataToSend.append('purposeOfVisit', formData.purposeOfVisit || '');
+    formDataToSend.append('travelMode', formData.travelMode || '');
+    formDataToSend.append('ticketProvidedBy', formData.ticketProvidedBy || '');
+    formDataToSend.append('deputationCharges', formData.deputationCharges || '');
+
+    // Handle department
+    if (selectedEmployee?.department?._id) {
+      formDataToSend.append('department', selectedEmployee.department._id);
+    }
+
+    // Handle employee ID
+    if (selectedEmployee?._id) {
+      formDataToSend.append('employeeId', selectedEmployee._id);
+    }
+
+    // Handle attachment
+    if (formData.attachment instanceof File) {
+      formDataToSend.append('attachment', formData.attachment);
+    }
+
     formDataToSend.append('claimedFromClient', String(claimedFromClient));
 
     // Debug logging
     console.log('Frontend - Valid expenses:', validExpenses);
     console.log('Frontend - Valid day charges:', validDayCharges);
-    console.log('Frontend - Form data keys:', Object.keys(formData));
+    console.log('Frontend - Form data:', formData);
+    console.log('Frontend - Selected employee:', selectedEmployee);
 
     // Log what's being sent
     for (let [key, value] of formDataToSend.entries()) {
@@ -305,47 +325,9 @@ const HRTravelExpenditure: React.FC = () => {
     }
   };
 
-  const handleApprove = async (travelExpenditureId: string) => {
-    try {
-      await approveOrRejectTravelExpenditure('approve', travelExpenditureId);
-      toast.success('Travel expenditure approved successfully');
-      fetchTravelExpenditures();
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'An error occurred');
-    }
-  };
 
-  const handleReject = async (travelExpenditureId: string) => {
-    const remarks = prompt('Please provide rejection remarks:');
-    if (remarks !== null) {
-      try {
-        await approveOrRejectTravelExpenditure('reject', travelExpenditureId, remarks);
-        toast.success('Travel expenditure rejected successfully');
-        fetchTravelExpenditures();
-      } catch (error: any) {
-        toast.error(error.response?.data?.message || 'An error occurred');
-      }
-    }
-  };
 
-  const handleVoucherEditClick = (id: string, currentValue: string) => {
-    setVoucherEditId(id);
-    setVoucherInput(prev => ({ ...prev, [id]: currentValue }));
-  };
 
-  const handleVoucherSave = async (travelExpenditure: TravelExpenditure) => {
-    try {
-      setVoucherLoadingId(travelExpenditure._id!);
-      await updateVoucherNo(travelExpenditure._id!, voucherInput[travelExpenditure._id!]);
-      setVoucherEditId(null);
-      toast.success('Voucher number updated successfully');
-      fetchTravelExpenditures();
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'An error occurred');
-    } finally {
-      setVoucherLoadingId(null);
-    }
-  };
 
   const exportToExcel = () => {
     const exportData = travelExpenditures.map(te => {
@@ -382,18 +364,12 @@ const HRTravelExpenditure: React.FC = () => {
   };
 
   const filteredTravelExpenditures = travelExpenditures.filter(te => {
-    const searchTerm = tableSearchTerm.toLowerCase();
-    const employeeIdStr = te.employeeId.employeeId.toString();
-    const employeeName = te.employeeId.name.toLowerCase();
     const status = te.status || 'pending';
-
-    // Filter by search term
-    const matchesSearch = employeeIdStr.includes(tableSearchTerm) || employeeName.includes(searchTerm);
 
     // Filter by status
     const matchesStatus = statusFilter === 'all' || status === statusFilter;
 
-    return matchesSearch && matchesStatus;
+    return matchesStatus;
   });
 
   if (loading) {
@@ -416,7 +392,7 @@ const HRTravelExpenditure: React.FC = () => {
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-3xl font-bold">Travel Expenditure Management</h1>
-          <p className="text-gray-600">Manage travel expenditure requests and approvals</p>
+          <p className="text-gray-600">Manage your travel expenditure requests</p>
         </div>
         <div className="flex gap-2">
           <Button onClick={openAddModal}>
@@ -431,7 +407,7 @@ const HRTravelExpenditure: React.FC = () => {
           <div className="flex justify-between items-center">
             <div>
               <CardTitle>Travel Expenditures</CardTitle>
-              <CardDescription>View and manage all travel expenditure requests</CardDescription>
+              <CardDescription>View and manage your travel expenditure requests</CardDescription>
             </div>
 
           </div>
@@ -440,17 +416,9 @@ const HRTravelExpenditure: React.FC = () => {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
-                <Search className="h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Search by Employee ID or Name..."
-                  value={tableSearchTerm}
-                  onChange={(e) => setTableSearchTerm(e.target.value)}
-                  className="w-80"
-                />
-              </div>
-              <div className="flex items-center space-x-2">
+                <Label htmlFor="status-filter" className="text-sm font-medium">Search by Status:</Label>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-32">
+                  <SelectTrigger className="w-32" id="status-filter">
                     <SelectValue placeholder="Search by Status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -488,181 +456,151 @@ const HRTravelExpenditure: React.FC = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredTravelExpenditures.map((te, index) => {
-                  const TravelModeIcon = getTravelModeIcon(te.travelMode);
-                  return (
-                    <TableRow key={te._id}>
-                      <TableCell>
-                        <div className="font-medium">{index + 1}</div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="font-medium">{te.employeeId.employeeId}</div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="font-medium">{te.employeeId.name}</div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="font-medium text-gray-500">{te.department?.departmentName || 'N/A'}</div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="font-medium text-gray-500">{te.placeOfVisit}</div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="font-medium text-gray-500">{te.clientName}</div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="font-medium text-gray-500">{te.projectNo}</div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <TravelModeIcon className="h-4 w-4" />
-                          <span>{te.travelMode}</span>
-                        </div>
-                        <div className="text-sm text-gray-500">{te.ticketProvidedBy}</div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="font-medium">₹{te.totalAmount.toLocaleString()}</div>
-                        <div className="text-xs text-gray-500">
-                          <div>Expenses: ₹{te.expenses ? te.expenses.reduce((sum, exp) => sum + exp.amount, 0).toLocaleString() : '0'}</div>
-                          <div>Day Charges: ₹{te.dayCharges ? te.dayCharges.reduce((sum, charge) => sum + charge.amount, 0).toLocaleString() : '0'}</div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={te.claimedFromClient ? 'success' : 'default'}>
-                          {te.claimedFromClient ? 'Yes' : 'No'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={getStatusBadgeColor(te.status || 'pending')}>
-                          {(te.status || 'pending').charAt(0).toUpperCase() + (te.status || 'pending').slice(1)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {voucherEditId === te._id ? (
+                {filteredTravelExpenditures.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={14} className="text-center py-8">
+                      <div className="text-gray-500 text-md">No travel expenditure requests found</div>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredTravelExpenditures.map((te, index) => {
+                    const TravelModeIcon = getTravelModeIcon(te.travelMode);
+                    return (
+                      <TableRow key={te._id}>
+                        <TableCell>
+                          <div className="font-medium">{index + 1}</div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="font-medium">{te.employeeId.employeeId}</div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="font-medium">{te.employeeId.name}</div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="font-medium text-gray-500">{te.department?.departmentName || 'N/A'}</div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="font-medium text-gray-500">{te.placeOfVisit}</div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="font-medium text-gray-500">{te.clientName}</div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="font-medium text-gray-500">{te.projectNo}</div>
+                        </TableCell>
+                        <TableCell>
                           <div className="flex items-center gap-2">
-                            <Input
-                              value={voucherInput[te._id!] || ''}
-                              onChange={(e) => handleVoucherChange(te._id!, e.target.value)}
-                              className="w-24"
-                            />
-                            <Button
-                              size="sm"
-                              onClick={() => handleVoucherSave(te)}
-                              disabled={voucherLoadingId === te._id}
-                            >
-                              {voucherLoadingId === te._id ? 'Saving...' : 'Save'}
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => setVoucherEditId(null)}
-                            >
-                              <X className="h-3 w-3" />
-                            </Button>
+                            <TravelModeIcon className="h-4 w-4" />
+                            <span>{te.travelMode}</span>
                           </div>
-                        ) : (
+                          <div className="text-sm text-gray-500">{te.ticketProvidedBy}</div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="font-medium">₹{te.totalAmount.toLocaleString()}</div>
+                          <div className="text-xs text-gray-500">
+                            <div>Expenses: ₹{te.expenses ? te.expenses.reduce((sum, exp) => sum + exp.amount, 0).toLocaleString() : '0'}</div>
+                            <div>Day Charges: ₹{te.dayCharges ? te.dayCharges.reduce((sum, charge) => sum + charge.amount, 0).toLocaleString() : '0'}</div>
+                          </div>
+                        </TableCell>
+                                                 <TableCell>
+                           <Badge variant={te.claimedFromClient ? 'success' : 'default'}>
+                             {te.claimedFromClient ? 'Yes' : 'No'}
+                           </Badge>
+                         </TableCell>
+                        <TableCell>
+                          <Badge variant={getStatusBadgeColor(te.status || 'pending')}>
+                            {(te.status || 'pending').charAt(0).toUpperCase() + (te.status || 'pending').slice(1)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm">{te.voucherNo || 'Not Assigned'}</div>
+                        </TableCell>
+                        <TableCell>
+                          {te.attachment ? (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={async () => {
+                                try {
+                                  const token = localStorage.getItem('token');
+                                  const response = await fetch(`https://korus-ems-backend.vercel.app/api/travel-expenditures/attachment/${te._id}`, {
+                                    headers: {
+                                      'Authorization': `Bearer ${token}`
+                                    }
+                                  });
+
+                                  if (response.ok) {
+                                    const blob = await response.blob();
+                                    const url = window.URL.createObjectURL(blob);
+                                    window.open(url, '_blank');
+                                  } else {
+                                    toast.error('Failed to load attachment');
+                                  }
+                                } catch (error) {
+                                  console.error('Error loading attachment:', error);
+                                  toast.error('Failed to load attachment');
+                                }
+                              }}
+                              className="flex items-center gap-1"
+                            >
+                              <Download className="h-3 w-3" />
+                              View
+                            </Button>
+                          ) : (
+                            <span className="text-sm text-gray-500">No Attachment</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
                           <div className="flex items-center gap-2">
-                            <span className="text-sm">{te.voucherNo || ''}</span>
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => handleVoucherEditClick(te._id!, te.voucherNo || '')}
+                              onClick={() => {
+                                setFormData(te);
+                                setIsEdit(true);
+                                setShowModal(true);
+                                // Set the selected employee correctly using the employee object
+                                setSelectedEmployee(te.employeeId);
+                                // Set department details from the populated data
+                                if (te.department) {
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    departmentCode: te.department.departmentId || '',
+                                    departmentName: te.department.departmentName || ''
+                                  }));
+                                }
+                                setClaimedFromClient(!!te.claimedFromClient);
+                                // Clear search terms when editing
+                                setEmployeeSearchTerm('');
+                                setExpenseInputs(te.expenses.map(exp => ({
+                                  date: exp.date ? exp.date.slice(0, 10) : '',
+                                  description: exp.description,
+                                  amount: exp.amount.toString()
+                                })));
+                                setDayChargeInputs((te.dayCharges || []).map(charge => ({
+                                  date: charge.date ? charge.date.slice(0, 10) : '',
+                                  description: charge.description,
+                                  amount: charge.amount.toString()
+                                })));
+
+                              }}
                             >
                               <Edit className="h-3 w-3" />
                             </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleDelete(te._id!)}
+                              className="text-red-600 hover:text-red-700"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
                           </div>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {te.attachment ? (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() =>
-                              window.open(
-                                `https://korus-ems-backend.vercel.app/api/travel-expenditures/attachment/${te._id}`,
-                                "_blank"
-                              )
-                            }
-                            className="flex items-center gap-1"
-                          >
-                            <Download className="h-3 w-3" />
-                            View
-                          </Button>
-                        ) : (
-                          <span className="text-sm text-gray-500">No Attachment</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          {te.status === 'pending' && (
-                            <>
-                              <Button
-                                size="sm"
-                                onClick={() => handleApprove(te._id!)}
-                                className="bg-green-600 hover:bg-green-700"
-                              >
-                                <CheckCircle className="h-3 w-3 mr-1" />
-                                Approve
-                              </Button>
-                              <Button
-                                size="sm"
-                                onClick={() => handleReject(te._id!)}
-                                className="bg-red-600 hover:bg-red-700"
-                              >
-                                <XCircle className="h-3 w-3 mr-1" />
-                                Reject
-                              </Button>
-                            </>
-                          )}
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              setFormData(te);
-                              setIsEdit(true);
-                              setShowModal(true);
-                              // Set the selected employee correctly using the employee object
-                              setSelectedEmployee(te.employeeId);
-                              // Set department details from the populated data
-                              if (te.department) {
-                                setFormData(prev => ({
-                                  ...prev,
-                                  departmentCode: te.department.departmentId || '',
-                                  departmentName: te.department.departmentName || ''
-                                }));
-                              }
-                              setClaimedFromClient(!!te.claimedFromClient);
-                              // Clear search terms when editing
-                              setEmployeeSearchTerm('');
-                              setExpenseInputs(te.expenses.map(exp => ({
-                                date: exp.date ? exp.date.slice(0, 10) : '',
-                                description: exp.description,
-                                amount: exp.amount.toString()
-                              })));
-                              setDayChargeInputs((te.dayCharges || []).map(charge => ({
-                                date: charge.date ? charge.date.slice(0, 10) : '',
-                                description: charge.description,
-                                amount: charge.amount.toString()
-                              })));
-
-                            }}
-                          >
-                            <Edit className="h-3 w-3" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleDelete(te._id!)}
-                            className="text-red-600 hover:text-red-700"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
               </TableBody>
             </Table>
           </div>
@@ -686,48 +624,18 @@ const HRTravelExpenditure: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="employeeId">Employee</Label>
-                <div className="flex gap-2">
-                  <Select
-                    value={selectedEmployee?._id || ''}
-                    onValueChange={(value) => handleEmployeeSelect(value)}
-                  >
-                    <SelectTrigger className="flex-1">
-                      <SelectValue placeholder="Search and select employee..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <div className="p-2">
-                        <Input
-                          placeholder="Search by ID or name..."
-                          value={employeeSearchTerm}
-                          onChange={(e) => setEmployeeSearchTerm(e.target.value)}
-                          onKeyDown={(e) => e.stopPropagation()}
-                          onClick={(e) => e.stopPropagation()}
-                          className="mb-2"
-                        />
-                      </div>
-                      {employees
-                        .filter(emp =>
-                          emp.employeeId.toString().includes(employeeSearchTerm) ||
-                          emp.name.toLowerCase().includes(employeeSearchTerm.toLowerCase())
-                        )
-                        .sort((a, b) => a.employeeId - b.employeeId)
-                        .map((employee) => (
-                          <SelectItem key={employee._id} value={employee._id}>
-                            {employee.employeeId} - {employee.name}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-
-                </div>
-                {employeeError && <p className="text-red-500 text-sm">{employeeError}</p>}
+                <Input
+                  value={selectedEmployee?.name || ''}
+                  disabled
+                  className="w-full"
+                />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="department">Department</Label>
                 <Input
                   placeholder="Department"
-                  value={selectedEmployee ? `${formData.departmentCode} - ${formData.departmentName}` : ''}
+                  value={selectedEmployee?.department?.departmentName || ''}
                   disabled
                   className="w-48"
                 />
@@ -893,12 +801,13 @@ const HRTravelExpenditure: React.FC = () => {
                     <div className="flex gap-2 items-end">
                       <div className="flex-1">
                         <Label>Amount (₹)</Label>
-                        <Input
-                          type="number"
-                          value={expense.amount}
-                          onChange={(e) => handleExpenseChange(index, 'amount', e.target.value)}
-                          placeholder="0.00"
-                        />
+                                                 <Input
+                           type="number"
+                           value={expense.amount}
+                           onChange={(e) => handleExpenseChange(index, 'amount', e.target.value)}
+                           onWheel={(e) => e.currentTarget.blur()}
+                           placeholder="0.00"
+                         />
                       </div>
                       {expenseInputs.length > 1 && (
                         <Button
@@ -945,12 +854,13 @@ const HRTravelExpenditure: React.FC = () => {
                     <div className="flex gap-2 items-end">
                       <div className="flex-1">
                         <Label>Amount (₹)</Label>
-                        <Input
-                          type="number"
-                          value={charge.amount}
-                          onChange={(e) => handleDayChargeChange(index, 'amount', e.target.value)}
-                          placeholder="0.00"
-                        />
+                                                 <Input
+                           type="number"
+                           value={charge.amount}
+                           onChange={(e) => handleDayChargeChange(index, 'amount', e.target.value)}
+                           onWheel={(e) => e.currentTarget.blur()}
+                           placeholder="0.00"
+                         />
                       </div>
                       {dayChargeInputs.length > 1 && (
                         <Button
@@ -1064,4 +974,4 @@ const HRTravelExpenditure: React.FC = () => {
   );
 };
 
-export default HRTravelExpenditure; 
+export default EmployeeTravelExpenditure; 

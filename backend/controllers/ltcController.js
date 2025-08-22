@@ -39,8 +39,14 @@ export const getAllLTCs = async (req, res) => {
 
 export const getUserLTCs = async (req, res) => {
   try {
-    const { employeeId } = req.params;
-    const ltcs = await Ltc.find({ employeeId })
+    const { userId } = req.params;
+    const employee = await Employee.findOne({ userId });
+    
+    if (!employee) {
+      return res.status(404).json({ message: 'Employee not found' });
+    }
+    
+    const ltcs = await Ltc.find({ employeeId: employee._id })
       .populate('employeeId', 'name employeeId designation')
       .populate('department', 'departmentName departmentId')
       .sort({ createdAt: -1 });
