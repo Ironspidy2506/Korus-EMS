@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -18,6 +18,7 @@ import { Download } from 'lucide-react';
 const AdminSalary: React.FC = () => {
   const [salaryRecords, setSalaryRecords] = useState<Salary[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [departmentFilter, setDepartmentFilter] = useState('All');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -44,8 +45,6 @@ const AdminSalary: React.FC = () => {
       { name: "Tax Deduction", amount: 0 },
     ],
     payableDays: '',
-    sundays: '',
-    netPayableDays: '',
     paymentMonth: '',
     paymentYear: '',
     department: '',
@@ -79,6 +78,15 @@ const AdminSalary: React.FC = () => {
     getAllEmployees().then(setEmployees).catch(() => { });
   }, []);
 
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
   useEffect(() => {
     if (skipAutoCalc) {
       setSkipAutoCalc(false);
@@ -86,8 +94,8 @@ const AdminSalary: React.FC = () => {
     }
     const grossSalary = parseFloat(formData.grossSalary) || 0;
     const employeeType = formData.employeeType;
-    if (grossSalary) {
-      const basic = employeeType === 'employee'
+    if (grossSalary && employeeType) {
+      const basic = employeeType === 'Employee'
         ? (grossSalary * 0.45)
         : (grossSalary * 0.6);
       // Update basicSalary
@@ -117,78 +125,64 @@ const AdminSalary: React.FC = () => {
     }
   }, [formData.grossSalary, formData.employeeType]);
 
-  useEffect(() => {
-    const paymentMonth = formData.paymentMonth;
-    const paymentYear = formData.paymentYear;
-    if (paymentMonth && paymentYear) {
-      const monthIndex = new Date(`${paymentMonth} 1, ${paymentYear}`).getMonth();
-      const daysInMonth = new Date(paymentYear, monthIndex + 1, 0).getDate();
-      let sundaysCount = 0;
-      for (let day = 1; day <= daysInMonth; day++) {
-        const date = new Date(paymentYear, monthIndex, day);
-        if (date.getDay() === 0) {
-          sundaysCount++;
-        }
-      }
-      setFormData(prev => ({ ...prev, sundays: sundaysCount }));
-    }
-  }, [formData.paymentMonth, formData.paymentYear]);
 
-  useEffect(() => {
-    const payableDays = parseInt(formData.payableDays || 0, 10);
-    const sundays = parseInt(formData.sundays || 0, 10);
-    const totalPayableDays = payableDays + sundays;
-    setFormData(prev => ({ ...prev, netPayableDays: totalPayableDays }));
-  }, [formData.payableDays, formData.sundays]);
 
-  const filteredEmployees = employees
-    .filter(e =>
-      e.name.toLowerCase().includes(employeeSearchTerm.toLowerCase()) ||
-      String(e.employeeId).includes(employeeSearchTerm)
-    )
-    .sort((a, b) => Number(a.employeeId) - Number(b.employeeId));
+
+
+  const filteredEmployees = useMemo(() => {
+    return employees
+      .filter(e =>
+        e.name.toLowerCase().includes(employeeSearchTerm.toLowerCase()) ||
+        String(e.employeeId).includes(employeeSearchTerm)
+      )
+      .sort((a, b) => Number(a.employeeId) - Number(b.employeeId));
+  }, [employees, employeeSearchTerm]);
 
   // Get unique month-year combinations from salary records and sort chronologically
-  const monthYearCombinations = salaryRecords
-    .filter(r => r.paymentMonth && r.paymentYear)
-    .map(r => ({ month: r.paymentMonth, year: r.paymentYear, display: `${r.paymentMonth} ${r.paymentYear}` }))
-    .filter((item, index, self) => 
-      index === self.findIndex(t => t.month === item.month && t.year === item.year)
-    )
-    .sort((a, b) => {
-      // First sort by year
-      if (a.year !== b.year) {
-        return parseInt(a.year) - parseInt(b.year);
-      }
-      // Then sort by month within the same year
-      const monthsOrder = [
-        'January', 'February', 'March', 'April', 'May', 'June',
-        'July', 'August', 'September', 'October', 'November', 'December'
-      ];
-      return monthsOrder.indexOf(a.month) - monthsOrder.indexOf(b.month);
-    })
-    .map(item => item.display);
+  const monthYearCombinations = useMemo(() => {
+    return salaryRecords
+      .filter(r => r.paymentMonth && r.paymentYear)
+      .map(r => ({ month: r.paymentMonth, year: r.paymentYear, display: `${r.paymentMonth} ${r.paymentYear}` }))
+      .filter((item, index, self) =>
+        index === self.findIndex(t => t.month === item.month && t.year === item.year)
+      )
+      .sort((a, b) => {
+        // First sort by year
+        if (a.year !== b.year) {
+          return parseInt(a.year) - parseInt(b.year);
+        }
+        // Then sort by month within the same year
+        const monthsOrder = [
+          'January', 'February', 'March', 'April', 'May', 'June',
+          'July', 'August', 'September', 'October', 'November', 'December'
+        ];
+        return monthsOrder.indexOf(a.month) - monthsOrder.indexOf(b.month);
+      })
+      .map(item => item.display);
+  }, [salaryRecords]);
 
-  const filteredRecords = salaryRecords
-    .filter(record => {
-      const employeeName = record.employeeId && typeof record.employeeId === 'object' ? record.employeeId.name : '';
-      const employeeIdStr = record.employeeId && typeof record.employeeId === 'object' ? String(record.employeeId.employeeId) : '';
-      const departmentName = record.employeeId && typeof record.employeeId === 'object' && record.employeeId.department ? record.employeeId.department.departmentName : '';
-      const matchesSearch = employeeName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        employeeIdStr.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (record.employeeType && record.employeeType.toLowerCase().includes(searchTerm.toLowerCase()));
-      const matchesDepartment = departmentFilter === 'All' || departmentName === departmentFilter;
+  const filteredRecords = useMemo(() => {
+    return salaryRecords
+      .filter(record => {
+        const employeeName = record.employeeId && typeof record.employeeId === 'object' ? record.employeeId.name : '';
+        const employeeIdStr = record.employeeId && typeof record.employeeId === 'object' ? String(record.employeeId.employeeId) : '';
+        const departmentName = record.employeeId && typeof record.employeeId === 'object' && record.employeeId.department ? record.employeeId.department.departmentName : '';
+        const matchesSearch = employeeName.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+          employeeIdStr.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+          (record.employeeType && record.employeeType.toLowerCase().includes(debouncedSearchTerm.toLowerCase()));
+        const matchesDepartment = departmentFilter === 'All' || departmentName === departmentFilter;
 
-      // Filter by month-year combination
-      const matchesMonthYear = monthYearFilter === 'All' || `${record.paymentMonth} ${record.paymentYear}` === monthYearFilter;
+        // Filter by month-year combination
+        const matchesMonthYear = monthYearFilter === 'All' || `${record.paymentMonth} ${record.paymentYear}` === monthYearFilter;
 
-      return matchesSearch && matchesDepartment && matchesMonthYear;
-    })
-    .sort((a, b) => {
-      const aId = a.employeeId && typeof a.employeeId === 'object' ? a.employeeId.employeeId : 0;
-      const bId = b.employeeId && typeof b.employeeId === 'object' ? b.employeeId.employeeId : 0;
-      return aId - bId;
-    });
+        return matchesSearch && matchesDepartment && matchesMonthYear;
+      })
+      .sort((a, b) => {
+        const aId = a.employeeId && typeof a.employeeId === 'object' ? a.employeeId.employeeId : 0;
+        const bId = b.employeeId && typeof b.employeeId === 'object' ? b.employeeId.employeeId : 0;
+        return aId - bId;
+      });
+  }, [salaryRecords, debouncedSearchTerm, departmentFilter, monthYearFilter]);
 
   // Calculate total salary for each record
   const getTotalSalary = (record: Salary) => {
@@ -197,14 +191,18 @@ const AdminSalary: React.FC = () => {
     return (record.basicSalary || 0) + totalAllowances - totalDeductions;
   };
 
-  const stats = {
-    totalRecords: filteredRecords.length,
-    totalPayroll: filteredRecords.reduce((sum, record) => sum + getTotalSalary(record), 0),
-    avgSalary: filteredRecords.length > 0 ? filteredRecords.reduce((sum, record) => sum + getTotalSalary(record), 0) / filteredRecords.length : 0,
-    departments: new Set(filteredRecords.map(record => (record.employeeId && typeof record.employeeId === 'object' && record.employeeId.department ? record.employeeId.department.departmentName : ''))).size
-  };
+  const stats = useMemo(() => {
+    return {
+      totalRecords: filteredRecords.length,
+      totalPayroll: filteredRecords.reduce((sum, record) => sum + getTotalSalary(record), 0),
+      avgSalary: filteredRecords.length > 0 ? filteredRecords.reduce((sum, record) => sum + getTotalSalary(record), 0) / filteredRecords.length : 0,
+      departments: new Set(filteredRecords.map(record => (record.employeeId && typeof record.employeeId === 'object' && record.employeeId.department ? record.employeeId.department.departmentName : ''))).size
+    };
+  }, [filteredRecords]);
 
-  const departments = Array.from(new Set(filteredRecords.map(record => (record.employeeId && typeof record.employeeId === 'object' && record.employeeId.department ? record.employeeId.department.departmentName : '')))).filter(Boolean);
+  const departments = useMemo(() => {
+    return Array.from(new Set(filteredRecords.map(record => (record.employeeId && typeof record.employeeId === 'object' && record.employeeId.department ? record.employeeId.department.departmentName : '')))).filter(Boolean);
+  }, [filteredRecords]);
 
   const handleViewDetails = (salary: Salary) => {
     setSelectedSalary(salary);
@@ -236,8 +234,6 @@ const AdminSalary: React.FC = () => {
         { name: "Tax Deduction", amount: 0 },
       ],
       payableDays: '',
-      sundays: '',
-      netPayableDays: '',
       paymentMonth: '',
       paymentYear: '',
       department: '',
@@ -256,8 +252,6 @@ const AdminSalary: React.FC = () => {
       allowances: record.allowances || [],
       deductions: record.deductions || [],
       payableDays: record.payableDays || '',
-      sundays: record.sundays || '',
-      netPayableDays: record.netPayableDays || '',
       paymentMonth: record.paymentMonth || '',
       paymentYear: record.paymentYear || '',
       department: record.employeeId?.department?._id || '',
@@ -344,8 +338,6 @@ const AdminSalary: React.FC = () => {
         allowances: [{ name: '', amount: '' }],
         deductions: [{ name: '', amount: '' }],
         payableDays: '',
-        sundays: '',
-        netPayableDays: '',
         paymentMonth: '',
         paymentYear: '',
         department: '',
@@ -570,8 +562,6 @@ const AdminSalary: React.FC = () => {
                     <TableHead>Deductions</TableHead>
                     <TableHead>Net Salary</TableHead>
                     <TableHead>Payable Days</TableHead>
-                    <TableHead>Sundays</TableHead>
-                    <TableHead>Net Payable Days</TableHead>
                     <TableHead>Payment Month</TableHead>
                     <TableHead>Payment Year</TableHead>
                     <TableHead>Actions</TableHead>
@@ -602,19 +592,32 @@ const AdminSalary: React.FC = () => {
                         <TableCell className="text-red-600">-₹{deductions.toLocaleString('en-IN')}</TableCell>
                         <TableCell className="font-medium">₹{netSalary.toLocaleString('en-IN')}</TableCell>
                         <TableCell>{record.payableDays}</TableCell>
-                        <TableCell>{record.sundays}</TableCell>
-                        <TableCell>{record.netPayableDays}</TableCell>
                         <TableCell>{record.paymentMonth}</TableCell>
                         <TableCell>{record.paymentYear}</TableCell>
                         <TableCell>
                           <div className="flex items-center space-x-2">
-                            <Button variant="ghost" size="sm" onClick={() => handleViewDetails(record)}>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => handleViewDetails(record)}
+                              className="bg-blue-500 hover:bg-blue-600 text-white"
+                            >
                               <Eye className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="sm" onClick={() => openEditModal(record)}>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => openEditModal(record)}
+                              className="bg-yellow-500 hover:bg-yellow-600 text-white"
+                            >
                               <Edit className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="sm" onClick={() => openDeleteDialog(record._id)}>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => openDeleteDialog(record._id)}
+                              className="bg-red-500 hover:bg-red-600 text-white"
+                            >
                               <X className="h-4 w-4" />
                             </Button>
                           </div>
@@ -657,8 +660,6 @@ const AdminSalary: React.FC = () => {
                         </div>
                         <div className="flex flex-col gap-1">
                           <span className="font-medium text-gray-700">Payable Days: <span className="font-semibold text-blue-900">{selectedSalary.payableDays}</span></span>
-                          <span className="font-medium text-gray-700">Sundays: <span className="font-semibold text-blue-900">{selectedSalary.sundays}</span></span>
-                          <span className="font-medium text-gray-700">Net Payable Days: <span className="font-semibold text-blue-900">{selectedSalary.netPayableDays}</span></span>
                         </div>
                       </div>
                       {/* Earnings & Deductions Table */}
@@ -720,7 +721,10 @@ const AdminSalary: React.FC = () => {
         </CardContent>
       </Card>
       <Dialog open={showFormModal} onOpenChange={setShowFormModal}>
-        <DialogContent className="sm:max-w-[500px] h-[80vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[700px] h-[80vh] overflow-y-auto">
+          <div className="flex justify-center mb-4">
+            <img src="/uploads/Korus.png" alt="Korus logo" className="h-16 w-auto" />
+          </div>
           <DialogHeader>
             <DialogTitle>{editId ? 'Edit Salary' : 'Add Salary'}</DialogTitle>
             <DialogDescription>{editId ? 'Edit salary details' : 'Add a new salary record'}</DialogDescription>
@@ -740,7 +744,7 @@ const AdminSalary: React.FC = () => {
                   <ChevronDown className="h-4 w-4" />
                 </Button>
                 {isEmployeeSelectOpen && (
-                  <div className="absolute z-50 w-full mt-1 bg-white border rounded-md shadow-lg max-h-60 overflow-auto">
+                  <div className="absolute z-50 w-full mt-1 bg-white border rounded-md shadow-lg max-h-72 overflow-auto">
                     <div className="p-2">
                       <Input
                         placeholder="Search employees..."
@@ -803,14 +807,6 @@ const AdminSalary: React.FC = () => {
               <div>
                 <Label>Payable Days</Label>
                 <Input name="payableDays" type="number" value={formData.payableDays} onChange={handleFormChange} required onWheel={e => e.currentTarget.blur()} />
-              </div>
-              <div>
-                <Label>Sundays</Label>
-                <Input name="sundays" type="number" value={formData.sundays} onChange={handleFormChange} required onWheel={e => e.currentTarget.blur()} />
-              </div>
-              <div>
-                <Label>Net Payable Days</Label>
-                <Input name="netPayableDays" type="number" value={formData.netPayableDays} onChange={handleFormChange} required onWheel={e => e.currentTarget.blur()} />
               </div>
               <div>
                 <Label>Payment Month</Label>

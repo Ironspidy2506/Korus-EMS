@@ -20,8 +20,6 @@ export interface Salary {
     allowances: Allowance[];
     deductions: Deduction[];
     payableDays: number;
-    sundays: number;
-    netPayableDays: number;
     paymentMonth: string;
     paymentYear: string;
 }

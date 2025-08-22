@@ -33,8 +33,6 @@ export const addSalary = async (req, res) => {
       grossSalary,
       basicSalary,
       payableDays,
-      sundays,
-      netPayableDays,
       allowances,
       deductions,
       paymentMonth,
@@ -61,8 +59,6 @@ export const addSalary = async (req, res) => {
       grossSalary,
       basicSalary,
       payableDays,
-      sundays,
-      netPayableDays,
       allowances,
       deductions,
       paymentMonth,
@@ -86,8 +82,6 @@ export const updateSalary = async (req, res) => {
       grossSalary,
       basicSalary,
       payableDays,
-      sundays,
-      netPayableDays,
       paymentMonth,
       paymentYear,
       allowances,
@@ -107,8 +101,6 @@ export const updateSalary = async (req, res) => {
     if (grossSalary !== undefined) salary.grossSalary = grossSalary;
     if (basicSalary !== undefined) salary.basicSalary = basicSalary;
     if (payableDays !== undefined) salary.payableDays = payableDays;
-    if (sundays !== undefined) salary.sundays = sundays;
-    if (netPayableDays !== undefined) salary.netPayableDays = netPayableDays;
     if (paymentMonth !== undefined) salary.paymentMonth = paymentMonth;
     if (paymentYear !== undefined) salary.paymentYear = paymentYear;
     if (allowances !== undefined) salary.allowances = allowances;

@@ -288,8 +288,6 @@ const EmployeeSalary: React.FC = () => {
         'Month': record.paymentMonth,
         'Year': record.paymentYear,
         'Payable Days': record.payableDays,
-        'Sundays': record.sundays,
-        'Net Payable Days': record.netPayableDays,
         'Gross Salary': record.grossSalary,
         'Basic Salary': record.basicSalary,
         'Allowances': (record.allowances?.reduce((sum: number, a: any) => sum + a.amount, 0) || 0),
@@ -614,8 +612,7 @@ const EmployeeSalary: React.FC = () => {
                 <TableHead>Month</TableHead>
                 <TableHead>Year</TableHead>
                 <TableHead>Payable Days</TableHead>
-                <TableHead>Sundays</TableHead>
-                <TableHead>Net Payable Days</TableHead>
+
                 <TableHead>Gross Salary</TableHead>
                 <TableHead>Basic Salary</TableHead>
                 <TableHead>Allowances</TableHead>
@@ -635,8 +632,7 @@ const EmployeeSalary: React.FC = () => {
                     <TableCell className="font-medium">{record.paymentMonth}</TableCell>
                     <TableCell className="font-medium">{record.paymentYear}</TableCell>
                     <TableCell>{record.payableDays}</TableCell>
-                    <TableCell>{record.sundays}</TableCell>
-                    <TableCell>{record.netPayableDays}</TableCell>
+
                     <TableCell>₹{record.grossSalary.toLocaleString('en-IN')}</TableCell>
                     <TableCell>₹{record.basicSalary.toLocaleString('en-IN')}</TableCell>
                     <TableCell className="text-green-600">₹{(record.allowances?.reduce((sum: number, a: any) => sum + a.amount, 0) || 0).toLocaleString('en-IN')}</TableCell>
@@ -688,8 +684,7 @@ const EmployeeSalary: React.FC = () => {
                 </div>
                 <div className="flex flex-col gap-1">
                   <span className="font-medium text-gray-700">Payable Days: <span className="font-semibold text-blue-900">{viewSlip.payableDays}</span></span>
-                  <span className="font-medium text-gray-700">Sundays: <span className="font-semibold text-blue-900">{viewSlip.sundays}</span></span>
-                  <span className="font-medium text-gray-700">Net Payable Days: <span className="font-semibold text-blue-900">{viewSlip.netPayableDays}</span></span>
+
                 </div>
               </div>
               {/* Earnings & Deductions Table */}
