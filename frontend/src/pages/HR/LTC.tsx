@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Edit, Trash2, UserPlus, Search, XCircle, CheckCircle, Download, Plus, X } from 'lucide-react';
+import { Trash2, Search, XCircle, CheckCircle, Download } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { getAllEmployees } from '@/utils/Employee';
@@ -14,11 +14,7 @@ import { Employee } from '@/utils/Employee';
 import { getAllDepartments, Department } from '@/utils/Department';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
-import { format } from 'date-fns';
-import { Calendar as CalendarIcon } from 'lucide-react';
-import { Calendar as DateCalendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { getAllLTCs, addLTC, updateLTC, deleteLTC, approveOrRejectLTC } from '@/utils/LTC.tsx';
+import { getAllLTCs, deleteLTC, approveOrRejectLTC, updateLTC } from '@/utils/LTC.tsx';
 
 interface LTC {
   _id: string;
@@ -49,33 +45,15 @@ const getStatusBadgeColor = (status: string) => {
   }
 };
 
-const initialForm = {
-  _id: '',
-  employeeId: '',
-  department: '',
-  serviceCompletionFrom: '',
-  serviceCompletionTo: '',
-  leavePeriodFrom: '',
-  leavePeriodTo: '',
-  reimbursementAmount: '',
-  attachment: null,
-};
-
 const HRLTC: React.FC = () => {
   const [ltcs, setLtcs] = useState<LTC[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
-  const [formData, setFormData] = useState<any>(initialForm);
-  const [isEdit, setIsEdit] = useState(false);
   const [employees, setEmployees] = useState<Employee[]>([]);
-  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
-  const [employeeError, setEmployeeError] = useState<string | null>(null);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [tableSearchTerm, setTableSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [ltcToDelete, setLtcToDelete] = useState<string | null>(null);
-  const [employeeSearchTerm, setEmployeeSearchTerm] = useState('');
   const [paymentStatusFilter, setPaymentStatusFilter] = useState<string>('all');
 
   useEffect(() => {
@@ -113,78 +91,6 @@ const HRLTC: React.FC = () => {
       setDepartments(data);
     } catch (error) {
       console.error('Error fetching departments:', error);
-    }
-  };
-
-  const handleEmployeeSelect = (employeeId: string) => {
-    const employee = employees.find(emp => emp._id === employeeId);
-    if (employee) {
-      setSelectedEmployee(employee);
-      const department = departments.find(dept => dept._id === employee.department._id);
-      setFormData(prev => ({
-        ...prev,
-        employeeId: employee._id,
-        department: employee.department,
-        departmentName: department?.departmentName || '',
-        departmentCode: department?.departmentId || ''
-      }));
-      setEmployeeError(null);
-    }
-  };
-
-  const openAddModal = () => {
-    setFormData(initialForm);
-    setIsEdit(false);
-    setShowModal(true);
-    setSelectedEmployee(null);
-    setEmployeeSearchTerm('');
-  };
-
-  const closeModal = () => {
-    setShowModal(false);
-    setFormData(initialForm);
-    setSelectedEmployee(null);
-    setEmployeeError(null);
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!selectedEmployee) {
-      setEmployeeError('Please select an employee');
-      return;
-    }
-
-    const formDataToSend = new FormData();
-    Object.keys(formData).forEach(key => {
-      if (key === 'attachment' && formData[key]) {
-        formDataToSend.append(key, formData[key]);
-      } else if (key === 'department' && typeof formData[key] === 'object') {
-        formDataToSend.append('department', formData[key]._id || '');
-      } else if (key === 'employeeId' && selectedEmployee) {
-        formDataToSend.append('employeeId', selectedEmployee._id);
-      } else if (key !== 'attachment') {
-        formDataToSend.append(key, formData[key]);
-      }
-    });
-
-    try {
-      if (isEdit) {
-        await updateLTC(formData._id, formDataToSend);
-        toast.success('LTC request updated successfully');
-      } else {
-        await addLTC(formDataToSend);
-        toast.success('LTC request added successfully');
-      }
-      closeModal();
-      fetchLTCs();
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'An error occurred');
     }
   };
 
@@ -267,20 +173,12 @@ const HRLTC: React.FC = () => {
     return <div className="flex justify-center items-center h-64">Loading...</div>;
   }
 
-
-
   return (
     <div className="space-y-6 bg-gray-50 min-h-screen">
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-3xl font-bold">Leave Travel Concession (LTC)</h1>
           <p className="text-gray-600">Manage LTC requests and approvals</p>
-        </div>
-        <div className="flex gap-2">
-          <Button onClick={openAddModal}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add LTC Request
-          </Button>
         </div>
       </div>
 
@@ -456,8 +354,7 @@ const HRLTC: React.FC = () => {
                           variant="outline"
                           size="sm"
                           onClick={() =>
-                            {console.log(ltc.attachment);
-                            
+                            {
                             window.open(
                               `https://korus-ems-backend.vercel.app/api/ltc/attachment/${ltc._id}`,
                               "_blank"
@@ -502,26 +399,6 @@ const HRLTC: React.FC = () => {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => {
-                            setFormData(ltc);
-                            setIsEdit(true);
-                            setShowModal(true);
-                            setSelectedEmployee(ltc.employeeId);
-                            if (ltc.department) {
-                              setFormData(prev => ({
-                                ...prev,
-                                departmentCode: ltc.department.departmentId || '',
-                                departmentName: ltc.department.departmentName || ''
-                              }));
-                            }
-                            setEmployeeSearchTerm('');
-                          }}
-                        >
-                          <Edit className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
                           onClick={() => handleDelete(ltc._id)}
                           className="text-red-600 hover:text-red-700"
                         >
@@ -536,201 +413,6 @@ const HRLTC: React.FC = () => {
           </div>
         </CardContent>
       </Card>
-
-      <Dialog open={showModal} onOpenChange={setShowModal}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <div className="flex justify-center">
-            <img src="/uploads/Korus.png" alt="Korus logo" className="h-12 w-auto mb-4" />
-          </div>
-          <DialogHeader>
-            <DialogTitle>
-              {isEdit ? 'Edit LTC Request' : 'Add New LTC Request'}
-            </DialogTitle>
-            <DialogDescription>
-              Fill in the LTC request details below
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="employeeId">Employee</Label>
-                <div className="flex gap-2">
-                  <Select
-                    value={selectedEmployee?._id || ''}
-                    onValueChange={(value) => handleEmployeeSelect(value)}
-                  >
-                    <SelectTrigger className="flex-1">
-                      <SelectValue placeholder="Search and select employee..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <div className="p-2">
-                        <Input
-                          placeholder="Search by ID or name..."
-                          value={employeeSearchTerm}
-                          onChange={(e) => setEmployeeSearchTerm(e.target.value)}
-                          onKeyDown={(e) => e.stopPropagation()}
-                          onClick={(e) => e.stopPropagation()}
-                          className="mb-2"
-                        />
-                      </div>
-                      {employees
-                        .filter(emp =>
-                          emp.employeeId.toString().includes(employeeSearchTerm) ||
-                          emp.name.toLowerCase().includes(employeeSearchTerm.toLowerCase())
-                        )
-                        .sort((a, b) => a.employeeId - b.employeeId)
-                        .map((employee) => (
-                          <SelectItem key={employee._id} value={employee._id}>
-                            {employee.employeeId} - {employee.name}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                {employeeError && <p className="text-red-500 text-sm">{employeeError}</p>}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="department">Department</Label>
-                <Input
-                  placeholder="Department"
-                  value={selectedEmployee ? `${formData.departmentCode} - ${formData.departmentName}` : ''}
-                  disabled
-                  className="w-48"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="serviceCompletionFrom">Service Completion From</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="w-full justify-start text-left font-normal"
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {formData.serviceCompletionFrom ? format(new Date(formData.serviceCompletionFrom), 'PPP') : 'Pick a date'}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <DateCalendar
-                      mode="single"
-                      selected={formData.serviceCompletionFrom ? new Date(formData.serviceCompletionFrom) : undefined}
-                      onSelect={(date) => setFormData(prev => ({ ...prev, serviceCompletionFrom: date ? date.toISOString() : '' }))}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="serviceCompletionTo">Service Completion To</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="w-full justify-start text-left font-normal"
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {formData.serviceCompletionTo ? format(new Date(formData.serviceCompletionTo), 'PPP') : 'Pick a date'}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <DateCalendar
-                      mode="single"
-                      selected={formData.serviceCompletionTo ? new Date(formData.serviceCompletionTo) : undefined}
-                      onSelect={(date) => setFormData(prev => ({ ...prev, serviceCompletionTo: date ? date.toISOString() : '' }))}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="leavePeriodFrom">Leave Period From</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="w-full justify-start text-left font-normal"
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {formData.leavePeriodFrom ? format(new Date(formData.leavePeriodFrom), 'PPP') : 'Pick a date'}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <DateCalendar
-                      mode="single"
-                      selected={formData.leavePeriodFrom ? new Date(formData.leavePeriodFrom) : undefined}
-                      onSelect={(date) => setFormData(prev => ({ ...prev, leavePeriodFrom: date ? date.toISOString() : '' }))}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="leavePeriodTo">Leave Period To</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="w-full justify-start text-left font-normal"
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {formData.leavePeriodTo ? format(new Date(formData.leavePeriodTo), 'PPP') : 'Pick a date'}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <DateCalendar
-                      mode="single"
-                      selected={formData.leavePeriodTo ? new Date(formData.leavePeriodTo) : undefined}
-                      onSelect={(date) => setFormData(prev => ({ ...prev, leavePeriodTo: date ? date.toISOString() : '' }))}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="reimbursementAmount">Reimbursement Amount (₹)</Label>
-                <Input
-                  id="reimbursementAmount"
-                  name="reimbursementAmount"
-                  type="number"
-                  value={formData.reimbursementAmount}
-                  onChange={handleChange}
-                  placeholder="0.00"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="attachment">Attachment</Label>
-              <Input
-                id="attachment"
-                name="attachment"
-                type="file"
-                accept=".pdf"
-                onChange={(e) => setFormData(prev => ({ ...prev, attachment: e.target.files?.[0] || null }))}
-              />
-              <p className="text-sm text-gray-500">
-                Note: Kindly upload only PDF files. Please scan all documents into a single PDF file before uploading.
-              </p>
-            </div>
-
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={closeModal}>
-                Cancel
-              </Button>
-              <Button type="submit">
-                {isEdit ? 'Update' : 'Add'} LTC Request
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
 
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent>
