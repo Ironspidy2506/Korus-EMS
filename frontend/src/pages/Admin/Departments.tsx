@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Building2, Plus, Edit, Trash2, Users, Download } from 'lucide-react';
+import { Building2, Plus, Edit, Trash2, Users, Download, Eye, Search } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { toast } from 'sonner';
 
@@ -20,7 +20,9 @@ const AdminDepartments: React.FC = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isViewEmployeesDialogOpen, setIsViewEmployeesDialogOpen] = useState(false);
   const [selectedDepartment, setSelectedDepartment] = useState<Department | null>(null);
+  const [employeeSearchTerm, setEmployeeSearchTerm] = useState('');
 
   const [newDepartment, setNewDepartment] = useState({
     departmentId: '',
@@ -70,6 +72,22 @@ const AdminDepartments: React.FC = () => {
     return employees.filter(
       (emp) => emp.department?._id === departmentId
     ).length;
+  };
+
+  const getEmployeesByDepartment = (departmentId: string) => {
+    return employees.filter(
+      (emp) => emp.department?._id === departmentId
+    );
+  };
+
+  const getFilteredEmployees = (departmentId: string) => {
+    const departmentEmployees = getEmployeesByDepartment(departmentId);
+    if (!employeeSearchTerm) return departmentEmployees;
+    
+    return departmentEmployees.filter(emp => 
+      emp.employeeId.toString().toLowerCase().includes(employeeSearchTerm.toLowerCase()) ||
+      emp.name.toLowerCase().includes(employeeSearchTerm.toLowerCase())
+    );
   };
 
   const handleAddDepartment = async () => {
@@ -146,6 +164,12 @@ const AdminDepartments: React.FC = () => {
   const openDeleteDialog = (department: Department) => {
     setSelectedDepartment(department);
     setIsDeleteDialogOpen(true);
+  };
+
+  const openViewEmployeesDialog = (department: Department) => {
+    setSelectedDepartment(department);
+    setEmployeeSearchTerm('');
+    setIsViewEmployeesDialogOpen(true);
   };
 
   return (
@@ -285,6 +309,13 @@ const AdminDepartments: React.FC = () => {
                       <Button
                         variant="ghost"
                         size="sm"
+                        onClick={() => openViewEmployeesDialog(department)}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => openEditDialog(department)}
                       >
                         <Edit className="h-4 w-4" />
@@ -365,6 +396,51 @@ const AdminDepartments: React.FC = () => {
               {loading ? "Deleting..." : "Delete Department"}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Employees Dialog */}
+      <Dialog open={isViewEmployeesDialogOpen} onOpenChange={setIsViewEmployeesDialogOpen}>
+        <DialogContent className="sm:max-w-[900px] h-[600px] overflow-hidden">
+          <DialogHeader>
+            <DialogTitle>Employees in {selectedDepartment?.departmentName}</DialogTitle>
+            <DialogDescription>
+              Search and view employees within this department.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex items-center space-x-2 mb-4">
+            <Input
+              placeholder="Search by Employee ID or Name..."
+              value={employeeSearchTerm}
+              onChange={(e) => setEmployeeSearchTerm(e.target.value)}
+              className="flex-1"
+            />
+            <Button onClick={() => setEmployeeSearchTerm('')} variant="outline" size="sm">
+              <Search className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="overflow-y-auto h-[400px]">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>S.No.</TableHead>
+                  <TableHead>Employee ID</TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Designation</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {getFilteredEmployees(selectedDepartment?._id!).map((emp, index) => (
+                  <TableRow key={emp._id}>
+                    <TableCell><div className="font-medium">{index + 1}</div></TableCell>
+                    <TableCell className="font-medium">{emp.employeeId}</TableCell>
+                    <TableCell>{emp.name}</TableCell>
+                    <TableCell>{emp.designation || 'N/A'}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
