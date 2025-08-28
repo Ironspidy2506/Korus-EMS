@@ -316,7 +316,7 @@ const EmployeeApproveRejectLeave: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <Card>
+                <Card className="border-orange-500">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Total Requests</CardTitle>
                         <FileText className="h-4 w-4 text-primary" />
@@ -325,7 +325,7 @@ const EmployeeApproveRejectLeave: React.FC = () => {
                         <div className="text-2xl font-bold">{stats.total}</div>
                     </CardContent>
                 </Card>
-                <Card>
+                <Card className="border-green-600">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Approved</CardTitle>
                         <CheckCircle className="h-4 w-4 text-green-600" />
@@ -334,7 +334,7 @@ const EmployeeApproveRejectLeave: React.FC = () => {
                         <div className="text-2xl font-bold">{stats.approved}</div>
                     </CardContent>
                 </Card>
-                <Card>
+                <Card className="border-yellow-600">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Pending Requests</CardTitle>
                         <Clock className="h-4 w-4 text-yellow-600" />
@@ -344,7 +344,7 @@ const EmployeeApproveRejectLeave: React.FC = () => {
                     </CardContent>
                 </Card>
 
-                <Card>
+                <Card className="border-red-600">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Rejected</CardTitle>
                         <XCircle className="h-4 w-4 text-red-600" />
@@ -409,22 +409,22 @@ const EmployeeApproveRejectLeave: React.FC = () => {
                 <CardContent>
                     <Table>
                         <TableHeader>
-                            <TableRow>
-                                <TableHead>S.No.</TableHead>
-                                <TableHead>Employee ID</TableHead>
-                                <TableHead>Employee Name</TableHead>
-                                <TableHead>Department</TableHead>
-                                <TableHead>Leave Type</TableHead>
-                                <TableHead>Start Date</TableHead>
-                                <TableHead>Start Time</TableHead>
-                                <TableHead>End Date</TableHead>
-                                <TableHead>End Time</TableHead>
-                                <TableHead>Days</TableHead>
-                                <TableHead>Reason</TableHead>
-                                <TableHead>Attachment</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead>Reason of Rejection</TableHead>
-                                <TableHead>Actions</TableHead>
+                            <TableRow className='bg-gray-300 hover:bg-gray-300'>
+                                <TableHead className="font-bold text-black">S.No.</TableHead>
+                                <TableHead className="font-bold text-black">Employee ID</TableHead>
+                                <TableHead className="font-bold text-black">Employee Name</TableHead>
+                                <TableHead className="font-bold text-black">Department</TableHead>
+                                <TableHead className="font-bold text-black">Leave Type</TableHead>
+                                <TableHead className="font-bold text-black">Start Date</TableHead>
+                                <TableHead className="font-bold text-black">Start Time</TableHead>
+                                <TableHead className="font-bold text-black">End Date</TableHead>
+                                <TableHead className="font-bold text-black">End Time</TableHead>
+                                <TableHead className="font-bold text-black">Days</TableHead>
+                                <TableHead className="font-bold text-black">Reason</TableHead>
+                                <TableHead className="font-bold text-black">Attachment</TableHead>
+                                <TableHead className="font-bold text-black">Status</TableHead>
+                                <TableHead className="font-bold text-black">Reason of Rejection</TableHead>
+                                <TableHead className="font-bold text-black">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>

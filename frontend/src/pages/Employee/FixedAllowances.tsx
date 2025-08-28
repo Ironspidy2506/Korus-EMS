@@ -74,7 +74,7 @@ const EmployeeFixedAllowances: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 min-h-screen bg-gray-50">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">My Fixed Allowances</h1>
@@ -83,7 +83,7 @@ const EmployeeFixedAllowances: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
+        <Card className="border-blue-600">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Active Allowances</CardTitle>
             <Gift className="h-4 w-4 text-blue-600" />
@@ -92,7 +92,7 @@ const EmployeeFixedAllowances: React.FC = () => {
             <div className="text-2xl font-bold">{fixedAllowances.length}</div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border-yellow-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Benefits</CardTitle>
             <Award className="h-4 w-4 text-yellow-500" />
@@ -111,8 +111,7 @@ const EmployeeFixedAllowances: React.FC = () => {
               <CardDescription>Complete list of your allowances</CardDescription>
             </div>
             <Button
-              variant="outline"
-              className="ml-auto"
+              className="ml-auto bg-primary hover:bg-primary/90 text-white"
               onClick={handleDownloadExcel}
             >
               <Download className="h-4 w-4 mr-2" />
@@ -123,14 +122,14 @@ const EmployeeFixedAllowances: React.FC = () => {
         <CardContent>
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead>Allowance Type</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Month</TableHead>
-                <TableHead>Year</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Voucher No.</TableHead>
-                <TableHead>Attachment</TableHead>
+              <TableRow className='bg-gray-300 hover:bg-gray-300'>
+                <TableHead className="font-bold text-black">Allowance Type</TableHead>
+                <TableHead className="font-bold text-black">Amount</TableHead>
+                <TableHead className="font-bold text-black">Month</TableHead>
+                <TableHead className="font-bold text-black">Year</TableHead>
+                <TableHead className="font-bold text-black">Status</TableHead>
+                <TableHead className="font-bold text-black">Voucher No.</TableHead>
+                <TableHead className="font-bold text-black">Attachment</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

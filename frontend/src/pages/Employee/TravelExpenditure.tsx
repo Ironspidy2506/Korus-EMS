@@ -372,9 +372,7 @@ const EmployeeTravelExpenditure: React.FC = () => {
     return matchesStatus;
   });
 
-  if (loading) {
-    return <div className="flex justify-center items-center h-64">Loading...</div>;
-  }
+
 
   if (error) {
     return (
@@ -430,31 +428,31 @@ const EmployeeTravelExpenditure: React.FC = () => {
                 </Select>
               </div>
             </div>
-            <Button onClick={exportToExcel} variant="outline">
+            <Button onClick={exportToExcel} className="bg-primary hover:bg-primary/90 text-white">
               <Download className="h-4 w-4 mr-2" />
               Download as Excel
             </Button>
           </div>
           <div className="mt-4">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>S.No.</TableHead>
-                  <TableHead>Employee ID</TableHead>
-                  <TableHead>Employee Name</TableHead>
-                  <TableHead>Department</TableHead>
-                  <TableHead>Place of Visit</TableHead>
-                  <TableHead>Client Name</TableHead>
-                  <TableHead>Project No</TableHead>
-                  <TableHead>Travel Info</TableHead>
-                  <TableHead>Amount (Expenses + Day Charges)</TableHead>
-                  <TableHead>Client Claim</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Voucher</TableHead>
-                  <TableHead>Attachment</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
+                      <Table>
+            <TableHeader>
+                             <TableRow className='bg-gray-300 hover:bg-gray-300'>
+                 <TableHead className="font-bold text-black">S.No.</TableHead>
+                 <TableHead className="font-bold text-black">Employee ID</TableHead>
+                 <TableHead className="font-bold text-black">Employee Name</TableHead>
+                 <TableHead className="font-bold text-black">Department</TableHead>
+                 <TableHead className="font-bold text-black">Place of Visit</TableHead>
+                 <TableHead className="font-bold text-black">Client Name</TableHead>
+                 <TableHead className="font-bold text-black">Project No</TableHead>
+                 <TableHead className="font-bold text-black">Travel Info</TableHead>
+                 <TableHead className="font-bold text-black">Amount (Expenses + Day Charges)</TableHead>
+                 <TableHead className="font-bold text-black">Client Claim</TableHead>
+                 <TableHead className="font-bold text-black">Status</TableHead>
+                 <TableHead className="font-bold text-black">Voucher</TableHead>
+                 <TableHead className="font-bold text-black">Attachment</TableHead>
+                 <TableHead className="font-bold text-black">Actions</TableHead>
+               </TableRow>
+            </TableHeader>
               <TableBody>
                 {filteredTravelExpenditures.length === 0 ? (
                   <TableRow>
@@ -552,10 +550,10 @@ const EmployeeTravelExpenditure: React.FC = () => {
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => {
+                                                      <Button
+                            size="sm"
+                            className="bg-yellow-500 hover:bg-yellow-600 text-white"
+                            onClick={() => {
                                 setFormData(te);
                                 setIsEdit(true);
                                 setShowModal(true);
@@ -610,7 +608,7 @@ const EmployeeTravelExpenditure: React.FC = () => {
       <Dialog open={showModal} onOpenChange={setShowModal}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <div className="flex justify-center">
-            <img src="/uploads/Korus.png" alt="Korus logo" className="h-12 w-auto mb-4" />
+            <img src="/uploads/Korus.png" alt="Korus logo" className="h-16 w-16 mb-4" />
           </div>
           <DialogHeader>
             <DialogTitle>

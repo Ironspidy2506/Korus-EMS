@@ -134,7 +134,7 @@ const EmployeeMessages: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
+        <Card className="border-orange-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Messages</CardTitle>
             <MessageSquare className="h-4 w-4 text-primary" />
@@ -143,7 +143,7 @@ const EmployeeMessages: React.FC = () => {
             <div className="text-2xl font-bold">{messages.length}</div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border-yellow-600">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">High Priority</CardTitle>
             <MessageSquare className="h-4 w-4 text-yellow-600" />
@@ -152,7 +152,7 @@ const EmployeeMessages: React.FC = () => {
             <div className="text-2xl font-bold">{messages.filter(m => m.priority === 'high').length}</div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border-red-600">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Urgent</CardTitle>
             <MessageSquare className="h-4 w-4 text-red-600" />

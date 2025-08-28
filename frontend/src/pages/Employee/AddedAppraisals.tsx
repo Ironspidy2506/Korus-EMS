@@ -704,7 +704,7 @@ const EmployeeAddedAppraisals: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card>
+                <Card className="border-orange-500">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Total Reviews</CardTitle>
                         <Star className="h-4 w-4 text-primary" />
@@ -713,7 +713,7 @@ const EmployeeAddedAppraisals: React.FC = () => {
                         <div className="text-2xl font-bold">{stats.total}</div>
                     </CardContent>
                 </Card>
-                <Card>
+                <Card className="border-yellow-400">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Avg Rating</CardTitle>
                         <Star className="h-4 w-4 text-yellow-400" />
@@ -763,8 +763,7 @@ const EmployeeAddedAppraisals: React.FC = () => {
                             className="max-w-sm"
                         />
                         <Button
-                            variant="outline"
-                            className="ml-auto"
+                            className="ml-auto bg-primary hover:bg-primary/90 text-white"
                             onClick={handleDownloadExcel}
                         >
                             <Download className="h-4 w-4 mr-2" />
@@ -774,15 +773,15 @@ const EmployeeAddedAppraisals: React.FC = () => {
 
                     <Table>
                         <TableHeader>
-                            <TableRow>
-                                <TableHead>Employee ID</TableHead>
-                                <TableHead>Employee Name</TableHead>
-                                <TableHead>Department</TableHead>
-                                <TableHead>Supervisor</TableHead>
-                                <TableHead>Total Rating</TableHead>
-                                <TableHead>Performance</TableHead>
-                                <TableHead>Review Date</TableHead>
-                                <TableHead>Actions</TableHead>
+                            <TableRow className='bg-gray-300 hover:bg-gray-300'>
+                                <TableHead className="font-bold text-black">Employee ID</TableHead>
+                                <TableHead className="font-bold text-black">Employee Name</TableHead>
+                                <TableHead className="font-bold text-black">Department</TableHead>
+                                <TableHead className="font-bold text-black">Supervisor</TableHead>
+                                <TableHead className="font-bold text-black">Total Rating</TableHead>
+                                <TableHead className="font-bold text-black">Performance</TableHead>
+                                <TableHead className="font-bold text-black">Review Date</TableHead>
+                                <TableHead className="font-bold text-black">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>

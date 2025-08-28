@@ -149,12 +149,10 @@ const EmployeeHelpdesk: React.FC = () => {
     XLSX.writeFile(workbook, 'helpdesk_tickets.xlsx');
   };
 
-  if (loading) {
-    return <div className="flex justify-center items-center h-96">Loading tickets...</div>;
-  }
+
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 min-h-screen bg-gray-50">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Helpdesk</h1>
@@ -192,7 +190,7 @@ const EmployeeHelpdesk: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card>
+        <Card className="border-orange-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Tickets</CardTitle>
             <HelpCircle className="h-4 w-4 text-primary" />
@@ -201,7 +199,7 @@ const EmployeeHelpdesk: React.FC = () => {
             <div className="text-2xl font-bold">{tickets.length}</div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border-red-600">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Open Tickets</CardTitle>
             <AlertCircle className="h-4 w-4 text-red-600" />
@@ -210,7 +208,7 @@ const EmployeeHelpdesk: React.FC = () => {
             <div className="text-2xl font-bold">{openTickets}</div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border-green-600">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Resolved</CardTitle>
             <CheckCircle className="h-4 w-4 text-green-600" />
@@ -246,8 +244,7 @@ const EmployeeHelpdesk: React.FC = () => {
                 </SelectContent>
               </Select>
               <Button
-                variant="outline"
-                className="ml-auto"
+                className="ml-auto bg-primary hover:bg-primary/90 text-white"
                 onClick={handleDownloadExcel}
               >
                 <Download className="h-4 w-4 mr-2" />
@@ -259,18 +256,20 @@ const EmployeeHelpdesk: React.FC = () => {
         <CardContent>
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead>Ticket ID</TableHead>
-                <TableHead>Query</TableHead>
-                <TableHead>Response</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Created Date</TableHead>
-                <TableHead>Actions</TableHead>
+              <TableRow className='bg-gray-300 hover:bg-gray-300'>
+                <TableHead className="font-bold text-black">S.No</TableHead>
+                <TableHead className="font-bold text-black">Ticket ID</TableHead>
+                <TableHead className="font-bold text-black">Query</TableHead>
+                <TableHead className="font-bold text-black">Response</TableHead>
+                <TableHead className="font-bold text-black">Status</TableHead>
+                <TableHead className="font-bold text-black">Created Date</TableHead>
+                <TableHead className="font-bold text-black">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredTickets.map((ticket) => (
+              {filteredTickets.map((ticket, index) => (
                 <TableRow key={ticket._id}>
+                  <TableCell className="font-medium">{index + 1}</TableCell>
                   <TableCell className="font-medium">{ticket.helpId}</TableCell>
                   <TableCell className="max-w-xs">{ticket.query}</TableCell>
                   <TableCell className="max-w-xs">{ticket.response || 'No response'}</TableCell>
@@ -287,7 +286,7 @@ const EmployeeHelpdesk: React.FC = () => {
                     {!ticket.status ? <div className="flex space-x-2">
                       <Button
                         size="icon"
-                        variant="outline"
+                        variant="secondary"
                         onClick={() => {
                           setSelectedTicket(ticket);
                           setEditQuery(ticket.query);

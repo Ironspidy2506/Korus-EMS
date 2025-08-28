@@ -4,11 +4,12 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import StatsCard from '@/components/Dashboard/StatsCard';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar, DollarSign, Star, Clock, CalendarCheck, Gift, Cake, HelpCircle } from 'lucide-react';
+import { Calendar, DollarSign, Star, Clock, CalendarCheck, Gift, Cake, HelpCircle, PartyPopper } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Leave, getUserLeaves } from '@/utils/Leave';
 import { Employee, getAllEmployees } from '@/utils/Employee';
 import { getUserSalaries, Salary } from '@/utils/Salary';
+import { Holiday, getAllHolidays } from '@/utils/Holiday';
 
 const EmployeeDashboard: React.FC = () => {
   const { user } = useAuth();
@@ -16,6 +17,7 @@ const EmployeeDashboard: React.FC = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [salaryRequests, setSalaryRequests] = useState<Salary[]>([]);
   const [leaveRequests, setLeaveRequests] = useState<Leave[]>([]);
+  const [holidays, setHolidays] = useState<Holiday[]>([]);
 
   useEffect(() => {
     fetchData();
@@ -24,15 +26,17 @@ const EmployeeDashboard: React.FC = () => {
   const fetchData = async () => {
     try {
       const token = localStorage.getItem('token');
-      const [employeesRes, salaryRes, leaveRes] = await Promise.all([
+      const [employeesRes, salaryRes, leaveRes, holidaysRes] = await Promise.all([
         getAllEmployees(),
         getUserSalaries(user._id),
         getUserLeaves(user._id),
+        getAllHolidays(),
       ])
 
       setEmployees(employeesRes);
       setSalaryRequests(salaryRes.salaries || [])
       setLeaveRequests(leaveRes.leaves || []);
+      setHolidays(holidaysRes || []);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
     }
@@ -47,33 +51,6 @@ const EmployeeDashboard: React.FC = () => {
     if (hour < 15) return 'Good Afternoon';
     return 'Good Evening';
   };
-
-  const stats = [
-    {
-      title: 'Leave Records',
-      value: `${leaveRequests.length || 0}`,
-      icon: Calendar,
-      color: 'text-blue-600'
-    },
-    {
-      title: 'Salary Records',
-      value: `${salaryRequests.length || 0}`,
-      icon: DollarSign,
-      color: 'text-green-600'
-    },
-    {
-      title: 'Appraisal Score',
-      value: '',
-      icon: Star,
-      color: 'text-yellow-500'
-    },
-    {
-      title: 'Hours This Week',
-      value: '',
-      icon: Clock,
-      color: 'text-purple-600'
-    }
-  ];
 
   // Get upcoming birthdays (next 5)
   const getUpcomingBirthdays = () => {
@@ -103,7 +80,47 @@ const EmployeeDashboard: React.FC = () => {
       .slice(0, 4);
   };
 
+  // Get upcoming holidays (next 30 days)
+  const getUpcomingHolidays = () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    return holidays.filter(holiday => {
+      const holidayDate = new Date(holiday.date);
+      holidayDate.setHours(0, 0, 0, 0);
+      return holidayDate >= today;
+    }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  };
+
+  const upcomingHolidays = getUpcomingHolidays();
   const upcomingBirthdays = getUpcomingBirthdays();
+
+  const stats = [
+    {
+      title: 'Leave Records',
+      value: `${leaveRequests.length || 0}`,
+      icon: Calendar,
+      color: 'text-blue-600'
+    },
+    {
+      title: 'Salary Records',
+      value: `${salaryRequests.length || 0}`,
+      icon: DollarSign,
+      color: 'text-green-600'
+    },
+    {
+      title: 'Upcoming Holidays',
+      value: `${upcomingHolidays.length || 0}`,
+      icon: CalendarCheck,
+      color: 'text-yellow-500'
+    },
+    {
+      title: 'Hours This Week',
+      value: '',
+      icon: Clock,
+      color: 'text-purple-600'
+    }
+  ];
 
 
   const getEventColor = (type: string) => {
@@ -153,21 +170,21 @@ const EmployeeDashboard: React.FC = () => {
             <CardDescription>Frequently used features</CardDescription>
           </CardHeader>
           <CardContent className="grid grid-cols-2 gap-4">
-            <Button variant="outline" className="flex flex-col items-center p-6 h-auto" onClick={() => navigate('/employee-dashboard/leave')}>
+            <Button variant="outline" className="flex flex-col items-center p-6 h-auto bg-blue-50 hover:bg-blue-100 border-blue-200 hover:border-blue-300 transition-colors" onClick={() => navigate('/employee-dashboard/leave')}>
               <Calendar className="h-8 w-8 mb-2 text-blue-600" />
-              <span className="text-sm">Request Leave</span>
+              <span className="text-sm text-blue-700">Request Leave</span>
             </Button>
-            <Button variant="outline" className="flex flex-col items-center p-6 h-auto" onClick={() => navigate('/employee-dashboard/salary')}>
+            <Button variant="outline" className="flex flex-col items-center p-6 h-auto bg-green-50 hover:bg-green-100 border-green-200 hover:border-green-300 transition-colors" onClick={() => navigate('/employee-dashboard/salary')}>
               <DollarSign className="h-8 w-8 mb-2 text-green-600" />
-              <span className="text-sm">View Salary</span>
+              <span className="text-sm text-green-700">View Salary</span>
             </Button>
-            <Button variant="outline" className="flex flex-col items-center p-6 h-auto" onClick={() => navigate('/employee-dashboard/helpdesk')}>
+            <Button variant="outline" className="flex flex-col items-center p-6 h-auto bg-purple-50 hover:bg-purple-100 border-purple-200 hover:border-purple-300 transition-colors" onClick={() => navigate('/employee-dashboard/helpdesk')}>
               <HelpCircle className="h-8 w-8 mb-2 text-purple-600" />
-              <span className="text-sm">Visit Helpdesk</span>
+              <span className="text-sm text-purple-700">Visit Helpdesk</span>
             </Button>
-            <Button variant="outline" className="flex flex-col items-center p-6 h-auto" onClick={() => navigate('/employee-dashboard/allowances')}>
+            <Button variant="outline" className="flex flex-col items-center p-6 h-auto bg-pink-50 hover:bg-pink-100 border-pink-200 hover:border-pink-300 transition-colors" onClick={() => navigate('/employee-dashboard/allowances')}>
               <Gift className="h-8 w-8 mb-2 text-pink-600" />
-              <span className="text-sm">View Allowances</span>
+              <span className="text-sm text-pink-700">View Allowances</span>
             </Button>
           </CardContent>
         </Card>

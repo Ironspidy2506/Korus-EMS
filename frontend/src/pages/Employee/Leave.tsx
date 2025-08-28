@@ -283,7 +283,7 @@ const EmployeeLeave: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 min-h-screen bg-gray-50">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Leave Management</h1>
@@ -293,8 +293,8 @@ const EmployeeLeave: React.FC = () => {
           <DialogTrigger asChild>
             <div className="flex gap-2">
               <Button className="bg-primary hover:bg-primary/90">
-                <Plus className="h-4 w-4 mr-2" />
-                Request Leave
+                <Plus className="h-4 w-4 mr-0.5" />
+                Apply Leave
               </Button>
               {user.role === "lead" ? <Button className="bg-secondary hover:bg-secondary/90" onClick={() => navigate('/lead-dashboard/approve-reject-leave')}>
                 <Check className="h-4 w-4 mr-2" />
@@ -447,7 +447,7 @@ const EmployeeLeave: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
+        <Card className="border-green-600">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Balance</CardTitle>
             <CheckCircle className="h-4 w-4 text-green-600" />
@@ -456,7 +456,7 @@ const EmployeeLeave: React.FC = () => {
             <div className="text-2xl font-bold">{totalBalance} days</div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border-blue-600">
 
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Earned Leave</CardTitle>
@@ -466,7 +466,7 @@ const EmployeeLeave: React.FC = () => {
             <div className="text-2xl font-bold">{leaveBalance.el} days</div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border-red-600">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Sick Leave</CardTitle>
             <Clock className="h-4 w-4 text-red-600" />
@@ -475,7 +475,7 @@ const EmployeeLeave: React.FC = () => {
             <div className="text-2xl font-bold">{leaveBalance.sl} days</div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border-yellow-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Casual Leave</CardTitle>
             <Sun className="h-4 w-4 text-yellow-500" />
@@ -484,7 +484,7 @@ const EmployeeLeave: React.FC = () => {
             <div className="text-2xl font-bold">{leaveBalance.cl} days</div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border-indigo-600">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">On Duty</CardTitle>
             <Briefcase className="h-4 w-4 text-indigo-600" />
@@ -493,7 +493,7 @@ const EmployeeLeave: React.FC = () => {
             <div className="text-2xl font-bold">{leaveBalance.od} days</div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border-gray-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Leave Without Pay</CardTitle>
             <MinusCircle className="h-4 w-4 text-gray-500" />
@@ -502,7 +502,7 @@ const EmployeeLeave: React.FC = () => {
             <div className="text-2xl font-bold">{leaveBalance.lwp} days</div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border-purple-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Late Hours Dedcutions</CardTitle>
             <Moon className="h-4 w-4 text-purple-500" />
@@ -511,7 +511,7 @@ const EmployeeLeave: React.FC = () => {
             <div className="text-2xl font-bold">{leaveBalance.lhd} days</div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border-pink-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Others</CardTitle>
             <Heart className="h-4 w-4 text-pink-500" />
@@ -531,8 +531,7 @@ const EmployeeLeave: React.FC = () => {
               <CardDescription>Track your submitted leave requests</CardDescription>
             </div>
             <Button
-              variant="outline"
-              className="ml-auto"
+              className="ml-auto bg-primary hover:bg-primary/90 text-white"
               onClick={handleDownloadExcel}
             >
               <Download className="h-4 w-4 mr-2" />
@@ -543,23 +542,25 @@ const EmployeeLeave: React.FC = () => {
         <CardContent>
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead>Leave Type</TableHead>
-                <TableHead>Start Date</TableHead>
-                <TableHead>Start Time</TableHead>
-                <TableHead>End Date</TableHead>
-                <TableHead>End Time</TableHead>
-                <TableHead>Days</TableHead>
-                <TableHead>Reason</TableHead>
-                <TableHead>Attachment</TableHead>
-                <TableHead>Reason of Rejection</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Actions</TableHead>
+              <TableRow className='bg-gray-300 hover:bg-gray-300'>
+                <TableHead className="font-bold text-black">S.No</TableHead>
+                <TableHead className="font-bold text-black">Leave Type</TableHead>
+                <TableHead className="font-bold text-black">Start Date</TableHead>
+                <TableHead className="font-bold text-black">Start Time</TableHead>
+                <TableHead className="font-bold text-black">End Date</TableHead>
+                <TableHead className="font-bold text-black">End Time</TableHead>
+                <TableHead className="font-bold text-black">Days</TableHead>
+                <TableHead className="font-bold text-black">Reason</TableHead>
+                <TableHead className="font-bold text-black">Attachment</TableHead>
+                <TableHead className="font-bold text-black">Reason of Rejection</TableHead>
+                <TableHead className="font-bold text-black">Status</TableHead>
+                <TableHead className="font-bold text-black">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {Leaves.map((request) => (
+              {Leaves.map((request, index) => (
                 <TableRow key={request._id}>
+                  <TableCell className="font-medium">{index + 1}</TableCell>
                   <TableCell className="font-medium">{getLeaveTypeLabel(request.type)}</TableCell>
                   <TableCell>{formatDate(request.startDate)}</TableCell>
                   <TableCell>{formatTime(request.startTime)}</TableCell>

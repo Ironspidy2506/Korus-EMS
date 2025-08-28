@@ -60,11 +60,10 @@ const EmployeeProfile: React.FC = () => {
           <p className="text-gray-600">View your personal information</p>
         </div>
         <Button
-          variant="outline"
-          className="print:hidden"
+          className="print:hidden bg-primary hover:bg-primary/90 text-white"
           onClick={handlePrint}
         >
-          <Printer className="h-4 w-4 mr-2" />
+          <Printer className="h-4 w-4 mr-0.5" />
           Print Profile
         </Button>
       </div>
@@ -102,7 +101,7 @@ const EmployeeProfile: React.FC = () => {
                 </div>
                 <div className="flex items-center space-x-3">
                   <Calendar className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm">Joined {formatDate(profile.doj)}</span>
+                  <span className="text-sm">Joined on {formatDate(profile.doj)}</span>
                 </div>
               </CardContent>
             </Card>

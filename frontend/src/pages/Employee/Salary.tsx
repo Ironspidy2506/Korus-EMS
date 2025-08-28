@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { DollarSign, Eye, EyeOff, Download, Lock, Key, Mail } from 'lucide-react';
+import { DollarSign, Eye, Download, Lock, Key, Mail } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { useAuth } from '@/contexts/AuthContext';
 import { getUserSalaries } from '@/utils/Salary';
@@ -38,9 +38,7 @@ const EmployeeSalary: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [otp, setOtp] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [showSalaryPass, setShowSalaryPass] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
 
   // Get unique years and months from salaryHistory
   const years = Array.from(new Set(salaryHistory.map((s: any) => s.paymentYear))).sort((a, b) => b - a);
@@ -566,29 +564,14 @@ const EmployeeSalary: React.FC = () => {
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="salaryPassword">Salary Password</Label>
-                <div className="relative">
-                  <Input
-                    id="salaryPassword"
-                    type={showSalaryPass ? 'text' : 'password'}
-                    placeholder="Enter your salary password"
-                    value={salaryPass}
-                    onChange={(e) => setSalaryPass(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && handlePasswordVerification()}
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-2 top-1/2 -translate-y-1/2"
-                    onClick={() => setShowSalaryPass((v) => !v)}
-                  >
-                    {showSalaryPass ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
-                  </Button>
-                </div>
+                <Input
+                  id="salaryPassword"
+                  type="password"
+                  placeholder="Enter your salary password"
+                  value={salaryPass}
+                  onChange={(e) => setSalaryPass(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handlePasswordVerification()}
+                />
               </div>
               <div className="flex gap-2">
                 <Button
@@ -626,54 +609,24 @@ const EmployeeSalary: React.FC = () => {
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="newPassword">New Password</Label>
-                <div className="relative">
-                  <Input
-                    id="newPassword"
-                    type={showNewPassword ? 'text' : 'password'}
-                    placeholder="Enter new password"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-2 top-1/2 -translate-y-1/2"
-                    onClick={() => setShowNewPassword((v) => !v)}
-                  >
-                    {showNewPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
-                  </Button>
-                </div>
+                <Input
+                  id="newPassword"
+                  type="password"
+                  placeholder="Enter new password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="confirmPassword">Confirm Password</Label>
-                <div className="relative">
-                  <Input
-                    id="confirmPassword"
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    placeholder="Confirm new password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && handleSetPassword()}
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-2 top-1/2 -translate-y-1/2"
-                    onClick={() => setShowConfirmPassword((v) => !v)}
-                  >
-                    {showConfirmPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
-                  </Button>
-                </div>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  placeholder="Confirm new password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleSetPassword()}
+                />
               </div>
               <Button
                 onClick={handleSetPassword}
@@ -710,54 +663,24 @@ const EmployeeSalary: React.FC = () => {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="resetNewPassword">New Password</Label>
-                <div className="relative">
-                  <Input
-                    id="resetNewPassword"
-                    type={showNewPassword ? 'text' : 'password'}
-                    placeholder="Enter new password"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-2 top-1/2 -translate-y-1/2"
-                    onClick={() => setShowNewPassword((v) => !v)}
-                  >
-                    {showNewPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
-                  </Button>
-                </div>
+                <Input
+                  id="resetNewPassword"
+                  type="password"
+                  placeholder="Enter new password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="resetConfirmPassword">Confirm Password</Label>
-                <div className="relative">
-                  <Input
-                    id="resetConfirmPassword"
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    placeholder="Confirm new password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && handleResetPassword()}
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-2 top-1/2 -translate-y-1/2"
-                    onClick={() => setShowConfirmPassword((v) => !v)}
-                  >
-                    {showConfirmPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
-                  </Button>
-                </div>
+                <Input
+                  id="resetConfirmPassword"
+                  type="password"
+                  placeholder="Confirm new password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleResetPassword()}
+                />
               </div>
               <Button
                 onClick={handleResetPassword}
@@ -775,14 +698,14 @@ const EmployeeSalary: React.FC = () => {
 
   // Main salary content (only shown after password verification)
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 min-h-screen bg-gray-50">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Salary Information</h1>
           <p className="text-gray-600">View your salary details and history</p>
         </div>
         <Button
-          variant="outline"
+          className="bg-primary hover:bg-primary/90 text-white"
           onClick={() => {
             setIsPasswordVerified(false);
             setShowPasswordModal(true);
@@ -794,7 +717,7 @@ const EmployeeSalary: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
+        <Card className='border border-primary'>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Salary History</CardTitle>
             <DollarSign className="h-4 w-4 text-primary" />
@@ -813,8 +736,7 @@ const EmployeeSalary: React.FC = () => {
               <CardDescription>Your salary history for the selected year</CardDescription>
             </div>
             <Button
-              variant="outline"
-              className="ml-auto"
+              className="ml-auto bg-primary hover:bg-primary/90 text-white"
               onClick={handleDownloadExcel}
             >
               <Download className="h-4 w-4 mr-2" />
@@ -855,16 +777,17 @@ const EmployeeSalary: React.FC = () => {
           </div>
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead>Month</TableHead>
-                <TableHead>Year</TableHead>
-                <TableHead>Payable Days</TableHead>
-                <TableHead>Gross Salary</TableHead>
-                <TableHead>Basic Salary</TableHead>
-                <TableHead>Allowances</TableHead>
-                <TableHead>Deductions</TableHead>
-                <TableHead>Net Salary</TableHead>
-                <TableHead>Slip</TableHead>
+              <TableRow className='bg-gray-300 hover:bg-gray-300'>
+                <TableHead className="font-bold text-black">S.No</TableHead>
+                <TableHead className="font-bold text-black">Month</TableHead>
+                <TableHead className="font-bold text-black">Year</TableHead>
+                <TableHead className="font-bold text-black">Payable Days</TableHead>
+                <TableHead className="font-bold text-black">Gross Salary</TableHead>
+                <TableHead className="font-bold text-black">Basic Salary</TableHead>
+                <TableHead className="font-bold text-black">Allowances</TableHead>
+                <TableHead className="font-bold text-black">Deductions</TableHead>
+                <TableHead className="font-bold text-black">Net Salary</TableHead>
+                <TableHead className="font-bold text-black">Slip</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -875,10 +798,10 @@ const EmployeeSalary: React.FC = () => {
                 )
                 .map((record, index) => (
                   <TableRow key={index}>
+                    <TableCell className="font-medium">{index + 1}</TableCell>
                     <TableCell className="font-medium">{record.paymentMonth}</TableCell>
                     <TableCell className="font-medium">{record.paymentYear}</TableCell>
                     <TableCell>{record.payableDays}</TableCell>
-
                     <TableCell>₹{record.grossSalary.toLocaleString('en-IN')}</TableCell>
                     <TableCell>₹{record.basicSalary.toLocaleString('en-IN')}</TableCell>
                     <TableCell className="text-green-600">+₹{(record.allowances?.reduce((sum: number, a: any) => sum + a.amount, 0) || 0).toLocaleString('en-IN')}</TableCell>
@@ -886,7 +809,7 @@ const EmployeeSalary: React.FC = () => {
                     <TableCell className="font-bold">₹{(record.grossSalary - (record.deductions?.reduce((sum: number, d: any) => sum + d.amount, 0) || 0)).toLocaleString('en-IN')}</TableCell>
                     <TableCell>
                       <Button size="icon" variant="ghost" onClick={() => setViewSlip(record)} title="View Salary Slip">
-                        <Eye className="h-5 w-5 text-orange-600 hover:text-orange-800 transition" />
+                        <Eye className="h-5 w-5 text-primary-600 hover:text-primary-800 transition" />
                       </Button>
                     </TableCell>
                   </TableRow>

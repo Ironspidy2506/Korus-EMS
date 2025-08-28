@@ -78,7 +78,6 @@ const EmployeeHolidays: React.FC = () => {
     return `${day}-${month}-${year}`;
   };
 
-  if (loading) return <div>Loading holidays...</div>;
   if (error) return <div className="text-red-500">{error}</div>;
 
   return (
@@ -91,17 +90,24 @@ const EmployeeHolidays: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
+        <Card className=' border border-purple-500'>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Holidays</CardTitle>
-            <Calendar className="h-4 w-4 text-primary" />
+            <Calendar className="h-5 w-5 text-purple-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{holidays.length}</div>
           </CardContent>
         </Card>
         {holidaysByType.map((item) => (
-          <Card key={item.type}>
+          <Card key={item.type} className={`${getTypeBadgeColor(item.type) === 'info' ? 'border-blue-500' :
+            getTypeBadgeColor(item.type) === 'success' ? 'border-green-500' :
+              getTypeBadgeColor(item.type) === 'warning' ? 'border-yellow-500' :
+                getTypeBadgeColor(item.type) === 'destructive' ? 'border-red-500' :
+                  getTypeBadgeColor(item.type) === 'teal' ? 'border-teal-500' :
+                    getTypeBadgeColor(item.type) === 'rose' ? 'border-rose-500' :
+                      'border-l-gray-500'
+            }`}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">{item.type}</CardTitle>
               <Badge variant={getTypeBadgeColor(item.type)}>{item.count}</Badge>
@@ -195,17 +201,19 @@ const EmployeeHolidays: React.FC = () => {
         <CardContent>
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead>Holiday Name</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead>Recurring</TableHead>
+              <TableRow className='bg-gray-300 hover:bg-gray-300'>
+                <TableHead className="font-bold text-black">S.No</TableHead>
+                <TableHead className="font-bold text-black">Holiday Name</TableHead>
+                <TableHead className="font-bold text-black">Date</TableHead>
+                <TableHead className="font-bold text-black">Type</TableHead>
+                <TableHead className="font-bold text-black">Description</TableHead>
+                <TableHead className="font-bold text-black">Recurring</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredHolidays.map((holiday) => (
+              {filteredHolidays.map((holiday, index) => (
                 <TableRow key={holiday._id}>
+                  <TableCell className="font-medium">{index + 1}</TableCell>
                   <TableCell className="font-medium">{holiday.name}</TableCell>
                   <TableCell>{formatDate(holiday.date)}</TableCell>
                   <TableCell>

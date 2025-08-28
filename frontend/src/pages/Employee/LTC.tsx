@@ -271,9 +271,7 @@ const EmployeeLTC: React.FC = () => {
     return matchesStatus && matchesPaymentStatus;
   });
 
-  if (loading) {
-    return <div className="flex justify-center items-center h-64">Loading...</div>;
-  }
+
 
 
 
@@ -334,29 +332,29 @@ const EmployeeLTC: React.FC = () => {
                  </Select>
                </div>
              </div>
-            <Button onClick={exportToExcel} variant="outline">
+            <Button onClick={exportToExcel} className="bg-primary hover:bg-primary/90 text-white">
               <Download className="h-4 w-4 mr-2" />
               Download as Excel
             </Button>
           </div>
           <div className="mt-4 overflow-x-auto">
             <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>S.No.</TableHead>
-                  <TableHead>Employee ID</TableHead>
-                  <TableHead>Employee Name</TableHead>
-                  <TableHead>Department</TableHead>
-                  <TableHead>Service Period</TableHead>
-                  <TableHead>Leave Period</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead className="w-[120px]">Admin Remarks</TableHead>
-                  <TableHead className="w-[120px]">Acoounts Remarks</TableHead>
-                  <TableHead className="w-[120px]">Payment Status</TableHead>
-                  <TableHead className="w-[120px]">Attachment</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
+                          <TableHeader>
+                             <TableRow className='bg-gray-300 hover:bg-gray-300'>
+                   <TableHead className="font-bold text-black">S.No.</TableHead>
+                   <TableHead className="font-bold text-black">Employee ID</TableHead>
+                   <TableHead className="font-bold text-black">Employee Name</TableHead>
+                   <TableHead className="font-bold text-black">Department</TableHead>
+                   <TableHead className="font-bold text-black">Service Period</TableHead>
+                   <TableHead className="font-bold text-black">Leave Period</TableHead>
+                   <TableHead className="font-bold text-black">Amount</TableHead>
+                   <TableHead className="font-bold text-black w-[120px]">Admin Remarks</TableHead>
+                   <TableHead className="font-bold text-black w-[120px]">Acoounts Remarks</TableHead>
+                   <TableHead className="font-bold text-black w-[120px]">Payment Status</TableHead>
+                   <TableHead className="font-bold text-black w-[120px]">Attachment</TableHead>
+                   <TableHead className="font-bold text-black">Status</TableHead>
+                   <TableHead className="font-bold text-black">Actions</TableHead>
+                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredLTCs.length === 0 ? (
@@ -466,7 +464,7 @@ const EmployeeLTC: React.FC = () => {
                         <div className="flex items-center gap-2">
                           <Button
                             size="sm"
-                            variant="outline"
+                            className="bg-yellow-500 hover:bg-yellow-600 text-white"
                             onClick={() => {
                               setFormData({
                                 ...ltc,
