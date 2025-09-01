@@ -50,6 +50,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             headers: {
               Authorization: `Bearer ${token}`,
             },
+            timeout: 10000, // 10 second timeout
           }
         );
 
@@ -77,17 +78,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         {
           email,
           password,
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          }
         }
       );
       if (response.data.success) {
         localStorage.setItem("token", response.data.token);
         setUser(response.data.user);
-        return response
+        return response;
       } else {
-        return response
+        return response;
       }
-    } catch (error) {
-      return false;
+    } catch (error: any) {
+      // Return a proper error response object instead of false
+      return {
+        data: {
+          success: false,
+          message: error.response?.data?.message || error.message || "Connection timed out!",
+        }
+      };
     } finally {
       setIsLoading(false);
     }

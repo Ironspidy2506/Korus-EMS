@@ -43,7 +43,7 @@ const Login: React.FC = () => {
 
     try {
       const response = await login(email, password);
-      if (response.data.success) {
+      if (response && response.data && response.data.success) {
         toast({
           title: "Login successful",
           description: "Welcome back!",
@@ -51,14 +51,15 @@ const Login: React.FC = () => {
       } else {
         toast({
           title: "Login failed",
-          description: response.data.message !== undefined ? `${response.data.message}` : "Connection timed out!",
+          description: response?.data?.message || "Connection timed out!",
           variant: "destructive",
         });
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Login error:", error);
       toast({
         title: "Error",
-        description: "An unexpected error occurred",
+        description: error?.message || "An unexpected error occurred",
         variant: "destructive",
       });
     } finally {
