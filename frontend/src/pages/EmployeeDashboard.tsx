@@ -100,25 +100,29 @@ const EmployeeDashboard: React.FC = () => {
       title: 'Leave Records',
       value: `${leaveRequests.length || 0}`,
       icon: Calendar,
-      color: 'text-blue-600'
+      color: 'text-blue-600',
+      borderColor: 'border-blue-600'
     },
     {
       title: 'Salary Records',
       value: `${salaryRequests.length || 0}`,
       icon: DollarSign,
-      color: 'text-green-600'
+      color: 'text-green-600',
+      borderColor: 'border-green-600'
     },
     {
       title: 'Upcoming Holidays',
       value: `${upcomingHolidays.length || 0}`,
       icon: CalendarCheck,
-      color: 'text-yellow-500'
+      color: 'text-yellow-500',
+      borderColor: 'border-yellow-500'
     },
     {
       title: 'Hours This Week',
       value: '',
       icon: Clock,
-      color: 'text-purple-600'
+      color: 'text-purple-600',
+      borderColor: 'border-purple-600'
     }
   ];
 

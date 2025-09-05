@@ -8,6 +8,7 @@ interface StatsCardProps {
   icon: LucideIcon;
   iconColor?: string;
   color?: string; // Accept color as a prop for icon
+  borderColor?: string; // Accept border color as a prop
   trend?: {
     value: number;
     isPositive: boolean;
@@ -15,9 +16,9 @@ interface StatsCardProps {
   className?: string;
 }
 
-const StatsCard: React.FC<StatsCardProps> = ({ title, value, icon: Icon, iconColor, color, trend, className = '' }) => {
+const StatsCard: React.FC<StatsCardProps> = ({ title, value, icon: Icon, iconColor, color, borderColor, trend, className = '' }) => {
   return (
-    <Card className={`animate-fade-in ${className}`}>
+    <Card className={`animate-fade-in ${borderColor ? `border-2 ${borderColor}` : ''} ${className}`}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium text-gray-600">{title}</CardTitle>
         <Icon className={`h-4 w-4 ${color || iconColor || 'text-primary'}`} />

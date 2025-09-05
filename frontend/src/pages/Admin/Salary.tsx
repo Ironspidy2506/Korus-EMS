@@ -5,11 +5,11 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { DollarSign, TrendingUp, Users, Building, Edit, Eye, X, Plus } from 'lucide-react';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { DollarSign, TrendingUp, Users, Building, Edit, Eye, X, Plus, ChevronDown, ChevronRight } from 'lucide-react';
 import { getAllSalaries, Salary, addSalary, updateSalary, deleteSalary } from '@/utils/Salary';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { ChevronDown } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { getAllEmployees, Employee } from '@/utils/Employee';
 import * as XLSX from 'xlsx';
@@ -20,11 +20,12 @@ const AdminSalary: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [departmentFilter, setDepartmentFilter] = useState('All');
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedSalary, setSelectedSalary] = useState<Salary | null>(null);
   const [showModal, setShowModal] = useState(false);
-  const [monthYearFilter, setMonthYearFilter] = useState('All');
+  const [paymentMonthFilter, setPaymentMonthFilter] = useState('All');
+  const [paymentYearFilter, setPaymentYearFilter] = useState('All');
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [showFormModal, setShowFormModal] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [formData, setFormData] = useState<any>({
@@ -60,15 +61,12 @@ const AdminSalary: React.FC = () => {
 
   useEffect(() => {
     const fetchSalaries = async () => {
-      setLoading(true);
       setError(null);
       try {
         const data = await getAllSalaries();
         setSalaryRecords(data.salaries || []);
       } catch (err: any) {
         setError('Failed to fetch salaries');
-      } finally {
-        setLoading(false);
       }
     };
     fetchSalaries();
@@ -138,27 +136,21 @@ const AdminSalary: React.FC = () => {
       .sort((a, b) => Number(a.employeeId) - Number(b.employeeId));
   }, [employees, employeeSearchTerm]);
 
-  // Get unique month-year combinations from salary records and sort chronologically
-  const monthYearCombinations = useMemo(() => {
-    return salaryRecords
-      .filter(r => r.paymentMonth && r.paymentYear)
-      .map(r => ({ month: r.paymentMonth, year: r.paymentYear, display: `${r.paymentMonth} ${r.paymentYear}` }))
-      .filter((item, index, self) =>
-        index === self.findIndex(t => t.month === item.month && t.year === item.year)
-      )
+  // Get unique months and years from salary records
+  const availableMonths = useMemo(() => {
+    return Array.from(new Set(salaryRecords.map(r => r.paymentMonth).filter(Boolean)))
       .sort((a, b) => {
-        // First sort by year
-        if (a.year !== b.year) {
-          return parseInt(a.year) - parseInt(b.year);
-        }
-        // Then sort by month within the same year
         const monthsOrder = [
           'January', 'February', 'March', 'April', 'May', 'June',
           'July', 'August', 'September', 'October', 'November', 'December'
         ];
-        return monthsOrder.indexOf(a.month) - monthsOrder.indexOf(b.month);
-      })
-      .map(item => item.display);
+        return monthsOrder.indexOf(a) - monthsOrder.indexOf(b);
+      });
+  }, [salaryRecords]);
+
+  const availableYears = useMemo(() => {
+    return Array.from(new Set(salaryRecords.map(r => r.paymentYear).filter(Boolean)))
+      .sort((a, b) => parseInt(b) - parseInt(a)); // Most recent year first
   }, [salaryRecords]);
 
   const filteredRecords = useMemo(() => {
@@ -171,18 +163,17 @@ const AdminSalary: React.FC = () => {
           employeeIdStr.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
           (record.employeeType && record.employeeType.toLowerCase().includes(debouncedSearchTerm.toLowerCase()));
         const matchesDepartment = departmentFilter === 'All' || departmentName === departmentFilter;
+        const matchesPaymentMonth = paymentMonthFilter === 'All' || record.paymentMonth === paymentMonthFilter;
+        const matchesPaymentYear = paymentYearFilter === 'All' || record.paymentYear === paymentYearFilter;
 
-        // Filter by month-year combination
-        const matchesMonthYear = monthYearFilter === 'All' || `${record.paymentMonth} ${record.paymentYear}` === monthYearFilter;
-
-        return matchesSearch && matchesDepartment && matchesMonthYear;
+        return matchesSearch && matchesDepartment && matchesPaymentMonth && matchesPaymentYear;
       })
       .sort((a, b) => {
         const aId = a.employeeId && typeof a.employeeId === 'object' ? a.employeeId.employeeId : 0;
         const bId = b.employeeId && typeof b.employeeId === 'object' ? b.employeeId.employeeId : 0;
         return aId - bId;
       });
-  }, [salaryRecords, debouncedSearchTerm, departmentFilter, monthYearFilter]);
+  }, [salaryRecords, debouncedSearchTerm, departmentFilter, paymentMonthFilter, paymentYearFilter]);
 
   // Calculate total salary for each record
   const getTotalSalary = (record: Salary) => {
@@ -202,6 +193,45 @@ const AdminSalary: React.FC = () => {
 
   const departments = useMemo(() => {
     return Array.from(new Set(filteredRecords.map(record => (record.employeeId && typeof record.employeeId === 'object' && record.employeeId.department ? record.employeeId.department.departmentName : '')))).filter(Boolean);
+  }, [filteredRecords]);
+
+  // Group records by employee for accordion view
+  const groupedRecords = useMemo(() => {
+    const grouped = filteredRecords.reduce((acc, record) => {
+      const employeeId = record.employeeId && typeof record.employeeId === 'object' ? String(record.employeeId.employeeId) : 'Unknown';
+      const employeeName = record.employeeId && typeof record.employeeId === 'object' ? record.employeeId.name : 'Unknown Employee';
+      const department = record.employeeId && typeof record.employeeId === 'object' && record.employeeId.department ? record.employeeId.department.departmentName : 'Unknown Department';
+      
+      if (!acc[employeeId]) {
+        acc[employeeId] = {
+          employeeId,
+          employeeName,
+          department,
+          records: []
+        };
+      }
+      acc[employeeId].records.push(record);
+      return acc;
+    }, {} as Record<string, { employeeId: string; employeeName: string; department: string; records: Salary[] }>);
+
+    // Sort records within each employee group by date (most recent first)
+    Object.values(grouped).forEach(group => {
+      group.records.sort((a, b) => {
+        const aYear = parseInt(a.paymentYear || '0');
+        const bYear = parseInt(b.paymentYear || '0');
+        if (aYear !== bYear) return bYear - aYear;
+        
+        const monthsOrder = [
+          'January', 'February', 'March', 'April', 'May', 'June',
+          'July', 'August', 'September', 'October', 'November', 'December'
+        ];
+        const aMonthIndex = monthsOrder.indexOf(a.paymentMonth || '');
+        const bMonthIndex = monthsOrder.indexOf(b.paymentMonth || '');
+        return bMonthIndex - aMonthIndex;
+      });
+    });
+
+    return grouped;
   }, [filteredRecords]);
 
   const handleViewDetails = (salary: Salary) => {
@@ -365,6 +395,18 @@ const AdminSalary: React.FC = () => {
     }
   };
 
+  const toggleRow = (employeeId: string) => {
+    setExpandedRows(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(employeeId)) {
+        newSet.delete(employeeId);
+      } else {
+        newSet.add(employeeId);
+      }
+      return newSet;
+    });
+  };
+
   const handlePrintSlip = () => {
     if (slipRef.current) {
       // Hide everything except the slip for printing
@@ -441,47 +483,7 @@ const AdminSalary: React.FC = () => {
           <CardTitle>Salary Records</CardTitle>
           <CardDescription>View and manage employee compensation details</CardDescription>
 
-          {/* Month-Year Selector */}
-          <div className="flex items-center gap-4 mt-4 mb-4 p-4 bg-gray-50 rounded-lg border">
-            <div className="flex items-center gap-2">
-              <Label className="font-medium text-gray-700">View Records for:</Label>
-            </div>
-            <div className="flex items-center gap-2">
-              <Select value={monthYearFilter} onValueChange={setMonthYearFilter}>
-                <SelectTrigger className="w-[200px]">
-                  <SelectValue placeholder="Select Month-Year" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="All">All Records</SelectItem>
-                  {monthYearCombinations.map(monthYear => (
-                    <SelectItem key={monthYear} value={monthYear}>{monthYear}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-center gap-2 ml-4">
-              <span className={`text-sm ${monthYearFilter !== 'All' ? 'text-green-600' : 'text-gray-600'}`}>
-                {monthYearFilter !== 'All'
-                  ? `Showing records for: ${monthYearFilter}`
-                  : 'Showing all salary records'
-                }
-              </span>
-              {monthYearFilter !== 'All' && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setMonthYearFilter('All');
-                  }}
-                  className="ml-2"
-                >
-                  Clear Filter
-                </Button>
-              )}
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 mt-2 overflow-x-auto pb-2">
+          <div className="flex items-center gap-2 mt-4 overflow-x-auto py-2">
             <Input
               placeholder="Search employees by Id or Name..."
               value={searchTerm}
@@ -496,6 +498,30 @@ const AdminSalary: React.FC = () => {
                 <SelectItem value="All">All Departments</SelectItem>
                 {departments.map(dept => (
                   <SelectItem key={dept} value={dept}>{dept}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={paymentMonthFilter} onValueChange={setPaymentMonthFilter}>
+              <SelectTrigger className="w-[150px]">
+                <SelectValue placeholder="Payment Month" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="All">All Months</SelectItem>
+                {availableMonths.map(month => (
+                  <SelectItem key={month} value={month}>{month}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={paymentYearFilter} onValueChange={setPaymentYearFilter}>
+              <SelectTrigger className="w-[120px]">
+                <SelectValue placeholder="Payment Year" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="All">All Years</SelectItem>
+                {availableYears.map(year => (
+                  <SelectItem key={year} value={year}>{year}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -534,17 +560,15 @@ const AdminSalary: React.FC = () => {
                 XLSX.writeFile(workbook, 'Salaries.xlsx');
               }}
               variant="outline"
-              className="border border-gray-300 text-gray-700 hover:bg-gray-100 ml-2 flex items-center min-w-[10rem]"
+              className="border border-gray-300 text-gray-700 hover:bg-gray-100 flex items-center min-w-[10rem]"
             >
-              <Download className="h-4 w-4 mr-2" />
+              <Download className="h-4 w-4" />
               Download Excel
             </Button>
           </div>
         </CardHeader>
         <CardContent>
-          {loading ? (
-            <div>Loading...</div>
-          ) : error ? (
+          {error ? (
             <div className="text-red-500">{error}</div>
           ) : (
             <>
@@ -555,51 +579,51 @@ const AdminSalary: React.FC = () => {
                     <TableHead>Employee ID</TableHead>
                     <TableHead>Employee Name</TableHead>
                     <TableHead>Department</TableHead>
-                    <TableHead>Position</TableHead>
-                    <TableHead>Gross Salary</TableHead>
-                    <TableHead>Basic Salary</TableHead>
-                    <TableHead>Allowances</TableHead>
-                    <TableHead>Deductions</TableHead>
-                    <TableHead>Net Salary</TableHead>
-                    <TableHead>Payable Days</TableHead>
-                    <TableHead>Payment Month</TableHead>
-                    <TableHead>Payment Year</TableHead>
+                    <TableHead>Number of Records</TableHead>
+                    <TableHead>Latest Payment</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredRecords.map((record, index) => {
-                    const employeeName = record.employeeId && typeof record.employeeId === 'object' ? record.employeeId.name : '';
-                    const department = record.employeeId && typeof record.employeeId === 'object' && record.employeeId.department ? record.employeeId.department.departmentName : '';
-                    const position = record.employeeType || '';
-                    const grossSalary = record.grossSalary || 0;
-                    const baseSalary = record.basicSalary || 0;
-                    const allowances = Array.isArray(record.allowances) ? record.allowances.reduce((sum, a) => sum + (a.amount || 0), 0) : 0;
-                    const deductions = Array.isArray(record.deductions) ? record.deductions.reduce((sum, d) => sum + (d.amount || 0), 0) : 0;
-                    const netSalary = (record.grossSalary || 0) - deductions;
-                    return (
-                      <TableRow key={record._id}>
+                  {Object.values(groupedRecords).map((group, groupIndex) => (
+                    <React.Fragment key={group.employeeId}>
+                      {/* Main employee row */}
+                      <TableRow 
+                        className="cursor-pointer hover:bg-gray-50"
+                        onClick={() => toggleRow(group.employeeId)}
+                      >
                         <TableCell>
-                          <div className="font-medium">{index + 1}</div>
+                          <div className="font-medium">{groupIndex + 1}</div>
                         </TableCell>
-                        <TableCell>{record.employeeId.employeeId}</TableCell>
-                        <TableCell>{employeeName}</TableCell>
-                        <TableCell>{department}</TableCell>
-                        <TableCell>{position}</TableCell>
-                        <TableCell>₹{grossSalary.toLocaleString()}</TableCell>
-                        <TableCell>₹{baseSalary.toLocaleString()}</TableCell>
-                        <TableCell className="text-green-600">+₹{allowances.toLocaleString('en-IN')}</TableCell>
-                        <TableCell className="text-red-600">-₹{deductions.toLocaleString('en-IN')}</TableCell>
-                        <TableCell className="font-medium">₹{netSalary.toLocaleString('en-IN')}</TableCell>
-                        <TableCell>{record.payableDays}</TableCell>
-                        <TableCell>{record.paymentMonth}</TableCell>
-                        <TableCell>{record.paymentYear}</TableCell>
+                        <TableCell>{group.employeeId}</TableCell>
+                        <TableCell>{group.employeeName}</TableCell>
+                        <TableCell>{group.department}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center">
+                            <Badge variant="outline" className="text-sm bg-orange-50 text-orange-700 border-orange-200">
+                              {group.records.length} record{group.records.length !== 1 ? 's' : ''}
+                            </Badge>
+                            {expandedRows.has(group.employeeId) ? (
+                              <ChevronDown className="h-4 w-4 text-orange-600" />
+                            ) : (
+                              <ChevronRight className="h-4 w-4 text-orange-600" />
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm font-medium">
+                            {group.records[0]?.paymentMonth} {group.records[0]?.paymentYear}
+                          </div>
+                        </TableCell>
                         <TableCell>
                           <div className="flex items-center space-x-2">
                             <Button 
                               variant="ghost" 
                               size="sm" 
-                              onClick={() => handleViewDetails(record)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleViewDetails(group.records[0]);
+                              }}
                               className="bg-blue-500 hover:bg-blue-600 text-white"
                             >
                               <Eye className="h-4 w-4" />
@@ -607,24 +631,105 @@ const AdminSalary: React.FC = () => {
                             <Button 
                               variant="ghost" 
                               size="sm" 
-                              onClick={() => openEditModal(record)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openEditModal(group.records[0]);
+                              }}
                               className="bg-yellow-500 hover:bg-yellow-600 text-white"
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              onClick={() => openDeleteDialog(record._id)}
-                              className="bg-red-500 hover:bg-red-600 text-white"
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
                           </div>
                         </TableCell>
                       </TableRow>
-                    );
-                  })}
+                      
+                      {/* Expandable salary records */}
+                      {expandedRows.has(group.employeeId) && (
+                        <tr>
+                        <TableCell colSpan={7} className="p-0">
+                          <div className="bg-gray-50 p-4">
+                            <div className="overflow-x-auto">
+                              <Table>
+                                <TableHeader>
+                                  <TableRow>
+                                    <TableHead>S.No.</TableHead>
+                                    <TableHead>Payment Period</TableHead>
+                                    <TableHead>Position</TableHead>
+                                    <TableHead>Gross Salary</TableHead>
+                                    <TableHead>Basic Salary</TableHead>
+                                    <TableHead>Allowances</TableHead>
+                                    <TableHead>Deductions</TableHead>
+                                    <TableHead>Net Salary</TableHead>
+                                    <TableHead>Payable Days</TableHead>
+                                    <TableHead>Actions</TableHead>
+                                  </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                  {group.records.map((record, recordIndex) => {
+                                    const position = record.employeeType || '';
+                                    const grossSalary = record.grossSalary || 0;
+                                    const baseSalary = record.basicSalary || 0;
+                                    const allowances = Array.isArray(record.allowances) ? record.allowances.reduce((sum, a) => sum + (a.amount || 0), 0) : 0;
+                                    const deductions = Array.isArray(record.deductions) ? record.deductions.reduce((sum, d) => sum + (d.amount || 0), 0) : 0;
+                                    const netSalary = (record.grossSalary || 0) - deductions;
+                                    return (
+                                      <TableRow key={record._id}>
+                                        <TableCell>
+                                          <div className="font-medium">{recordIndex + 1}</div>
+                                        </TableCell>
+                                        <TableCell>
+                                          <div className="flex flex-col">
+                                            <span className="font-medium">{record.paymentMonth}</span>
+                                            <span className="text-sm text-gray-500">{record.paymentYear}</span>
+                                          </div>
+                                        </TableCell>
+                                        <TableCell>{position}</TableCell>
+                                        <TableCell>₹{grossSalary.toLocaleString()}</TableCell>
+                                        <TableCell>₹{baseSalary.toLocaleString()}</TableCell>
+                                        <TableCell className="text-green-600">+₹{allowances.toLocaleString('en-IN')}</TableCell>
+                                        <TableCell className="text-red-600">-₹{deductions.toLocaleString('en-IN')}</TableCell>
+                                        <TableCell className="font-medium">₹{netSalary.toLocaleString('en-IN')}</TableCell>
+                                        <TableCell>{record.payableDays}</TableCell>
+                                        <TableCell>
+                                          <div className="flex items-center space-x-2">
+                                            <Button 
+                                              variant="ghost" 
+                                              size="sm" 
+                                              onClick={() => handleViewDetails(record)}
+                                              className="bg-blue-500 hover:bg-blue-600 text-white"
+                                            >
+                                              <Eye className="h-4 w-4" />
+                                            </Button>
+                                            <Button 
+                                              variant="ghost" 
+                                              size="sm" 
+                                              onClick={() => openEditModal(record)}
+                                              className="bg-yellow-500 hover:bg-yellow-600 text-white"
+                                            >
+                                              <Edit className="h-4 w-4" />
+                                            </Button>
+                                            <Button 
+                                              variant="ghost" 
+                                              size="sm" 
+                                              onClick={() => openDeleteDialog(record._id)}
+                                              className="bg-red-500 hover:bg-red-600 text-white"
+                                            >
+                                              <X className="h-4 w-4" />
+                                            </Button>
+                                          </div>
+                                        </TableCell>
+                                      </TableRow>
+                                    );
+                                  })}
+                                </TableBody>
+                              </Table>
+                            </div>
+                          </div>
+                        </TableCell>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  ))}
                 </TableBody>
               </Table>
               {/* Modal for Allowances and Deductions */}
