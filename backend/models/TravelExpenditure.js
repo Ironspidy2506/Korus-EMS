@@ -55,12 +55,10 @@ const travelExpenditureSchema = new mongoose.Schema({
     required: true
   },
   startDate: {
-    type: Date,
-    required: true
+    type: Date
   },
   returnDate: {
-    type: Date,
-    required: true
+    type: Date
   },
   purposeOfVisit: {
     type: String,

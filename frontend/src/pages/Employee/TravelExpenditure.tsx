@@ -11,15 +11,10 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Calendar } from 'lucide-react';
 import { Employee } from '@/utils/Employee';
 import { getAllDepartments, Department } from '@/utils/Department';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
-import { format } from 'date-fns';
-import { Calendar as CalendarIcon } from 'lucide-react';
-import { Calendar as DateCalendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useAuth } from '@/contexts/AuthContext';
 
 const getStatusBadgeColor = (status: string) => {
@@ -674,48 +669,26 @@ const EmployeeTravelExpenditure: React.FC = () => {
 
               <div className="space-y-2">
                 <Label htmlFor="startDate">Start Date</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="w-full justify-start text-left font-normal"
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {formData.startDate ? format(new Date(formData.startDate), 'PPP') : 'Pick a date'}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <DateCalendar
-                      mode="single"
-                      selected={formData.startDate ? new Date(formData.startDate) : undefined}
-                      onSelect={(date) => setFormData(prev => ({ ...prev, startDate: date ? date.toISOString() : '' }))}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
+                <Input
+                  id="startDate"
+                  name="startDate"
+                  type="date"
+                  value={formData.startDate ? formData.startDate.slice(0, 10) : ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, startDate: e.target.value }))}
+                  className="w-full"
+                />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="returnDate">Return Date</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="w-full justify-start text-left font-normal"
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {formData.returnDate ? format(new Date(formData.returnDate), 'PPP') : 'Pick a date'}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <DateCalendar
-                      mode="single"
-                      selected={formData.returnDate ? new Date(formData.returnDate) : undefined}
-                      onSelect={(date) => setFormData(prev => ({ ...prev, returnDate: date ? date.toISOString() : '' }))}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
+                <Input
+                  id="returnDate"
+                  name="returnDate"
+                  type="date"
+                  value={formData.returnDate ? formData.returnDate.slice(0, 10) : ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, returnDate: e.target.value }))}
+                  className="w-full"
+                />
               </div>
 
               <div className="space-y-2">

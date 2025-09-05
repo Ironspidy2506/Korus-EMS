@@ -101,28 +101,28 @@ const EmployeeDashboard: React.FC = () => {
       value: `${leaveRequests.length || 0}`,
       icon: Calendar,
       color: 'text-blue-600',
-      borderColor: 'border-blue-600'
+      borderColor: 'border border-blue-600'
     },
     {
       title: 'Salary Records',
       value: `${salaryRequests.length || 0}`,
       icon: DollarSign,
       color: 'text-green-600',
-      borderColor: 'border-green-600'
+      borderColor: 'border border-green-600'
     },
     {
       title: 'Upcoming Holidays',
       value: `${upcomingHolidays.length || 0}`,
       icon: CalendarCheck,
       color: 'text-yellow-500',
-      borderColor: 'border-yellow-500'
+      borderColor: 'border border-yellow-600'
     },
     {
       title: 'Hours This Week',
       value: '',
       icon: Clock,
       color: 'text-purple-600',
-      borderColor: 'border-purple-600'
+      borderColor: 'border border-purple-600'
     }
   ];
 
@@ -174,19 +174,19 @@ const EmployeeDashboard: React.FC = () => {
             <CardDescription>Frequently used features</CardDescription>
           </CardHeader>
           <CardContent className="grid grid-cols-2 gap-4">
-            <Button variant="outline" className="flex flex-col items-center p-6 h-auto bg-blue-50 hover:bg-blue-100 border-blue-200 hover:border-blue-300 transition-colors" onClick={() => navigate(`/${user?.role}-dashboard/leave`)}>
+            <Button variant="outline" className="flex flex-col items-center p-6 h-auto bg-blue-50 hover:bg-blue-100 border-blue-100 hover:border-blue-200 transition-colors" onClick={() => navigate(`/${user?.role}-dashboard/leave`)}>
               <Calendar className="h-8 w-8 mb-2 text-blue-600" />
               <span className="text-sm text-blue-700">Request Leave</span>
             </Button>
-            <Button variant="outline" className="flex flex-col items-center p-6 h-auto bg-green-50 hover:bg-green-100 border-green-200 hover:border-green-300 transition-colors" onClick={() => navigate(`/${user?.role}-dashboard/salary`)}>
+            <Button variant="outline" className="flex flex-col items-center p-6 h-auto bg-green-50 hover:bg-green-100 border-green-100 hover:border-green-200 transition-colors" onClick={() => navigate(`/${user?.role}-dashboard/salary`)}>
               <DollarSign className="h-8 w-8 mb-2 text-green-600" />
               <span className="text-sm text-green-700">View Salary</span>
             </Button>
-            <Button variant="outline" className="flex flex-col items-center p-6 h-auto bg-purple-50 hover:bg-purple-100 border-purple-200 hover:border-purple-300 transition-colors" onClick={() => navigate(`/${user?.role}-dashboard/helpdesk`)}>
+            <Button variant="outline" className="flex flex-col items-center p-6 h-auto bg-purple-50 hover:bg-purple-100 border-purple-100 hover:border-purple-200 transition-colors" onClick={() => navigate(`/${user?.role}-dashboard/helpdesk`)}>
               <HelpCircle className="h-8 w-8 mb-2 text-purple-600" />
               <span className="text-sm text-purple-700">Visit Helpdesk</span>
             </Button>
-            <Button variant="outline" className="flex flex-col items-center p-6 h-auto bg-pink-50 hover:bg-pink-100 border-pink-200 hover:border-pink-300 transition-colors" onClick={() => navigate(`/${user?.role}-dashboard/allowances`)}>
+            <Button variant="outline" className="flex flex-col items-center p-6 h-auto bg-pink-50 hover:bg-pink-100 border-pink-100 hover:border-pink-200 transition-colors" onClick={() => navigate(`/${user?.role}-dashboard/allowances`)}>
               <Gift className="h-8 w-8 mb-2 text-pink-600" />
               <span className="text-sm text-pink-700">View Allowances</span>
             </Button>
