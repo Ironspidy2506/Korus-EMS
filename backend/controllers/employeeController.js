@@ -294,6 +294,15 @@ const updateEmployeeLeaveBalance = async (req, res) => {
     const { employeeId } = req.params;
     const { el, cl, sl, od, lwp, lhd, others } = req.body;
 
+    // Validate employeeId
+    if (!employeeId) {
+      return res.status(400).json({ 
+        success: false, 
+        error: "Employee ID is required" 
+      });
+    }
+
+    // Find employee by employeeId (not _id)
     const employee = await Employee.findOne({ employeeId: employeeId });
     if (!employee) {
       return res

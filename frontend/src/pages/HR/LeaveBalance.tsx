@@ -6,9 +6,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Label } from '@/components/ui/label';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, ChevronLeft, ChevronRight, Save, User, Check, ChevronsUpDown, Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Employee, getAllEmployees, updateEmployeeLeaveBalance } from '@/utils/Employee';
+import { Leave, getUserLeaves } from '@/utils/Leave';
 import { cn } from '@/lib/utils';
 import * as XLSX from 'xlsx';
 
@@ -24,16 +26,19 @@ const HRLeaveBalance: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [employeeLeaves, setEmployeeLeaves] = useState<Leave[]>([]);
+  const [loadingLeaves, setLoadingLeaves] = useState(false);
+  const [leaveStatusFilter, setLeaveStatusFilter] = useState<string>('all');
 
   // Form state for leave balances
   const [leaveBalances, setLeaveBalances] = useState({
-    el: 0,
-    sl: 0,
-    cl: 0,
-    od: 0,
-    lwp: 0,
-    lhd: 0,
-    others: 0
+    el: '',
+    sl: '',
+    cl: '',
+    od: '',
+    lwp: '',
+    lhd: '',
+    others: ''
   });
 
   useEffect(() => {
@@ -69,30 +74,41 @@ const HRLeaveBalance: React.FC = () => {
   }, [toast]);
 
   // Handle employee selection
-  const handleEmployeeSelect = useCallback((employeeId: string) => {
+  const handleEmployeeSelect = useCallback(async (employeeId: string) => {
     const employee = employees.find(emp => emp._id === employeeId);
     if (employee) {
       setSelectedEmployee(employee);
       setLeaveBalances({
-        el: employee.leaveBalance?.el || 0,
-        sl: employee.leaveBalance?.sl || 0,
-        cl: employee.leaveBalance?.cl || 0,
-        od: employee.leaveBalance?.od || 0,
-        lwp: employee.leaveBalance?.lwp || 0,
-        lhd: employee.leaveBalance?.lhd || 0,
-        others: employee.leaveBalance?.others || 0
+        el: employee.leaveBalance?.el?.toString() || '',
+        sl: employee.leaveBalance?.sl?.toString() || '',
+        cl: employee.leaveBalance?.cl?.toString() || '',
+        od: employee.leaveBalance?.od?.toString() || '',
+        lwp: employee.leaveBalance?.lwp?.toString() || '',
+        lhd: employee.leaveBalance?.lhd?.toString() || '',
+        others: employee.leaveBalance?.others?.toString() || ''
       });
       setIsEditing(true);
       setIsOpen(false);
+      
+      // Fetch employee leave records
+      try {
+        setLoadingLeaves(true);
+        const response = await getUserLeaves(employee.userId._id);
+        setEmployeeLeaves(response.leaves || []);
+      } catch (error) {
+        console.error('Error fetching employee leaves:', error);
+        setEmployeeLeaves([]);
+      } finally {
+        setLoadingLeaves(false);
+      }
     }
   }, [employees]);
 
   // Handle leave balance input changes
   const handleLeaveBalanceChange = useCallback((field: keyof typeof leaveBalances, value: string) => {
-    const numValue = parseFloat(value) || 0;
     setLeaveBalances(prev => ({
       ...prev,
-      [field]: numValue
+      [field]: value
     }));
   }, []);
 
@@ -102,7 +118,19 @@ const HRLeaveBalance: React.FC = () => {
 
     try {
       setIsSaving(true);
-      await updateEmployeeLeaveBalance(String(selectedEmployee.employeeId), leaveBalances);
+      
+      // Convert string values to numbers, defaulting to 0 for empty strings
+      const numericLeaveBalances = {
+        el: parseFloat(leaveBalances.el) || 0,
+        sl: parseFloat(leaveBalances.sl) || 0,
+        cl: parseFloat(leaveBalances.cl) || 0,
+        od: parseFloat(leaveBalances.od) || 0,
+        lwp: parseFloat(leaveBalances.lwp) || 0,
+        lhd: parseFloat(leaveBalances.lhd) || 0,
+        others: parseFloat(leaveBalances.others) || 0
+      };
+
+      await updateEmployeeLeaveBalance(String(selectedEmployee.employeeId), numericLeaveBalances);
 
       toast({
         title: "Success",
@@ -112,7 +140,7 @@ const HRLeaveBalance: React.FC = () => {
       // Update the employee in the list
       setEmployees(prev => prev.map(emp =>
         emp._id === selectedEmployee._id
-          ? { ...emp, leaveBalance: leaveBalances }
+          ? { ...emp, leaveBalance: numericLeaveBalances }
           : emp
       ));
 
@@ -120,13 +148,13 @@ const HRLeaveBalance: React.FC = () => {
       setSelectedEmployee(null);
       setIsEditing(false);
       setLeaveBalances({
-        el: 0,
-        sl: 0,
-        cl: 0,
-        od: 0,
-        lwp: 0,
-        lhd: 0,
-        others: 0
+        el: '',
+        sl: '',
+        cl: '',
+        od: '',
+        lwp: '',
+        lhd: '',
+        others: ''
       });
     } catch (error) {
       console.error("Failed to update leave balances:", error);
@@ -192,6 +220,12 @@ const HRLeaveBalance: React.FC = () => {
   const getLeaveBalance = useCallback((employee: Employee, leaveType: keyof Employee['leaveBalance']) => {
     return employee.leaveBalance?.[leaveType] || 0;
   }, []);
+
+  // Filtered employee leave records
+  const filteredEmployeeLeaves = useMemo(() => {
+    if (leaveStatusFilter === 'all') return employeeLeaves;
+    return employeeLeaves.filter(leave => leave.status === leaveStatusFilter);
+  }, [employeeLeaves, leaveStatusFilter]);
 
   // Excel export handler
   const handleDownloadExcel = () => {
@@ -319,7 +353,7 @@ const HRLeaveBalance: React.FC = () => {
                     id="el"
                     type="number"
                     min="0"
-                    step="0.01"
+                    step="0.5"
                     value={leaveBalances.el}
                     onChange={(e) => handleLeaveBalanceChange('el', e.target.value)}
                     placeholder="0"
@@ -331,7 +365,7 @@ const HRLeaveBalance: React.FC = () => {
                     id="sl"
                     type="number"
                     min="0"
-                    step="0.01"
+                    step="0.5"
                     value={leaveBalances.sl}
                     onChange={(e) => handleLeaveBalanceChange('sl', e.target.value)}
                     placeholder="0"
@@ -343,7 +377,7 @@ const HRLeaveBalance: React.FC = () => {
                     id="cl"
                     type="number"
                     min="0"
-                    step="0.01"
+                    step="0.5"
                     value={leaveBalances.cl}
                     onChange={(e) => handleLeaveBalanceChange('cl', e.target.value)}
                     placeholder="0"
@@ -355,7 +389,7 @@ const HRLeaveBalance: React.FC = () => {
                     id="od"
                     type="number"
                     min="0"
-                    step="0.01"
+                    step="0.5"
                     value={leaveBalances.od}
                     onChange={(e) => handleLeaveBalanceChange('od', e.target.value)}
                     placeholder="0"
@@ -367,7 +401,7 @@ const HRLeaveBalance: React.FC = () => {
                     id="lwp"
                     type="number"
                     min="0"
-                    step="0.01"
+                    step="0.5"
                     value={leaveBalances.lwp}
                     onChange={(e) => handleLeaveBalanceChange('lwp', e.target.value)}
                     placeholder="0"
@@ -379,7 +413,7 @@ const HRLeaveBalance: React.FC = () => {
                     id="lhd"
                     type="number"
                     min="0"
-                    step="0.01"
+                    step="0.5"
                     value={leaveBalances.lhd}
                     onChange={(e) => handleLeaveBalanceChange('lhd', e.target.value)}
                     placeholder="0"
@@ -391,7 +425,7 @@ const HRLeaveBalance: React.FC = () => {
                     id="others"
                     type="number"
                     min="0"
-                    step="0.01"
+                    step="0.5"
                     value={leaveBalances.others}
                     onChange={(e) => handleLeaveBalanceChange('others', e.target.value)}
                     placeholder="0"
@@ -414,18 +448,137 @@ const HRLeaveBalance: React.FC = () => {
                     setSelectedEmployee(null);
                     setIsEditing(false);
                     setLeaveBalances({
-                      el: 0,
-                      sl: 0,
-                      cl: 0,
-                      od: 0,
-                      lwp: 0,
-                      lhd: 0,
-                      others: 0
+                      el: '',
+                      sl: '',
+                      cl: '',
+                      od: '',
+                      lwp: '',
+                      lhd: '',
+                      others: ''
                     });
                   }}
                 >
                   Cancel
                 </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Employee Leave Records Table */}
+          {isEditing && selectedEmployee && (
+            <div className="space-y-4">
+              <div className="p-4 bg-blue-50 rounded-lg">
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <h3 className="font-semibold text-blue-800">Leave Records for: {selectedEmployee.name}</h3>
+                    <p className="text-sm text-blue-600">Employee ID: {selectedEmployee.employeeId} | Department: {selectedEmployee.department?.departmentName}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="leave-status-filter" className="text-sm font-medium text-blue-700">Filter by Status:</Label>
+                    <Select value={leaveStatusFilter} onValueChange={setLeaveStatusFilter}>
+                      <SelectTrigger className="w-32" id="leave-status-filter">
+                        <SelectValue placeholder="All Status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Status</SelectItem>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="approved">Approved</SelectItem>
+                        <SelectItem value="rejected">Rejected</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border rounded-lg">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-gray-100">
+                      <TableHead className="font-bold">S.No.</TableHead>
+                      <TableHead className="font-bold">Leave Type</TableHead>
+                      <TableHead className="font-bold">Start Date</TableHead>
+                      <TableHead className="font-bold">Start Time</TableHead>
+                      <TableHead className="font-bold">End Date</TableHead>
+                      <TableHead className="font-bold">End Time</TableHead>
+                      <TableHead className="font-bold">Days</TableHead>
+                      <TableHead className="font-bold">Reason</TableHead>
+                      <TableHead className="font-bold">Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {loadingLeaves ? (
+                      <TableRow>
+                        <TableCell colSpan={9} className="text-center py-8">
+                          <div className="flex items-center justify-center">
+                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mr-2"></div>
+                            Loading leave records...
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ) : filteredEmployeeLeaves.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={9} className="text-center py-8">
+                          <div className="text-gray-500">
+                            {employeeLeaves.length === 0 
+                              ? 'No leave records found for this employee'
+                              : `No ${leaveStatusFilter} leave records found`
+                            }
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      filteredEmployeeLeaves.map((leave, index) => (
+                        <TableRow key={leave._id}>
+                          <TableCell className="font-medium">{index + 1}</TableCell>
+                          <TableCell>
+                            <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
+                              {leave.type === 'el' ? 'Earned Leave' :
+                               leave.type === 'sl' ? 'Sick Leave' :
+                               leave.type === 'cl' ? 'Casual Leave' :
+                               leave.type === 'od' ? 'On Duty' :
+                               leave.type === 'lwp' ? 'Leave Without Pay' :
+                               leave.type === 'lhd' ? 'Late Hours Deduction' :
+                               leave.type === 'others' ? 'Others' : leave.type}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            {new Date(leave.startDate).toLocaleDateString('en-GB')}
+                          </TableCell>
+                          <TableCell>
+                            {new Date(`2000-01-01T${leave.startTime}`).toLocaleTimeString('en-US', { 
+                              hour: 'numeric', 
+                              minute: '2-digit', 
+                              hour12: true 
+                            })}
+                          </TableCell>
+                          <TableCell>
+                            {new Date(leave.endDate).toLocaleDateString('en-GB')}
+                          </TableCell>
+                          <TableCell>
+                            {new Date(`2000-01-01T${leave.endTime}`).toLocaleTimeString('en-US', { 
+                              hour: 'numeric', 
+                              minute: '2-digit', 
+                              hour12: true 
+                            })}
+                          </TableCell>
+                          <TableCell className="font-medium">{leave.days}</TableCell>
+                          <TableCell className="max-w-xs truncate" title={leave.reason}>
+                            {leave.reason}
+                          </TableCell>
+                          <TableCell>
+                            <span className={`px-2 py-1 text-xs rounded-full ${
+                              leave.status === 'approved' ? 'bg-green-100 text-green-800' :
+                              leave.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                              'bg-yellow-100 text-yellow-800'
+                            }`}>
+                              {(leave.status || 'pending').charAt(0).toUpperCase() + (leave.status || 'pending').slice(1)}
+                            </span>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
               </div>
             </div>
           )}
