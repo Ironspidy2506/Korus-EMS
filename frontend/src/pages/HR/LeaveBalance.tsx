@@ -348,11 +348,12 @@ const HRLeaveBalance: React.FC = () => {
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div>
-                  <Label htmlFor="el">Earned Leave</Label>
+                  <Label htmlFor="el">Earned Leave (Max: 75)</Label>
                   <Input
                     id="el"
                     type="number"
                     min="0"
+                    max="75"
                     step="0.5"
                     value={leaveBalances.el}
                     onChange={(e) => handleLeaveBalanceChange('el', e.target.value)}
@@ -360,11 +361,12 @@ const HRLeaveBalance: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="sl">Sick Leave</Label>
+                  <Label htmlFor="sl">Sick Leave (Max: 15)</Label>
                   <Input
                     id="sl"
                     type="number"
                     min="0"
+                    max="15"
                     step="0.5"
                     value={leaveBalances.sl}
                     onChange={(e) => handleLeaveBalanceChange('sl', e.target.value)}
