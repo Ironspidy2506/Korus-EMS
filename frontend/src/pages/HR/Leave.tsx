@@ -250,6 +250,7 @@ const HRLeave: React.FC = () => {
           method: 'DELETE',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
           },
         })
       );
@@ -307,6 +308,7 @@ const HRLeave: React.FC = () => {
           method: 'DELETE',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
           },
         })
       );
