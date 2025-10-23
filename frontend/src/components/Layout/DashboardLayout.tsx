@@ -57,7 +57,8 @@ const DashboardLayout: React.FC = () => {
           { icon: Gift, label: 'Fixed Allowances', path: '/admin-dashboard/fixed-allowances' },
           { icon: Award, label: 'Variable Allowances', path: '/admin-dashboard/allowances' },
           { icon: MapPin, label: 'LTC', path: '/admin-dashboard/ltc' },
-          { icon: Plane, label: 'Travel Expenditure', path: '/admin-dashboard/travel-expenditure' }
+          { icon: Plane, label: 'Travel Expenditure', path: '/admin-dashboard/travel-expenditure' },
+          { icon: UserPlus, label: 'Onboarding/Offboarding', path: '/admin-dashboard/onboarding' },
         ];
       case 'accounts':
         return [
