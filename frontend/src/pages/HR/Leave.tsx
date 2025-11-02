@@ -18,6 +18,7 @@ const ITEMS_PER_PAGE = 20; // Show 20 items per page for better performance
 
 const HRLeave: React.FC = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [leaveRequests, setLeaveRequests] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -25,16 +26,27 @@ const HRLeave: React.FC = () => {
   const [selectedLeave, setSelectedLeave] = useState(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [leaveTypeFilter, setLeaveTypeFilter] = useState('All');
   const [editingRejectionId, setEditingRejectionId] = useState(null);
   const [rejectionReason, setRejectionReason] = useState('');
   const [isUpdatingRejection, setIsUpdatingRejection] = useState(false);
-  const [selectedMonth, setSelectedMonth] = useState<string>('All');
-  const [selectedYear, setSelectedYear] = useState<string>('All');
   const [isDeleteAllDialogOpen, setIsDeleteAllDialogOpen] = useState(false);
   const [isDeletingAll, setIsDeletingAll] = useState(false);
   const [isDeleteRejectedDialogOpen, setIsDeleteRejectedDialogOpen] = useState(false);
   const [isDeletingRejected, setIsDeletingRejected] = useState(false);
-  const navigate = useNavigate();
+
+  const getLeaveTypeLabel = useCallback((type: string) => {
+    const typeMap: { [key: string]: string } = {
+      'el': 'Earned Leave',
+      'sl': 'Sick Leave',
+      'cl': 'Casual Leave',
+      'od': 'On Duty',
+      'lwp': 'Leave Without Pay',
+      'lhd': 'Late Hours Deduction',
+      'others': 'Others'
+    };
+    return typeMap[type] || type;
+  }, []);
 
   useEffect(() => {
     fetchLeaves();
@@ -69,26 +81,15 @@ const HRLeave: React.FC = () => {
     return leaveRequests.filter((request: any) => {
       const matchesSearch = searchTerm === '' ||
         request.employeeId?.employeeId?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
-        request.employeeId?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+        request.employeeId?.name?.toLowerCase().includes(searchTerm.toLowerCase());
 
       const matchesStatus = statusFilter === 'All' || request.status === statusFilter;
 
-      // Month/year filter
-      let matchesMonth = true;
-      let matchesYear = true;
-      if (selectedMonth !== 'All' || selectedYear !== 'All') {
-        const startDate = new Date(request.startDate);
-        if (selectedMonth !== 'All') {
-          matchesMonth = startDate.getMonth() + 1 === parseInt(selectedMonth);
-        }
-        if (selectedYear !== 'All') {
-          matchesYear = startDate.getFullYear() === parseInt(selectedYear);
-        }
-      }
+      const matchesLeaveType = leaveTypeFilter === 'All' || getLeaveTypeLabel(request.type) === leaveTypeFilter;
 
-      return matchesSearch && matchesStatus && matchesMonth && matchesYear;
+      return matchesSearch && matchesStatus && matchesLeaveType;
     });
-  }, [leaveRequests, searchTerm, statusFilter, selectedMonth, selectedYear]);
+  }, [leaveRequests, searchTerm, statusFilter, leaveTypeFilter, getLeaveTypeLabel]);
 
   // Memoized paginated data - CRITICAL for performance
   const paginatedLeaveRequests = useMemo(() => {
@@ -126,7 +127,7 @@ const HRLeave: React.FC = () => {
   // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, statusFilter, selectedMonth, selectedYear]);
+  }, [searchTerm, statusFilter, leaveTypeFilter]);
 
   const handleApprove = useCallback(async (leaveId: string) => {
     try {
@@ -179,7 +180,6 @@ const HRLeave: React.FC = () => {
       });
     }
   }, [toast]);
-
 
   const handleEditRejectionReason = useCallback((leaveId: string, currentReason: string) => {
     setEditingRejectionId(leaveId);
@@ -361,19 +361,6 @@ const HRLeave: React.FC = () => {
     }
   }, []);
 
-  const getLeaveTypeLabel = useCallback((type: string) => {
-    const typeMap: { [key: string]: string } = {
-      'el': 'Earned Leave',
-      'sl': 'Sick Leave',
-      'cl': 'Casual Leave',
-      'od': 'On Duty',
-      'lwp': 'Leave Without Pay',
-      'lhd': 'Half Day Leave',
-      'others': 'Others'
-    };
-    return typeMap[type] || type;
-  }, []);
-
   const formatDate = useCallback((dateString: string) => {
     const date = new Date(dateString);
     const day = date.getDate().toString().padStart(2, '0');
@@ -394,32 +381,6 @@ const HRLeave: React.FC = () => {
   const handlePageChange = useCallback((newPage: number) => {
     setCurrentPage(newPage);
   }, []);
-
-  // Excel export handler
-  const handleDownloadExcel = () => {
-    const dataToExport = filteredLeaveRequests.map((request: any, idx: number) => ({
-      'S.No.': idx + 1,
-      'Employee ID': request.employeeId?.employeeId,
-      'Employee Name': request.employeeId?.name,
-      'Department': request.employeeId?.department?.departmentName,
-      'Leave Type': getLeaveTypeLabel(request.type),
-      'Start Date': formatDate(request.startDate),
-      'Start Time': formatTime(request.startTime),
-      'End Date': formatDate(request.endDate),
-      'End Time': formatTime(request.endTime),
-      'Days': request.days,
-      'Reason': request.reason,
-      'Attachment': request.attachment ? 'Yes' : 'No',
-      'Status': request.status,
-      'Approved By': request.approvedBy || '',
-      'Rejected By': request.rejectedBy || '',
-      'Reason of Rejection': request.ror || '',
-    }));
-    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Leave Requests');
-    XLSX.writeFile(workbook, 'leave_requests.xlsx');
-  };
 
   if (isLoading) {
     return (
@@ -451,7 +412,7 @@ const HRLeave: React.FC = () => {
 
       {/* Quick Action Buttons */}
       <div className="flex gap-4">
-        <Button variant="outline" className="flex items-center gap-2" onClick={() => navigate('/hr-dashboard/leave-balances')}>
+        <Button variant="outline" className="flex items-center gap-2" onClick={() => navigate('/admin-dashboard/leave-balances')}>
           <Calendar className="h-4 w-4" />
           Leave Balances
         </Button>
@@ -518,18 +479,16 @@ const HRLeave: React.FC = () => {
         <CardHeader>
           <CardTitle>Leave Requests</CardTitle>
           <CardDescription>Review and approve/reject employee leave requests</CardDescription>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <Search className="h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Search by Employee ID or Name"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-80"
-              />
-            </div>
+          <div className="flex items-center gap-2 mt-2 overflow-x-auto pb-2">
+            <Search className="h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Search by Employee ID or Name"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-48 sm:w-56 md:w-64 min-w-[10rem]"
+            />
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-32 sm:w-40 min-w-[8rem]">
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
               <SelectContent>
@@ -539,55 +498,53 @@ const HRLeave: React.FC = () => {
                 <SelectItem value="rejected">Rejected</SelectItem>
               </SelectContent>
             </Select>
-            {/* Month Filter */}
-            <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-              <SelectTrigger className="w-[120px]">
-                <SelectValue placeholder="Month" />
+            <Select value={leaveTypeFilter} onValueChange={setLeaveTypeFilter}>
+              <SelectTrigger className="w-36 sm:w-48 min-w-[9rem]">
+                <SelectValue placeholder="Filter by leave type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="All">All Months</SelectItem>
-                <SelectItem value="1">January</SelectItem>
-                <SelectItem value="2">February</SelectItem>
-                <SelectItem value="3">March</SelectItem>
-                <SelectItem value="4">April</SelectItem>
-                <SelectItem value="5">May</SelectItem>
-                <SelectItem value="6">June</SelectItem>
-                <SelectItem value="7">July</SelectItem>
-                <SelectItem value="8">August</SelectItem>
-                <SelectItem value="9">September</SelectItem>
-                <SelectItem value="10">October</SelectItem>
-                <SelectItem value="11">November</SelectItem>
-                <SelectItem value="12">December</SelectItem>
-              </SelectContent>
-            </Select>
-            {/* Year Filter */}
-            <Select value={selectedYear} onValueChange={setSelectedYear}>
-              <SelectTrigger className="w-[120px]">
-                <SelectValue placeholder="Year" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="All">All Years</SelectItem>
-                {/* Dynamically generate year options from leaveRequests, only valid 4-digit years */}
-                {Array.from(new Set(leaveRequests.map((req: any) => {
-                  const year = new Date(req.startDate).getFullYear();
-                  return (year >= 2000 && year <= 2100) ? year : null;
-                })))
-                  .filter((year) => year !== null)
-                  .sort((a, b) => b - a)
-                  .map((year) => (
-                    <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
-                  ))}
+                <SelectItem value="All">All Leave Types</SelectItem>
+                <SelectItem value="Earned Leave">Earned Leave</SelectItem>
+                <SelectItem value="Sick Leave">Sick Leave</SelectItem>
+                <SelectItem value="Casual Leave">Casual Leave</SelectItem>
+                <SelectItem value="On Duty">On Duty</SelectItem>
+                <SelectItem value="Leave Without Pay">Leave Without Pay</SelectItem>
+                <SelectItem value="Late Hours Deduction">Late Hours Deduction</SelectItem>
+                <SelectItem value="Others">Others</SelectItem>
               </SelectContent>
             </Select>
             <Button
+              onClick={() => {
+                const tableData = filteredLeaveRequests.map((request: any, index: number) => ({
+                  'S.No.': index + 1,
+                  'Employee ID': request.employeeId?.employeeId,
+                  'Employee Name': request.employeeId?.name,
+                  'Department': request.employeeId?.department?.departmentName,
+                  'Leave Type': getLeaveTypeLabel(request.type),
+                  'Start Date': formatDate(request.startDate),
+                  'Start Time': formatTime(request.startTime),
+                  'End Date': formatDate(request.endDate),
+                  'End Time': formatTime(request.endTime),
+                  'Days': request.days,
+                  'Reason': request.reason,
+                  'Status': request.status,
+                  'Approved By': request.approvedBy || '',
+                  'Rejected By': request.rejectedBy || '',
+                  'Reason of Rejection': request.ror || '',
+                }));
+                const worksheet = XLSX.utils.json_to_sheet(tableData);
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, 'LeaveRequests');
+                XLSX.writeFile(workbook, 'LeaveRequests.xlsx');
+              }}
               variant="outline"
-              className="ml-auto"
-              onClick={handleDownloadExcel}
+              className="border border-gray-300 text-gray-700 hover:bg-gray-100 ml-2 flex items-center min-w-[10rem]"
             >
               <Download className="h-4 w-4 mr-2" />
-              Download as Excel
+              Download Excel
             </Button>
           </div>
+
         </CardHeader>
         <CardContent>
           <Table>
@@ -606,6 +563,7 @@ const HRLeave: React.FC = () => {
                 <TableHead>Reason</TableHead>
                 <TableHead>Attachment</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>Reason of Rejection</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -614,7 +572,7 @@ const HRLeave: React.FC = () => {
                 <TableRow>
                   <TableCell colSpan={14} className="text-center py-8">
                     <div className="text-gray-500">
-                      {searchTerm || statusFilter !== 'All' || selectedMonth !== 'All' || selectedYear !== 'All'
+                      {searchTerm || statusFilter !== 'All' || leaveTypeFilter !== 'All'
                         ? 'No leave requests match your search criteria.'
                         : 'No leave requests found.'}
                     </div>
@@ -724,17 +682,28 @@ const HRLeave: React.FC = () => {
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-red-600 border-red-600 hover:bg-red-50"
-                            onClick={() => handleReject(request._id)}
-                          >
-                            <XCircle className="h-4 w-4 mr-1" />
-                            Reject
-                          </Button>
-                        </>
+                        {request.status === 'pending' && (
+                          <>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-green-600 border-green-600 hover:bg-green-50"
+                              onClick={() => handleApprove(request._id)}
+                            >
+                              <CheckCircle className="h-4 w-4 mr-1" />
+                              Approve
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-red-600 border-red-600 hover:bg-red-50"
+                              onClick={() => handleReject(request._id)}
+                            >
+                              <XCircle className="h-4 w-4 mr-1" />
+                              Reject
+                            </Button>
+                          </>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -956,6 +925,8 @@ const HRLeave: React.FC = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+
     </div>
   );
 };
