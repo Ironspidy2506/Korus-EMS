@@ -412,7 +412,7 @@ const HRLeave: React.FC = () => {
 
       {/* Quick Action Buttons */}
       <div className="flex gap-4">
-        <Button variant="outline" className="flex items-center gap-2" onClick={() => navigate('/admin-dashboard/leave-balances')}>
+        <Button variant="outline" className="flex items-center gap-2" onClick={() => navigate('/hr-dashboard/leave-balances')}>
           <Calendar className="h-4 w-4" />
           Leave Balances
         </Button>
@@ -683,26 +683,26 @@ const HRLeave: React.FC = () => {
                           <Eye className="h-4 w-4" />
                         </Button>
                         {request.status === 'pending' && (
-                          <>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="text-green-600 border-green-600 hover:bg-green-50"
-                              onClick={() => handleApprove(request._id)}
-                            >
-                              <CheckCircle className="h-4 w-4 mr-1" />
-                              Approve
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="text-red-600 border-red-600 hover:bg-red-50"
-                              onClick={() => handleReject(request._id)}
-                            >
-                              <XCircle className="h-4 w-4 mr-1" />
-                              Reject
-                            </Button>
-                          </>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-green-600 border-green-600 hover:bg-green-50"
+                            onClick={() => handleApprove(request._id)}
+                          >
+                            <CheckCircle className="h-4 w-4 mr-1" />
+                            Approve
+                          </Button>
+                        )}
+                        {request.status !== 'rejected' && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-red-600 border-red-600 hover:bg-red-50"
+                            onClick={() => handleReject(request._id)}
+                          >
+                            <XCircle className="h-4 w-4 mr-1" />
+                            Reject
+                          </Button>
                         )}
                       </div>
                     </TableCell>

@@ -89,7 +89,7 @@ const HRLeaveBalance: React.FC = () => {
       });
       setIsEditing(true);
       setIsOpen(false);
-      
+
       // Fetch employee leave records
       try {
         setLoadingLeaves(true);
@@ -118,7 +118,7 @@ const HRLeaveBalance: React.FC = () => {
 
     try {
       setIsSaving(true);
-      
+
       // Convert string values to numbers, defaulting to 0 for empty strings
       const numericLeaveBalances = {
         el: parseFloat(leaveBalances.el) || 0,
@@ -348,12 +348,12 @@ const HRLeaveBalance: React.FC = () => {
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div>
-                  <Label htmlFor="el">Earned Leave (Max: 50)</Label>
+                  <Label htmlFor="el">Earned Leave (Max: 75)</Label>
                   <Input
                     id="el"
                     type="number"
                     min="0"
-                    max="50"
+                    max="75"
                     step="0.5"
                     value={leaveBalances.el}
                     onChange={(e) => handleLeaveBalanceChange('el', e.target.value)}
@@ -521,7 +521,7 @@ const HRLeaveBalance: React.FC = () => {
                       <TableRow>
                         <TableCell colSpan={9} className="text-center py-8">
                           <div className="text-gray-500">
-                            {employeeLeaves.length === 0 
+                            {employeeLeaves.length === 0
                               ? 'No leave records found for this employee'
                               : `No ${leaveStatusFilter} leave records found`
                             }
@@ -535,32 +535,32 @@ const HRLeaveBalance: React.FC = () => {
                           <TableCell>
                             <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
                               {leave.type === 'el' ? 'Earned Leave' :
-                               leave.type === 'sl' ? 'Sick Leave' :
-                               leave.type === 'cl' ? 'Casual Leave' :
-                               leave.type === 'od' ? 'On Duty' :
-                               leave.type === 'lwp' ? 'Leave Without Pay' :
-                               leave.type === 'lhd' ? 'Late Hours Deduction' :
-                               leave.type === 'others' ? 'Others' : leave.type}
+                                leave.type === 'sl' ? 'Sick Leave' :
+                                  leave.type === 'cl' ? 'Casual Leave' :
+                                    leave.type === 'od' ? 'On Duty' :
+                                      leave.type === 'lwp' ? 'Leave Without Pay' :
+                                        leave.type === 'lhd' ? 'Late Hours Deduction' :
+                                          leave.type === 'others' ? 'Others' : leave.type}
                             </span>
                           </TableCell>
                           <TableCell>
                             {new Date(leave.startDate).toLocaleDateString('en-GB')}
                           </TableCell>
                           <TableCell>
-                            {new Date(`2000-01-01T${leave.startTime}`).toLocaleTimeString('en-US', { 
-                              hour: 'numeric', 
-                              minute: '2-digit', 
-                              hour12: true 
+                            {new Date(`2000-01-01T${leave.startTime}`).toLocaleTimeString('en-US', {
+                              hour: 'numeric',
+                              minute: '2-digit',
+                              hour12: true
                             })}
                           </TableCell>
                           <TableCell>
                             {new Date(leave.endDate).toLocaleDateString('en-GB')}
                           </TableCell>
                           <TableCell>
-                            {new Date(`2000-01-01T${leave.endTime}`).toLocaleTimeString('en-US', { 
-                              hour: 'numeric', 
-                              minute: '2-digit', 
-                              hour12: true 
+                            {new Date(`2000-01-01T${leave.endTime}`).toLocaleTimeString('en-US', {
+                              hour: 'numeric',
+                              minute: '2-digit',
+                              hour12: true
                             })}
                           </TableCell>
                           <TableCell className="font-medium">{leave.days}</TableCell>
@@ -568,11 +568,10 @@ const HRLeaveBalance: React.FC = () => {
                             {leave.reason}
                           </TableCell>
                           <TableCell>
-                            <span className={`px-2 py-1 text-xs rounded-full ${
-                              leave.status === 'approved' ? 'bg-green-100 text-green-800' :
-                              leave.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                              'bg-yellow-100 text-yellow-800'
-                            }`}>
+                            <span className={`px-2 py-1 text-xs rounded-full ${leave.status === 'approved' ? 'bg-green-100 text-green-800' :
+                                leave.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                                  'bg-yellow-100 text-yellow-800'
+                              }`}>
                               {(leave.status || 'pending').charAt(0).toUpperCase() + (leave.status || 'pending').slice(1)}
                             </span>
                           </TableCell>
