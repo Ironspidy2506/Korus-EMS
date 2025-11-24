@@ -57,6 +57,7 @@ import AdminLTC from "./pages/Admin/LTC";
 import EmployeeLTC from "./pages/Employee/LTC";
 import EmployeeTravelExpenditure from "./pages/Employee/TravelExpenditure";
 import AdminOnboarding from "./pages/Admin/Onboarding";
+import HRCTC from "./pages/HR/CTC";
 
 const queryClient = new QueryClient();
 
@@ -240,6 +241,11 @@ const App = () => (
               <Route path="hr-dashboard/holiday" element={
                 <ProtectedRoute allowedRoles={['hr']}>
                   <HRHoliday />
+                </ProtectedRoute>
+              } />
+              <Route path="hr-dashboard/ctc" element={
+                <ProtectedRoute allowedRoles={['hr']}>
+                  <HRCTC />
                 </ProtectedRoute>
               } />
               <Route path="hr-dashboard/appraisal" element={

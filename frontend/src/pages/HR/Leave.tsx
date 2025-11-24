@@ -16,6 +16,12 @@ import * as XLSX from 'xlsx';
 
 const ITEMS_PER_PAGE = 20; // Show 20 items per page for better performance
 
+// Month names array
+const monthNames = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December'
+];
+
 const HRLeave: React.FC = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -27,6 +33,8 @@ const HRLeave: React.FC = () => {
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [leaveTypeFilter, setLeaveTypeFilter] = useState('All');
+  const [monthFilter, setMonthFilter] = useState('All');
+  const [yearFilter, setYearFilter] = useState('All');
   const [editingRejectionId, setEditingRejectionId] = useState(null);
   const [rejectionReason, setRejectionReason] = useState('');
   const [isUpdatingRejection, setIsUpdatingRejection] = useState(false);
@@ -76,6 +84,17 @@ const HRLeave: React.FC = () => {
     }
   };
 
+  // Generate years: previous year and upcoming 5 years
+  const availableYears = useMemo(() => {
+    const currentYear = new Date().getFullYear();
+    const years: number[] = [];
+    // Previous year to upcoming 5 years (currentYear - 1 to currentYear + 5)
+    for (let i = currentYear - 1; i <= currentYear + 5; i++) {
+      years.push(i);
+    }
+    return years.sort((a, b) => b - a); // Sort descending (newest first)
+  }, []);
+
   // Memoized filtered data - CRITICAL for performance
   const filteredLeaveRequests = useMemo(() => {
     return leaveRequests.filter((request: any) => {
@@ -87,9 +106,29 @@ const HRLeave: React.FC = () => {
 
       const matchesLeaveType = leaveTypeFilter === 'All' || getLeaveTypeLabel(request.type) === leaveTypeFilter;
 
-      return matchesSearch && matchesStatus && matchesLeaveType;
+      // Month and Year filtering
+      let matchesMonth = monthFilter === 'All';
+      let matchesYear = yearFilter === 'All';
+
+      if (monthFilter !== 'All' || yearFilter !== 'All') {
+        const startDate = request.startDate ? new Date(request.startDate) : null;
+        if (startDate) {
+          if (monthFilter !== 'All') {
+            const monthIndex = monthNames.indexOf(monthFilter);
+            matchesMonth = startDate.getMonth() === monthIndex;
+          }
+          if (yearFilter !== 'All') {
+            matchesYear = startDate.getFullYear().toString() === yearFilter;
+          }
+        } else {
+          matchesMonth = false;
+          matchesYear = false;
+        }
+      }
+
+      return matchesSearch && matchesStatus && matchesLeaveType && matchesMonth && matchesYear;
     });
-  }, [leaveRequests, searchTerm, statusFilter, leaveTypeFilter, getLeaveTypeLabel]);
+  }, [leaveRequests, searchTerm, statusFilter, leaveTypeFilter, monthFilter, yearFilter, getLeaveTypeLabel]);
 
   // Memoized paginated data - CRITICAL for performance
   const paginatedLeaveRequests = useMemo(() => {
@@ -127,7 +166,7 @@ const HRLeave: React.FC = () => {
   // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, statusFilter, leaveTypeFilter]);
+  }, [searchTerm, statusFilter, leaveTypeFilter, monthFilter, yearFilter]);
 
   const handleApprove = useCallback(async (leaveId: string) => {
     try {
@@ -479,7 +518,7 @@ const HRLeave: React.FC = () => {
         <CardHeader>
           <CardTitle>Leave Requests</CardTitle>
           <CardDescription>Review and approve/reject employee leave requests</CardDescription>
-          <div className="flex items-center gap-2 mt-2 overflow-x-auto pb-2">
+          <div className="flex items-center gap-2 mt-4 pt-2 overflow-x-auto pb-2">
             <Search className="h-4 w-4 text-gray-400" />
             <Input
               placeholder="Search by Employee ID or Name"
@@ -511,6 +550,28 @@ const HRLeave: React.FC = () => {
                 <SelectItem value="Leave Without Pay">Leave Without Pay</SelectItem>
                 <SelectItem value="Late Hours Deduction">Late Hours Deduction</SelectItem>
                 <SelectItem value="Others">Others</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={monthFilter} onValueChange={setMonthFilter}>
+              <SelectTrigger className="w-32 sm:w-40 min-w-[8rem]">
+                <SelectValue placeholder="Filter by month" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="All">All Months</SelectItem>
+                {monthNames.map((month) => (
+                  <SelectItem key={month} value={month}>{month}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={yearFilter} onValueChange={setYearFilter}>
+              <SelectTrigger className="w-28 sm:w-32 min-w-[7rem]">
+                <SelectValue placeholder="Filter by year" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="All">All Years</SelectItem>
+                {availableYears.map((year) => (
+                  <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
             <Button
@@ -572,7 +633,7 @@ const HRLeave: React.FC = () => {
                 <TableRow>
                   <TableCell colSpan={14} className="text-center py-8">
                     <div className="text-gray-500">
-                      {searchTerm || statusFilter !== 'All' || leaveTypeFilter !== 'All'
+                      {searchTerm || statusFilter !== 'All' || leaveTypeFilter !== 'All' || monthFilter !== 'All' || yearFilter !== 'All'
                         ? 'No leave requests match your search criteria.'
                         : 'No leave requests found.'}
                     </div>

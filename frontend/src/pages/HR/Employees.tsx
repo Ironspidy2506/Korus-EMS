@@ -149,8 +149,10 @@ const HREmployees: React.FC = () => {
   };
 
   const filteredEmployees = employees.filter(emp =>
-    emp.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    emp.employeeId.toString().includes(searchTerm)
+    !emp.dol && (
+      emp.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      emp.employeeId.toString().includes(searchTerm)
+    )
   );
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {

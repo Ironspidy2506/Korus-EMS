@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DollarSign, TrendingUp, PieChart, BarChart3, Search, Download, Eye, Printer } from 'lucide-react';
@@ -29,7 +28,7 @@ interface CTCData {
   totalCTC: number;
 }
 
-const AdminCTC: React.FC = () => {
+const HRCTC: React.FC = () => {
   const [ctcData, setCtcData] = useState<CTCData[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -399,10 +398,10 @@ const AdminCTC: React.FC = () => {
                   <TableHead>Salary Allowances</TableHead>
                   <TableHead>Salary Deductions</TableHead>
                   <TableHead>Variable Allowances</TableHead>
-                  <TableHead>Fixed Allowances</TableHead>
-                  <TableHead>Total CTC</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
+                <TableHead>Fixed Allowances</TableHead>
+                <TableHead>Total CTC</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredCTCData.length === 0 ? (
@@ -579,4 +578,4 @@ const AdminCTC: React.FC = () => {
   );
 };
 
-export default AdminCTC;
+export default HRCTC;

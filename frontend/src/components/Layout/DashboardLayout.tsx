@@ -83,6 +83,7 @@ const DashboardLayout: React.FC = () => {
           { icon: Calendar, label: 'Leave', path: '/hr-dashboard/leave' },
           { icon: CalendarCheck, label: 'Holiday', path: '/hr-dashboard/holiday' },
           { icon: Star, label: 'Appraisal', path: '/hr-dashboard/appraisal' },
+          { icon: Briefcase, label: 'CTC', path: '/hr-dashboard/ctc' },
           { icon: MapPin, label: 'LTC', path: '/hr-dashboard/ltc' },
           { icon: Plane, label: 'Travel Expenditure', path: '/hr-dashboard/travel-expenditure' },
           { icon: UserPlus, label: 'Onboarding/Offboarding', path: '/hr-dashboard/onboarding' },
