@@ -73,7 +73,11 @@ const AdminSalary: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    getAllEmployees().then(setEmployees).catch(() => { });
+    getAllEmployees().then((data) => {
+      // Filter employees to only include those without a Date of Leaving (DOL)
+      const activeEmployees = data.filter((emp: Employee) => !emp.dol);
+      setEmployees(activeEmployees);
+    }).catch(() => { });
   }, []);
 
   // Debounce search term

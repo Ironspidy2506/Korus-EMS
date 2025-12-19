@@ -23,7 +23,9 @@ const AdminDashboard: React.FC = () => {
           getAllLeaves()
         ]);
 
-        setEmployees(emp);
+        // Filter employees to only include those without a Date of Leaving (DOL)
+        const activeEmployees = emp.filter((emp: Employee) => !emp.dol);
+        setEmployees(activeEmployees);
         setDepartments(dep);
         setLeaves(leave.leaves);
       } catch (error) {
@@ -43,7 +45,7 @@ const AdminDashboard: React.FC = () => {
     const currentDay = today.getDate();
 
     return employees
-      .filter(emp => emp.dob)
+      .filter(emp => emp.dob && !emp.dol) // Only include active employees (without DOL)
       .map(emp => {
         const dob = new Date(emp.dob);
         const nextBirthday = new Date(today.getFullYear(), dob.getMonth(), dob.getDate());
@@ -66,7 +68,7 @@ const AdminDashboard: React.FC = () => {
   // Get pending leave requests
   const getPendingLeaves = () => {
     return leaves
-      .filter(leave => leave.status === 'pending')
+      .filter(leave => leave.status === 'pending' && !leave.employeeId?.dol) // Only include leaves from active employees (without DOL)
       .slice(0, 5);
   };
 
@@ -111,25 +113,25 @@ const AdminDashboard: React.FC = () => {
   const leaveStats = [
     {
       title: 'Total Leaves',
-      value: leaves.length,
+      value: leaves.filter(l => !l.employeeId?.dol).length, // Only count leaves from active employees
       icon: Calendar,
       iconColor: 'text-indigo-600',
     },
     {
       title: 'Approved Leaves',
-      value: leaves.filter(l => l.status === 'approved').length,
+      value: leaves.filter(l => l.status === 'approved' && !l.employeeId?.dol).length,
       icon: CheckCircle,
       iconColor: 'text-green-600',
     },
     {
       title: 'Pending Leaves',
-      value: leaves.filter(l => l.status === 'pending').length,
+      value: leaves.filter(l => l.status === 'pending' && !l.employeeId?.dol).length,
       icon: AlertCircle,
       iconColor: 'text-orange-600',
     },
     {
       title: 'Rejected Leaves',
-      value: leaves.filter(l => l.status === 'rejected').length,
+      value: leaves.filter(l => l.status === 'rejected' && !l.employeeId?.dol).length,
       icon: XCircle,
       iconColor: 'text-red-600',
     },

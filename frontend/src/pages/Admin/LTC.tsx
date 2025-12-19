@@ -83,7 +83,9 @@ const AdminLTC: React.FC = () => {
   const fetchEmployees = async () => {
     try {
       const data = await getAllEmployees();
-      setEmployees(data);
+      // Filter employees to only include those without a Date of Leaving (DOL)
+      const activeEmployees = data.filter((emp: Employee) => !emp.dol);
+      setEmployees(activeEmployees);
     } catch (error) {
       console.error('Error fetching employees:', error);
     }

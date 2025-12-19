@@ -45,8 +45,10 @@ const AdminLeaveBalance: React.FC = () => {
       try {
         setIsLoading(true);
         const data = await getAllEmployees();
+        // Filter employees to only include those without a Date of Leaving (DOL)
+        const activeEmployees = data.filter((emp: Employee) => !emp.dol);
         // Fix sorting - handle both string and number employeeId
-        const sorted = data.sort((a: Employee, b: Employee) => {
+        const sorted = activeEmployees.sort((a: Employee, b: Employee) => {
           const aId = String(a.employeeId || '');
           const bId = String(b.employeeId || '');
           

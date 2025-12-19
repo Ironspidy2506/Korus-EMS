@@ -131,7 +131,9 @@ const AdminEmployees: React.FC = () => {
     try {
       setIsLoading(true);
       const data = await getAllEmployees();
-      const sorted = data.sort((a: Employee, b: Employee) => a.employeeId - b.employeeId);
+      // Filter employees to only include those without a Date of Leaving (DOL)
+      const activeEmployees = data.filter((emp: Employee) => !emp.dol);
+      const sorted = activeEmployees.sort((a: Employee, b: Employee) => a.employeeId - b.employeeId);
       setEmployees(sorted);
     } catch (error) {
       console.error("Failed to fetch employees:", error);

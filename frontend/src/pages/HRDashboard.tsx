@@ -15,6 +15,7 @@ interface LeaveRequest {
   employeeId: {
     name: string;
     employeeId: string;
+    dol?: string; // Date of Leaving (optional)
   };
   startDate: string;
   endDate: string;
@@ -41,7 +42,9 @@ const HRDashboard: React.FC = () => {
         getAllLeaves(),
       ]);
 
-      setEmployees(employeesRes);
+      // Filter employees to only include those without a Date of Leaving (DOL)
+      const activeEmployees = employeesRes.filter((emp: Employee) => !emp.dol);
+      setEmployees(activeEmployees);
       setDepartments(departmentsRes);
       setLeaveRequests(leaveRes.leaves || []);
     } catch (error) {
@@ -57,7 +60,7 @@ const HRDashboard: React.FC = () => {
     const currentDay = today.getDate();
 
     return employees
-      .filter(emp => emp.dob)
+      .filter(emp => emp.dob && !emp.dol) // Only include active employees (without DOL)
       .map(emp => {
         const dob = new Date(emp.dob);
         const nextBirthday = new Date(today.getFullYear(), dob.getMonth(), dob.getDate());
@@ -80,7 +83,7 @@ const HRDashboard: React.FC = () => {
   // Get pending leave requests
   const getPendingLeaves = () => {
     return leaveRequests
-      .filter(leave => leave.status === 'pending')
+      .filter(leave => leave.status === 'pending' && !leave.employeeId?.dol) // Only include leaves from active employees (without DOL)
       .slice(0, 5);
   };
 
@@ -107,7 +110,7 @@ const HRDashboard: React.FC = () => {
     },
     {
       title: 'Leave Requests',
-      value: leaveRequests.filter(leave => leave.status === 'pending').length.toString(),
+      value: leaveRequests.filter(leave => leave.status === 'pending' && !leave.employeeId?.dol).length.toString(), // Only count leaves from active employees
       icon: Calendar,
     }
   ];

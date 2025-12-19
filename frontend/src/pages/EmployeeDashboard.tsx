@@ -33,7 +33,9 @@ const EmployeeDashboard: React.FC = () => {
         getAllHolidays(),
       ])
 
-      setEmployees(employeesRes);
+      // Filter employees to only include those without a Date of Leaving (DOL)
+      const activeEmployees = employeesRes.filter((emp: Employee) => !emp.dol);
+      setEmployees(activeEmployees);
       setSalaryRequests(salaryRes.salaries || [])
       setLeaveRequests(leaveRes.leaves || []);
       setHolidays(holidaysRes || []);
@@ -60,7 +62,7 @@ const EmployeeDashboard: React.FC = () => {
     const currentDay = today.getDate();
 
     return employees
-      .filter(emp => emp.dob)
+      .filter(emp => emp.dob && !emp.dol) // Only include active employees (without DOL)
       .map(emp => {
         const dob = new Date(emp.dob);
         const nextBirthday = new Date(today.getFullYear(), dob.getMonth(), dob.getDate());

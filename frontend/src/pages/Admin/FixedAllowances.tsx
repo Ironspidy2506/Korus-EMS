@@ -105,7 +105,9 @@ const AdminFixedAllowances: React.FC = () => {
   const fetchEmployees = async () => {
     try {
       const data = await getAllEmployees();
-      const sorted = data.sort((a, b) => Number(a.employeeId) - Number(b.employeeId));
+      // Filter employees to only include those without a Date of Leaving (DOL)
+      const activeEmployees = data.filter((emp: Employee) => !emp.dol);
+      const sorted = activeEmployees.sort((a, b) => Number(a.employeeId) - Number(b.employeeId));
       setEmployees(sorted);
     } catch (err) {
       setEmployeeError('Failed to fetch employees');

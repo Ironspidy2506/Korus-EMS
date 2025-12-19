@@ -98,6 +98,11 @@ const HRLeave: React.FC = () => {
   // Memoized filtered data - CRITICAL for performance
   const filteredLeaveRequests = useMemo(() => {
     return leaveRequests.filter((request: any) => {
+      // Filter out leave requests from employees with DOL (Date of Leaving)
+      if (request.employeeId?.dol) {
+        return false;
+      }
+
       const matchesSearch = searchTerm === '' ||
         request.employeeId?.employeeId?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
         request.employeeId?.name?.toLowerCase().includes(searchTerm.toLowerCase());

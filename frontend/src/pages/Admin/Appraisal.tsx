@@ -227,7 +227,9 @@ const AdminAppraisal: React.FC = () => {
       const response = await axios.get("https://korus-ems-backend.vercel.app/api/employees", {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setEmployees(response.data.employees);
+      // Filter employees to only include those without a Date of Leaving (DOL)
+      const activeEmployees = response.data.employees.filter((emp: any) => !emp.dol);
+      setEmployees(activeEmployees);
     } catch (error) {
       console.error("Error fetching employees:", error);
       toast({

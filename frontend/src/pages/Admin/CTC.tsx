@@ -118,6 +118,10 @@ const AdminCTC: React.FC = () => {
 
       // Process salaries
       salaries.forEach((salary: any) => {
+        // Filter out employees with DOL (Date of Leaving)
+        if (salary.employeeId?.dol) {
+          return;
+        }
         const key = `${salary.employeeId?.employeeId || salary.employeeId}_${salary.paymentMonth}_${salary.paymentYear}`;
         const employeeName = salary.employeeId?.name || 'Unknown';
         const department = salary.employeeId?.department?.departmentName || 'Unknown';
@@ -161,6 +165,10 @@ const AdminCTC: React.FC = () => {
         if (allowance.status !== 'approved') {
           return;
         }
+        // Filter out employees with DOL (Date of Leaving)
+        if (allowance.employeeId?.dol) {
+          return;
+        }
 
         const key = `${allowance.employeeId?.employeeId || allowance.employeeId}_${allowance.allowanceMonth}_${allowance.allowanceYear}`;
         const employeeName = allowance.employeeId?.name || 'Unknown';
@@ -192,6 +200,10 @@ const AdminCTC: React.FC = () => {
       fixedAllowances.forEach((fixedAllowance: any) => {
         // Only process approved fixed allowances
         if (fixedAllowance.status !== 'approved') {
+          return;
+        }
+        // Filter out employees with DOL (Date of Leaving)
+        if (fixedAllowance.employeeId?.dol) {
           return;
         }
 

@@ -80,7 +80,9 @@ const HRMessages: React.FC = () => {
   const fetchEmployees = async () => {
     try {
       const data = await getAllEmployees();
-      const sorted = data.sort((a, b) => a.employeeId - b.employeeId)
+      // Filter employees to only include those without a Date of Leaving (DOL)
+      const activeEmployees = data.filter((emp: Employee) => !emp.dol);
+      const sorted = activeEmployees.sort((a, b) => a.employeeId - b.employeeId)
       setEmployees(sorted);
     } catch (error) {
       console.error('Error fetching employees:', error);
