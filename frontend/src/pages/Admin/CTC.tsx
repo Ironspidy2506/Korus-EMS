@@ -14,6 +14,12 @@ import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
 import { Button } from '@/components/ui/button';
 
+interface AllowanceItem {
+  name: string;
+  amount: number;
+  type?: string; // For variable/fixed allowances
+}
+
 interface CTCData {
   employeeId: string;
   employeeName: string;
@@ -27,6 +33,11 @@ interface CTCData {
   variableAllowances: number;
   fixedAllowances: number;
   totalCTC: number;
+  // Detailed breakdowns
+  detailedSalaryAllowances: AllowanceItem[];
+  detailedSalaryDeductions: AllowanceItem[];
+  detailedVariableAllowances: AllowanceItem[];
+  detailedFixedAllowances: AllowanceItem[];
 }
 
 const AdminCTC: React.FC = () => {
@@ -134,6 +145,14 @@ const AdminCTC: React.FC = () => {
           ? salary.deductions.reduce((sum: number, d: any) => sum + (d.amount || 0), 0)
           : 0;
 
+        // Get detailed salary allowances and deductions
+        const detailedSalaryAllowances: AllowanceItem[] = Array.isArray(salary.allowances)
+          ? salary.allowances.map((a: any) => ({ name: a.name || 'Allowance', amount: a.amount || 0 }))
+          : [];
+        const detailedSalaryDeductions: AllowanceItem[] = Array.isArray(salary.deductions)
+          ? salary.deductions.map((d: any) => ({ name: d.name || 'Deduction', amount: d.amount || 0 }))
+          : [];
+
         if (!ctcMap.has(key)) {
           ctcMap.set(key, {
             employeeId: salary.employeeId?.employeeId || salary.employeeId,
@@ -147,7 +166,11 @@ const AdminCTC: React.FC = () => {
             salaryDeductions,
             variableAllowances: 0,
             fixedAllowances: 0,
-            totalCTC: (salary.basicSalary || 0) + salaryAllowances - salaryDeductions
+            totalCTC: (salary.basicSalary || 0) + salaryAllowances - salaryDeductions,
+            detailedSalaryAllowances,
+            detailedSalaryDeductions,
+            detailedVariableAllowances: [],
+            detailedFixedAllowances: []
           });
         } else {
           const existing = ctcMap.get(key)!;
@@ -155,6 +178,9 @@ const AdminCTC: React.FC = () => {
           existing.basicSalary = salary.basicSalary || 0;
           existing.salaryAllowances = salaryAllowances;
           existing.salaryDeductions = salaryDeductions;
+          // Merge detailed allowances and deductions
+          existing.detailedSalaryAllowances = detailedSalaryAllowances;
+          existing.detailedSalaryDeductions = detailedSalaryDeductions;
           existing.totalCTC = (salary.basicSalary || 0) + salaryAllowances - salaryDeductions + existing.variableAllowances + existing.fixedAllowances;
         }
       });
@@ -174,6 +200,12 @@ const AdminCTC: React.FC = () => {
         const employeeName = allowance.employeeId?.name || 'Unknown';
         const department = allowance.employeeId?.department?.departmentName || 'Unknown';
 
+        const allowanceItem: AllowanceItem = {
+          name: allowance.allowanceType || 'Variable Allowance',
+          amount: allowance.allowanceAmount || 0,
+          type: 'variable'
+        };
+
         if (!ctcMap.has(key)) {
           ctcMap.set(key, {
             employeeId: allowance.employeeId?.employeeId || allowance.employeeId,
@@ -187,11 +219,16 @@ const AdminCTC: React.FC = () => {
             salaryDeductions: 0,
             variableAllowances: allowance.allowanceAmount || 0,
             fixedAllowances: 0,
-            totalCTC: allowance.allowanceAmount || 0
+            totalCTC: allowance.allowanceAmount || 0,
+            detailedSalaryAllowances: [],
+            detailedSalaryDeductions: [],
+            detailedVariableAllowances: [allowanceItem],
+            detailedFixedAllowances: []
           });
         } else {
           const existing = ctcMap.get(key)!;
           existing.variableAllowances += allowance.allowanceAmount || 0;
+          existing.detailedVariableAllowances.push(allowanceItem);
           existing.totalCTC += allowance.allowanceAmount || 0;
         }
       });
@@ -211,6 +248,12 @@ const AdminCTC: React.FC = () => {
         const employeeName = fixedAllowance.employeeId?.name || 'Unknown';
         const department = fixedAllowance.employeeId?.department?.departmentName || 'Unknown';
 
+        const allowanceItem: AllowanceItem = {
+          name: fixedAllowance.allowanceType || 'Fixed Allowance',
+          amount: fixedAllowance.allowanceAmount || 0,
+          type: 'fixed'
+        };
+
         if (!ctcMap.has(key)) {
           ctcMap.set(key, {
             employeeId: fixedAllowance.employeeId?.employeeId || fixedAllowance.employeeId,
@@ -224,11 +267,16 @@ const AdminCTC: React.FC = () => {
             salaryDeductions: 0,
             variableAllowances: 0,
             fixedAllowances: fixedAllowance.allowanceAmount || 0,
-            totalCTC: fixedAllowance.allowanceAmount || 0
+            totalCTC: fixedAllowance.allowanceAmount || 0,
+            detailedSalaryAllowances: [],
+            detailedSalaryDeductions: [],
+            detailedVariableAllowances: [],
+            detailedFixedAllowances: [allowanceItem]
           });
         } else {
           const existing = ctcMap.get(key)!;
           existing.fixedAllowances += fixedAllowance.allowanceAmount || 0;
+          existing.detailedFixedAllowances.push(allowanceItem);
           existing.totalCTC += fixedAllowance.allowanceAmount || 0;
         }
       });
@@ -507,23 +555,53 @@ const AdminCTC: React.FC = () => {
                         <span className="font-medium text-gray-700 text-sm sm:text-base">Basic Salary</span>
                         <span className="font-semibold text-blue-900 text-sm sm:text-base">₹{viewSlip.basicSalary.toLocaleString('en-IN')}</span>
                       </div>
-                      {viewSlip.salaryAllowances > 0 && (
-                        <div className="flex justify-between items-center">
-                          <span className="font-medium text-gray-700 text-sm sm:text-base">Salary Allowances</span>
-                          <span className="font-semibold text-blue-900 text-sm sm:text-base">₹{viewSlip.salaryAllowances.toLocaleString('en-IN')}</span>
-                        </div>
+                      
+                      {/* Salary Allowances - Individual Items */}
+                      {viewSlip.detailedSalaryAllowances && viewSlip.detailedSalaryAllowances.length > 0 && (
+                        <>
+                          {viewSlip.detailedSalaryAllowances.map((allowance, idx) => (
+                            <div key={`salary-allowance-${idx}`} className="flex justify-between items-center pl-4">
+                              <span className="font-medium text-gray-600 text-sm sm:text-base">{allowance.name}</span>
+                              <span className="font-semibold text-blue-900 text-sm sm:text-base">₹{allowance.amount.toLocaleString('en-IN')}</span>
+                            </div>
+                          ))}
+                          <div className="flex justify-between items-center pt-1 border-t border-gray-200">
+                            <span className="font-medium text-gray-700 text-sm sm:text-base">Total Salary Allowances</span>
+                            <span className="font-semibold text-blue-900 text-sm sm:text-base">₹{viewSlip.salaryAllowances.toLocaleString('en-IN')}</span>
+                          </div>
+                        </>
                       )}
-                      {viewSlip.variableAllowances > 0 && (
-                        <div className="flex justify-between items-center">
-                          <span className="font-medium text-gray-700 text-sm sm:text-base">Variable Allowances</span>
-                          <span className="font-semibold text-blue-900 text-sm sm:text-base">₹{viewSlip.variableAllowances.toLocaleString('en-IN')}</span>
-                        </div>
+                      
+                      {/* Variable Allowances - Individual Items */}
+                      {viewSlip.detailedVariableAllowances && viewSlip.detailedVariableAllowances.length > 0 && (
+                        <>
+                          {viewSlip.detailedVariableAllowances.map((allowance, idx) => (
+                            <div key={`variable-allowance-${idx}`} className="flex justify-between items-center pl-4">
+                              <span className="font-medium text-gray-600 text-sm sm:text-base">{allowance.name}</span>
+                              <span className="font-semibold text-blue-900 text-sm sm:text-base">₹{allowance.amount.toLocaleString('en-IN')}</span>
+                            </div>
+                          ))}
+                          <div className="flex justify-between items-center pt-1 border-t border-gray-200">
+                            <span className="font-medium text-gray-700 text-sm sm:text-base">Total Variable Allowances</span>
+                            <span className="font-semibold text-blue-900 text-sm sm:text-base">₹{viewSlip.variableAllowances.toLocaleString('en-IN')}</span>
+                          </div>
+                        </>
                       )}
-                      {viewSlip.fixedAllowances > 0 && (
-                        <div className="flex justify-between items-center">
-                          <span className="font-medium text-gray-700 text-sm sm:text-base">Fixed Allowances</span>
-                          <span className="font-semibold text-blue-900 text-sm sm:text-base">₹{viewSlip.fixedAllowances.toLocaleString('en-IN')}</span>
-                        </div>
+                      
+                      {/* Fixed Allowances - Individual Items */}
+                      {viewSlip.detailedFixedAllowances && viewSlip.detailedFixedAllowances.length > 0 && (
+                        <>
+                          {viewSlip.detailedFixedAllowances.map((allowance, idx) => (
+                            <div key={`fixed-allowance-${idx}`} className="flex justify-between items-center pl-4">
+                              <span className="font-medium text-gray-600 text-sm sm:text-base">{allowance.name}</span>
+                              <span className="font-semibold text-blue-900 text-sm sm:text-base">₹{allowance.amount.toLocaleString('en-IN')}</span>
+                            </div>
+                          ))}
+                          <div className="flex justify-between items-center pt-1 border-t border-gray-200">
+                            <span className="font-medium text-gray-700 text-sm sm:text-base">Total Fixed Allowances</span>
+                            <span className="font-semibold text-blue-900 text-sm sm:text-base">₹{viewSlip.fixedAllowances.toLocaleString('en-IN')}</span>
+                          </div>
+                        </>
                       )}
                     </div>
                   </div>
@@ -531,11 +609,19 @@ const AdminCTC: React.FC = () => {
                   <div>
                     <h3 className="text-base sm:text-lg font-semibold text-red-700 mb-3 border-b border-red-100 pb-1">Deductions</h3>
                     <div className="space-y-2">
-                      {viewSlip.salaryDeductions > 0 ? (
-                        <div className="flex justify-between items-center">
-                          <span className="font-medium text-gray-700 text-sm sm:text-base">Salary Deductions</span>
-                          <span className="font-semibold text-red-600 text-sm sm:text-base">-₹{viewSlip.salaryDeductions.toLocaleString('en-IN')}</span>
-                        </div>
+                      {viewSlip.detailedSalaryDeductions && viewSlip.detailedSalaryDeductions.length > 0 ? (
+                        <>
+                          {viewSlip.detailedSalaryDeductions.map((deduction, idx) => (
+                            <div key={`deduction-${idx}`} className="flex justify-between items-center pl-4">
+                              <span className="font-medium text-gray-600 text-sm sm:text-base">{deduction.name}</span>
+                              <span className="font-semibold text-red-600 text-sm sm:text-base">-₹{deduction.amount.toLocaleString('en-IN')}</span>
+                            </div>
+                          ))}
+                          <div className="flex justify-between items-center pt-1 border-t border-gray-200">
+                            <span className="font-medium text-gray-700 text-sm sm:text-base">Total Deductions</span>
+                            <span className="font-semibold text-red-600 text-sm sm:text-base">-₹{viewSlip.salaryDeductions.toLocaleString('en-IN')}</span>
+                          </div>
+                        </>
                       ) : (
                         <div className="text-gray-400 text-sm sm:text-base">No deductions</div>
                       )}
