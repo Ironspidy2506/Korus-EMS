@@ -26,6 +26,7 @@ interface LeaveRequest {
 const HRDashboard: React.FC = () => {
   const { user } = useAuth();
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const [allEmployees, setAllEmployees] = useState<Employee[]>([]); // Store all employees for stats
   const [departments, setDepartments] = useState<Department[]>([]);
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
 
@@ -42,7 +43,10 @@ const HRDashboard: React.FC = () => {
         getAllLeaves(),
       ]);
 
-      // Filter employees to only include those without a Date of Leaving (DOL)
+      // Store all employees for stats calculation
+      setAllEmployees(employeesRes);
+
+      // Filter employees to only include those without a Date of Leaving (DOL) for display purposes
       const activeEmployees = employeesRes.filter((emp: Employee) => !emp.dol);
       setEmployees(activeEmployees);
       setDepartments(departmentsRes);
@@ -90,17 +94,17 @@ const HRDashboard: React.FC = () => {
   const stats = [
     {
       title: 'Total Employees',
-      value: employees.length.toString(),
+      value: allEmployees.length.toString(),
       icon: Users,
     },
     {
       title: 'Active Employees',
-      value: employees.filter(emp => !emp.dol).length.toString(),
+      value: allEmployees.filter(emp => !emp.dol).length.toString(),
       icon: UserPlus,
     },
     {
       title: 'Inactive Employees',
-      value: employees.filter(emp => emp.dol).length.toString(),
+      value: allEmployees.filter(emp => emp.dol).length.toString(),
       icon: Clock,
     },
     {

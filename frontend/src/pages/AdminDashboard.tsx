@@ -11,6 +11,7 @@ import { Leave, getAllLeaves } from '@/utils/Leave';
 const AdminDashboard: React.FC = () => {
   const { user } = useAuth();
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const [allEmployees, setAllEmployees] = useState<Employee[]>([]); // Store all employees for stats
   const [departments, setDepartments] = useState<Department[]>([]);
   const [leaves, setLeaves] = useState<any[]>([]);
 
@@ -23,13 +24,17 @@ const AdminDashboard: React.FC = () => {
           getAllLeaves()
         ]);
 
-        // Filter employees to only include those without a Date of Leaving (DOL)
+        // Store all employees for stats calculation
+        setAllEmployees(emp);
+        
+        // Filter employees to only include those without a Date of Leaving (DOL) for display purposes
         const activeEmployees = emp.filter((emp: Employee) => !emp.dol);
         setEmployees(activeEmployees);
         setDepartments(dep);
         setLeaves(leave.leaves);
       } catch (error) {
         setEmployees([]);
+        setAllEmployees([]);
         setDepartments([]);
         setLeaves([]);
       }
@@ -86,19 +91,19 @@ const AdminDashboard: React.FC = () => {
   const employeeStats = [
     {
       title: 'Total Employees',
-      value: employees.length,
+      value: allEmployees.length,
       icon: Users,
       iconColor: 'text-blue-600',
     },
     {
       title: 'Active Employees',
-      value: employees.filter(emp => !emp.dol).length,
+      value: allEmployees.filter(emp => !emp.dol).length,
       icon: UserPlus,
       iconColor: 'text-green-600',
     },
     {
       title: 'Inactive Employees',
-      value: employees.filter(emp => emp.dol).length,
+      value: allEmployees.filter(emp => emp.dol).length,
       icon: UserMinus,
       iconColor: 'text-red-600',
     },

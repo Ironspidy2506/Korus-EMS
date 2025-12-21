@@ -105,12 +105,26 @@ export default {
 						opacity: '1',
 						transform: 'translateY(0)'
 					}
+				},
+				'bell-shake': {
+					'0%': { transform: 'rotate(0deg) translateX(0)' },
+					'10%': { transform: 'rotate(-15deg) translateX(-2px)' },
+					'20%': { transform: 'rotate(15deg) translateX(2px)' },
+					'30%': { transform: 'rotate(-12deg) translateX(-1px)' },
+					'40%': { transform: 'rotate(12deg) translateX(1px)' },
+					'50%': { transform: 'rotate(-10deg) translateX(-1px)' },
+					'60%': { transform: 'rotate(10deg) translateX(1px)' },
+					'70%': { transform: 'rotate(-8deg) translateX(-1px)' },
+					'80%': { transform: 'rotate(8deg) translateX(1px)' },
+					'90%': { transform: 'rotate(-5deg) translateX(0)' },
+					'100%': { transform: 'rotate(0deg) translateX(0)' }
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out',
-				'fade-in': 'fade-in 0.3s ease-out'
+				'fade-in': 'fade-in 0.3s ease-out',
+				'bell-shake': 'bell-shake 0.6s ease-in-out infinite'
 			}
 		}
 	},

@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -26,17 +26,64 @@ import {
   User,
   Award,
   Plane,
-  MapPin
+  MapPin,
+  Bell
 } from 'lucide-react';
+import { Notification, getAllNotifications } from '@/utils/Notification';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const DashboardLayout: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [notificationCount, setNotificationCount] = useState(0);
+  const [isMessagesOpen, setIsMessagesOpen] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [loading, setLoading] = useState(false);
 
   const handleLogout = () => {
     logout();
     navigate('/login');
+  };
+
+  // Fetch notifications from backend
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        setLoading(true);
+        const data = await getAllNotifications();
+        setNotifications(data);
+        setNotificationCount(data.length);
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+        setNotifications([]);
+        setNotificationCount(0);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (user) {
+      fetchNotifications();
+      // Refresh notifications every 30 seconds
+      const interval = setInterval(fetchNotifications, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [user]);
+
+  const handleNotificationClick = async () => {
+    // Open modal immediately
+    setIsMessagesOpen(true);
+    
+    // Then fetch notifications
+    try {
+      const data = await getAllNotifications();
+      setNotifications(data);
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+      setNotifications([]);
+    }
   };
 
   const getMenuItems = () => {
@@ -190,6 +237,18 @@ const DashboardLayout: React.FC = () => {
           </Button>
 
           <div className="w-full flex justify-end items-center space-x-4">
+            {/* Notification Bell */}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="relative group"
+              onClick={handleNotificationClick}
+            >
+              <Bell className="h-5 w-5 text-gray-700 transition-all duration-200 group-hover:scale-110 group-hover:animate-bell-shake group-hover:[transform-origin:top_center]" />
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center min-w-[20px]">
+                {notificationCount > 99 ? '99+' : notificationCount}
+              </span>
+            </Button>
             <div className="text-right">
               <p className="text-sm font-medium text-gray-900">{user?.name}</p>
               <p className="text-xs text-gray-500 capitalize">{user?.role.toUpperCase()}</p>
@@ -217,6 +276,68 @@ const DashboardLayout: React.FC = () => {
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
+
+      {/* Notifications Modal */}
+      <Dialog open={isMessagesOpen} onOpenChange={setIsMessagesOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle>Notifications</DialogTitle>
+          </DialogHeader>
+          <ScrollArea className="max-h-[60vh] pr-4">
+            {loading ? (
+              <div className="text-center py-8 text-gray-500">
+                Loading notifications...
+              </div>
+            ) : notifications.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                No notifications found
+              </div>
+            ) : (
+              <div className="py-4 space-y-4">
+                {notifications.map((notification) => (
+                  <div
+                    key={notification._id}
+                    className={`p-4 rounded-lg border ${
+                      notification.priority === 'urgent'
+                        ? 'bg-red-50 border-red-200'
+                        : notification.priority === 'high'
+                        ? 'bg-orange-50 border-orange-200'
+                        : 'bg-blue-50 border-blue-200'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <h3 className="font-semibold text-gray-900">
+                        {notification.subject}
+                      </h3>
+                      {notification.priority && (
+                        <span
+                          className={`text-xs px-2 py-1 rounded ${
+                            notification.priority === 'urgent'
+                              ? 'bg-red-500 text-white'
+                              : notification.priority === 'high'
+                              ? 'bg-orange-500 text-white'
+                              : 'bg-blue-500 text-white'
+                          }`}
+                        >
+                          {notification.priority.toUpperCase()}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm text-gray-700 mb-2 whitespace-pre-wrap">
+                      {notification.message}
+                    </p>
+                    {notification.createdAt && (
+                      <p className="text-xs text-gray-500 mt-2">
+                        {new Date(notification.createdAt).toLocaleString()}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
