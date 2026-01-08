@@ -123,6 +123,7 @@ const EmployeeFixedAllowances: React.FC = () => {
           <Table>
             <TableHeader>
               <TableRow className='bg-gray-300 hover:bg-gray-300'>
+                <TableHead className="font-bold text-black">S.No</TableHead>
                 <TableHead className="font-bold text-black">Allowance Type</TableHead>
                 <TableHead className="font-bold text-black">Amount</TableHead>
                 <TableHead className="font-bold text-black">Month</TableHead>
@@ -133,8 +134,9 @@ const EmployeeFixedAllowances: React.FC = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {fixedAllowances.map((a) => (
+              {fixedAllowances.map((a, index) => (
                 <TableRow key={a._id}>
+                  <TableCell className="font-medium">{index + 1}</TableCell>
                   <TableCell>{ALLOWANCE_TYPE_LABELS[a.allowanceType] || a.allowanceType}</TableCell>
                   <TableCell>₹{a.allowanceAmount.toLocaleString('en-IN')}</TableCell>
                   <TableCell>{a.allowanceMonth}</TableCell>

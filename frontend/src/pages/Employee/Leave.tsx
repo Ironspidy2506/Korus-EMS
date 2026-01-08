@@ -221,7 +221,7 @@ const EmployeeLeave: React.FC = () => {
   const leaveBalance = currentEmployee?.leaveBalance || {
     el: 0, sl: 0, cl: 0, od: 0, lwp: 0, lhd: 0, others: 0
   };
-  const totalBalance = Object.values(leaveBalance).reduce((sum, v) => sum + (typeof v === 'number' ? v : 0), 0);
+  const totalBalance = (leaveBalance.el || 0) + (leaveBalance.sl || 0) + (leaveBalance.cl || 0);
 
   const getStatusBadgeColor = useCallback((status: string) => {
     switch (status) {

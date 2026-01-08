@@ -7,12 +7,13 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { getAllSalaries } from '@/utils/Salary';
+import { getAllSalaries, updateSalary } from '@/utils/Salary';
 import { getAllAllowances } from '@/utils/Allowance';
 import { getAllFixedAllowances } from '@/utils/FixedAllowance';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
 import { Button } from '@/components/ui/button';
+import { Pencil, Save, X } from 'lucide-react';
 
 interface AllowanceItem {
   name: string;
@@ -38,6 +39,10 @@ interface CTCData {
   detailedSalaryDeductions: AllowanceItem[];
   detailedVariableAllowances: AllowanceItem[];
   detailedFixedAllowances: AllowanceItem[];
+  salaryId?: string; // Store salary record ID for editing
+  employeeIdObj?: string; // Store employee ObjectId for updating
+  employeeType?: string; // Store employee type for updating
+  payableDays?: number; // Store payable days for updating
 }
 
 const AdminCTC: React.FC = () => {
@@ -47,6 +52,9 @@ const AdminCTC: React.FC = () => {
   const [monthFilter, setMonthFilter] = useState('All');
   const [yearFilter, setYearFilter] = useState('All');
   const [viewSlip, setViewSlip] = useState<CTCData | null>(null);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editedData, setEditedData] = useState<CTCData | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
   const slipRef = useRef<HTMLDivElement>(null);
 
   const monthsList = [
@@ -170,7 +178,11 @@ const AdminCTC: React.FC = () => {
             detailedSalaryAllowances,
             detailedSalaryDeductions,
             detailedVariableAllowances: [],
-            detailedFixedAllowances: []
+            detailedFixedAllowances: [],
+            salaryId: salary._id,
+            employeeIdObj: typeof salary.employeeId === 'object' ? salary.employeeId._id : salary.employeeId,
+            employeeType: salary.employeeType || '',
+            payableDays: salary.payableDays || 0
           });
         } else {
           const existing = ctcMap.get(key)!;
@@ -182,6 +194,10 @@ const AdminCTC: React.FC = () => {
           existing.detailedSalaryAllowances = detailedSalaryAllowances;
           existing.detailedSalaryDeductions = detailedSalaryDeductions;
           existing.totalCTC = (salary.basicSalary || 0) + salaryAllowances - salaryDeductions + existing.variableAllowances + existing.fixedAllowances;
+          existing.salaryId = salary._id;
+          existing.employeeIdObj = typeof salary.employeeId === 'object' ? salary.employeeId._id : salary.employeeId;
+          existing.employeeType = salary.employeeType || '';
+          existing.payableDays = salary.payableDays || 0;
         }
       });
 
@@ -324,6 +340,112 @@ const AdminCTC: React.FC = () => {
 
     return matchesSearch && matchesMonth && matchesYear;
   });
+
+  // Handle edit mode toggle
+  const handleEditToggle = () => {
+    if (isEditMode) {
+      setEditedData(null);
+      setIsEditMode(false);
+    } else {
+      if (viewSlip) {
+        setEditedData({ ...viewSlip });
+        setIsEditMode(true);
+      }
+    }
+  };
+
+  // Handle save changes
+  const handleSaveChanges = async () => {
+    if (!editedData || !editedData.salaryId || !editedData.employeeIdObj) {
+      toast.error('Cannot save: Missing salary record information');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const totalAllowances = (editedData.detailedSalaryAllowances || []).reduce((sum, a) => sum + a.amount, 0);
+      const totalDeductions = (editedData.detailedSalaryDeductions || []).reduce((sum, d) => sum + d.amount, 0);
+
+      const salaryUpdateData = {
+        employeeId: editedData.employeeIdObj,
+        employeeType: editedData.employeeType || '',
+        grossSalary: editedData.grossSalary,
+        basicSalary: editedData.basicSalary,
+        payableDays: editedData.payableDays || 0,
+        allowances: editedData.detailedSalaryAllowances || [],
+        deductions: editedData.detailedSalaryDeductions || [],
+        paymentMonth: editedData.month,
+        paymentYear: editedData.year
+      };
+
+      const response = await updateSalary(editedData.salaryId, salaryUpdateData as any);
+      
+      if (response.data.success) {
+        toast.success('CTC updated successfully');
+        setIsEditMode(false);
+        setEditedData(null);
+        await fetchCTCData();
+        const updatedData = {
+          ...editedData,
+          salaryAllowances: totalAllowances,
+          salaryDeductions: totalDeductions,
+          totalCTC: editedData.basicSalary + totalAllowances - totalDeductions + editedData.variableAllowances + editedData.fixedAllowances
+        };
+        setViewSlip(updatedData);
+      } else {
+        toast.error(response.data.message || 'Failed to update CTC');
+      }
+    } catch (error: any) {
+      console.error('Error saving CTC:', error);
+      toast.error(error.response?.data?.message || 'Failed to save changes');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Handle field changes
+  const handleFieldChange = (field: keyof CTCData, value: any) => {
+    if (!editedData) return;
+    setEditedData({ ...editedData, [field]: value });
+  };
+
+  const handleAllowanceChange = (index: number, field: 'name' | 'amount', value: string | number) => {
+    if (!editedData || !editedData.detailedSalaryAllowances) return;
+    const updated = [...editedData.detailedSalaryAllowances];
+    updated[index] = { ...updated[index], [field]: value };
+    setEditedData({ ...editedData, detailedSalaryAllowances: updated });
+  };
+
+  const handleDeductionChange = (index: number, field: 'name' | 'amount', value: string | number) => {
+    if (!editedData || !editedData.detailedSalaryDeductions) return;
+    const updated = [...editedData.detailedSalaryDeductions];
+    updated[index] = { ...updated[index], [field]: value };
+    setEditedData({ ...editedData, detailedSalaryDeductions: updated });
+  };
+
+  const handleAddAllowance = () => {
+    if (!editedData) return;
+    const updated = [...(editedData.detailedSalaryAllowances || []), { name: '', amount: 0 }];
+    setEditedData({ ...editedData, detailedSalaryAllowances: updated });
+  };
+
+  const handleRemoveAllowance = (index: number) => {
+    if (!editedData || !editedData.detailedSalaryAllowances) return;
+    const updated = editedData.detailedSalaryAllowances.filter((_, i) => i !== index);
+    setEditedData({ ...editedData, detailedSalaryAllowances: updated });
+  };
+
+  const handleAddDeduction = () => {
+    if (!editedData) return;
+    const updated = [...(editedData.detailedSalaryDeductions || []), { name: '', amount: 0 }];
+    setEditedData({ ...editedData, detailedSalaryDeductions: updated });
+  };
+
+  const handleRemoveDeduction = (index: number) => {
+    if (!editedData || !editedData.detailedSalaryDeductions) return;
+    const updated = editedData.detailedSalaryDeductions.filter((_, i) => i !== index);
+    setEditedData({ ...editedData, detailedSalaryDeductions: updated });
+  };
 
   // Calculate stats
   const totalCTC = ctcData.reduce((sum, item) => sum + item.totalCTC, 0);
@@ -511,9 +633,47 @@ const AdminCTC: React.FC = () => {
 
       {/* CTC Slip Modal */}
       {viewSlip && (
-        <Dialog open={!!viewSlip} onOpenChange={() => setViewSlip(null)}>
+        <Dialog open={!!viewSlip} onOpenChange={() => {
+          setViewSlip(null);
+          setIsEditMode(false);
+          setEditedData(null);
+        }}>
           <DialogContent className="max-w-[160vw] w-[160vw] p-0 mx-1 sm:mx-0 sm:max-w-2xl sm:w-auto rounded-lg">
             <div ref={slipRef} className="relative bg-white rounded-xl shadow-2xl border border-gray-300 print:bg-white print:shadow-none print:border print:rounded-none overflow-y-auto max-h-[90vh] w-full">
+              {/* Edit Mode Toggle Button */}
+              <div className="absolute top-4 right-4 print:hidden z-20">
+                {!isEditMode ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleEditToggle}
+                    disabled={!viewSlip.salaryId}
+                  >
+                    <Pencil className="h-4 w-4 mr-2" />
+                    Edit
+                  </Button>
+                ) : (
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleEditToggle}
+                      disabled={isSaving}
+                    >
+                      <X className="h-4 w-4 mr-2" />
+                      Cancel
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={handleSaveChanges}
+                      disabled={isSaving}
+                    >
+                      <Save className="h-4 w-4 mr-2" />
+                      {isSaving ? 'Saving...' : 'Save'}
+                    </Button>
+                  </div>
+                )}
+              </div>
               {/* Header */}
               <div className="relative z-10 px-4 sm:px-6 pt-6 sm:pt-8 pb-4 border-b border-blue-200 bg-gradient-to-r from-blue-50 to-white">
                 <div className="flex flex-col items-center sm:items-start gap-4">
@@ -541,6 +701,18 @@ const AdminCTC: React.FC = () => {
                     <span className="font-medium text-gray-700 text-sm sm:text-base">Employee ID: <span className="font-semibold text-blue-900">{viewSlip.employeeId || '-'}</span></span>
                     <span className="font-medium text-gray-700 text-sm sm:text-base">Name: <span className="font-semibold text-blue-900">{viewSlip.employeeName || '-'}</span></span>
                     <span className="font-medium text-gray-700 text-sm sm:text-base">Department: <span className="font-semibold text-blue-900">{viewSlip.department || '-'}</span></span>
+                    {isEditMode && editedData && (
+                      <div className="flex justify-between items-center mt-2">
+                        <span className="font-medium text-gray-700 text-sm sm:text-base">Gross Salary:</span>
+                        <Input
+                          type="number"
+                          value={editedData.grossSalary}
+                          onChange={(e) => handleFieldChange('grossSalary', Number(e.target.value))}
+                          className="w-32 text-right"
+                          onWheel={(e) => e.currentTarget.blur()}
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -553,23 +725,84 @@ const AdminCTC: React.FC = () => {
                     <div className="space-y-2">
                       <div className="flex justify-between items-center">
                         <span className="font-medium text-gray-700 text-sm sm:text-base">Basic Salary</span>
-                        <span className="font-semibold text-blue-900 text-sm sm:text-base">₹{viewSlip.basicSalary.toLocaleString('en-IN')}</span>
+                        {isEditMode && editedData ? (
+                          <Input
+                            type="number"
+                            value={editedData.basicSalary}
+                            onChange={(e) => handleFieldChange('basicSalary', Number(e.target.value))}
+                            className="w-32 text-right"
+                            onWheel={(e) => e.currentTarget.blur()}
+                          />
+                        ) : (
+                          <span className="font-semibold text-blue-900 text-sm sm:text-base">₹{viewSlip.basicSalary.toLocaleString('en-IN')}</span>
+                        )}
                       </div>
                       
                       {/* Salary Allowances - Individual Items */}
-                      {viewSlip.detailedSalaryAllowances && viewSlip.detailedSalaryAllowances.length > 0 && (
-                        <>
-                          {viewSlip.detailedSalaryAllowances.map((allowance, idx) => (
-                            <div key={`salary-allowance-${idx}`} className="flex justify-between items-center pl-4">
-                              <span className="font-medium text-gray-600 text-sm sm:text-base">{allowance.name}</span>
-                              <span className="font-semibold text-blue-900 text-sm sm:text-base">₹{allowance.amount.toLocaleString('en-IN')}</span>
+                      {isEditMode && editedData ? (
+                        <div className="space-y-2 pl-4 border-l-2 border-blue-200">
+                          <div className="flex justify-between items-center mb-2">
+                            <span className="font-medium text-gray-700 text-sm">Salary Allowances</span>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={handleAddAllowance}
+                              className="h-6 text-xs"
+                            >
+                              + Add
+                            </Button>
+                          </div>
+                          {(editedData.detailedSalaryAllowances || []).map((allowance, idx) => (
+                            <div key={idx} className="flex gap-2 items-center">
+                              <Input
+                                type="text"
+                                placeholder="Allowance name"
+                                value={allowance.name}
+                                onChange={(e) => handleAllowanceChange(idx, 'name', e.target.value)}
+                                className="flex-1"
+                              />
+                              <Input
+                                type="number"
+                                placeholder="Amount"
+                                value={allowance.amount}
+                                onChange={(e) => handleAllowanceChange(idx, 'amount', Number(e.target.value))}
+                                className="w-32"
+                                onWheel={(e) => e.currentTarget.blur()}
+                              />
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleRemoveAllowance(idx)}
+                                className="text-red-600 h-6 w-6 p-0"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
                             </div>
                           ))}
-                          <div className="flex justify-between items-center pt-1 border-t border-gray-200">
-                            <span className="font-medium text-gray-700 text-sm sm:text-base">Total Salary Allowances</span>
-                            <span className="font-semibold text-blue-900 text-sm sm:text-base">₹{viewSlip.salaryAllowances.toLocaleString('en-IN')}</span>
+                          <div className="flex justify-between items-center pt-2 border-t border-gray-200">
+                            <span className="font-medium text-gray-700 text-sm">Total</span>
+                            <span className="font-semibold text-blue-900 text-sm">
+                              ₹{((editedData.detailedSalaryAllowances || []).reduce((sum, a) => sum + a.amount, 0)).toLocaleString('en-IN')}
+                            </span>
                           </div>
-                        </>
+                        </div>
+                      ) : (
+                        viewSlip.detailedSalaryAllowances && viewSlip.detailedSalaryAllowances.length > 0 && (
+                          <>
+                            {viewSlip.detailedSalaryAllowances.map((allowance, idx) => (
+                              <div key={`salary-allowance-${idx}`} className="flex justify-between items-center pl-4">
+                                <span className="font-medium text-gray-600 text-sm sm:text-base">{allowance.name}</span>
+                                <span className="font-semibold text-blue-900 text-sm sm:text-base">₹{allowance.amount.toLocaleString('en-IN')}</span>
+                              </div>
+                            ))}
+                            <div className="flex justify-between items-center pt-1 border-t border-gray-200">
+                              <span className="font-medium text-gray-700 text-sm sm:text-base">Total Salary Allowances</span>
+                              <span className="font-semibold text-blue-900 text-sm sm:text-base">₹{viewSlip.salaryAllowances.toLocaleString('en-IN')}</span>
+                            </div>
+                          </>
+                        )
                       )}
                       
                       {/* Variable Allowances - Individual Items */}
@@ -609,21 +842,72 @@ const AdminCTC: React.FC = () => {
                   <div>
                     <h3 className="text-base sm:text-lg font-semibold text-red-700 mb-3 border-b border-red-100 pb-1">Deductions</h3>
                     <div className="space-y-2">
-                      {viewSlip.detailedSalaryDeductions && viewSlip.detailedSalaryDeductions.length > 0 ? (
-                        <>
-                          {viewSlip.detailedSalaryDeductions.map((deduction, idx) => (
-                            <div key={`deduction-${idx}`} className="flex justify-between items-center pl-4">
-                              <span className="font-medium text-gray-600 text-sm sm:text-base">{deduction.name}</span>
-                              <span className="font-semibold text-red-600 text-sm sm:text-base">-₹{deduction.amount.toLocaleString('en-IN')}</span>
+                      {isEditMode && editedData ? (
+                        <div className="space-y-2 pl-4 border-l-2 border-red-200">
+                          <div className="flex justify-between items-center mb-2">
+                            <span className="font-medium text-gray-700 text-sm">Salary Deductions</span>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={handleAddDeduction}
+                              className="h-6 text-xs"
+                            >
+                              + Add
+                            </Button>
+                          </div>
+                          {(editedData.detailedSalaryDeductions || []).map((deduction, idx) => (
+                            <div key={idx} className="flex gap-2 items-center">
+                              <Input
+                                type="text"
+                                placeholder="Deduction name"
+                                value={deduction.name}
+                                onChange={(e) => handleDeductionChange(idx, 'name', e.target.value)}
+                                className="flex-1"
+                              />
+                              <Input
+                                type="number"
+                                placeholder="Amount"
+                                value={deduction.amount}
+                                onChange={(e) => handleDeductionChange(idx, 'amount', Number(e.target.value))}
+                                className="w-32"
+                                onWheel={(e) => e.currentTarget.blur()}
+                              />
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleRemoveDeduction(idx)}
+                                className="text-red-600 h-6 w-6 p-0"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
                             </div>
                           ))}
-                          <div className="flex justify-between items-center pt-1 border-t border-gray-200">
-                            <span className="font-medium text-gray-700 text-sm sm:text-base">Total Deductions</span>
-                            <span className="font-semibold text-red-600 text-sm sm:text-base">-₹{viewSlip.salaryDeductions.toLocaleString('en-IN')}</span>
+                          <div className="flex justify-between items-center pt-2 border-t border-gray-200">
+                            <span className="font-medium text-gray-700 text-sm">Total</span>
+                            <span className="font-semibold text-red-600 text-sm">
+                              -₹{((editedData.detailedSalaryDeductions || []).reduce((sum, d) => sum + d.amount, 0)).toLocaleString('en-IN')}
+                            </span>
                           </div>
-                        </>
+                        </div>
                       ) : (
-                        <div className="text-gray-400 text-sm sm:text-base">No deductions</div>
+                        viewSlip.detailedSalaryDeductions && viewSlip.detailedSalaryDeductions.length > 0 ? (
+                          <>
+                            {viewSlip.detailedSalaryDeductions.map((deduction, idx) => (
+                              <div key={`deduction-${idx}`} className="flex justify-between items-center pl-4">
+                                <span className="font-medium text-gray-600 text-sm sm:text-base">{deduction.name}</span>
+                                <span className="font-semibold text-red-600 text-sm sm:text-base">-₹{deduction.amount.toLocaleString('en-IN')}</span>
+                              </div>
+                            ))}
+                            <div className="flex justify-between items-center pt-1 border-t border-gray-200">
+                              <span className="font-medium text-gray-700 text-sm sm:text-base">Total Deductions</span>
+                              <span className="font-semibold text-red-600 text-sm sm:text-base">-₹{viewSlip.salaryDeductions.toLocaleString('en-IN')}</span>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="text-gray-400 text-sm sm:text-base">No deductions</div>
+                        )
                       )}
                     </div>
                   </div>
@@ -631,7 +915,19 @@ const AdminCTC: React.FC = () => {
 
                 <div className="flex justify-between items-center mt-4 pt-3 border-t border-gray-200">
                   <span className="text-base sm:text-lg font-bold text-gray-900">Total CTC</span>
-                  <span className="text-xl sm:text-2xl font-extrabold text-green-700">₹{viewSlip.totalCTC.toLocaleString('en-IN')}</span>
+                  {isEditMode && editedData ? (
+                    <span className="text-xl sm:text-2xl font-extrabold text-green-700">
+                      ₹{(
+                        editedData.basicSalary +
+                        (editedData.detailedSalaryAllowances || []).reduce((sum, a) => sum + a.amount, 0) -
+                        (editedData.detailedSalaryDeductions || []).reduce((sum, d) => sum + d.amount, 0) +
+                        editedData.variableAllowances +
+                        editedData.fixedAllowances
+                      ).toLocaleString('en-IN')}
+                    </span>
+                  ) : (
+                    <span className="text-xl sm:text-2xl font-extrabold text-green-700">₹{viewSlip.totalCTC.toLocaleString('en-IN')}</span>
+                  )}
                 </div>
               </div>
 

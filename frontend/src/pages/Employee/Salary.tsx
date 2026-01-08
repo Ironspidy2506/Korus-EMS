@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -46,6 +46,20 @@ const EmployeeSalary: React.FC = () => {
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'
   ];
+
+  // Sort salary history by year (ascending) then by month (ascending)
+  const sortedSalaryHistory = useMemo(() => {
+    return [...salaryHistory].sort((a: any, b: any) => {
+      // First sort by year (ascending)
+      if (a.paymentYear !== b.paymentYear) {
+        return a.paymentYear - b.paymentYear;
+      }
+      // Then sort by month (ascending)
+      const monthA = monthsList.indexOf(a.paymentMonth);
+      const monthB = monthsList.indexOf(b.paymentMonth);
+      return monthA - monthB;
+    });
+  }, [salaryHistory]);
 
   useEffect(() => {
     // Check if user has access to salary
@@ -524,7 +538,7 @@ const EmployeeSalary: React.FC = () => {
 
   // Excel export handler
   const handleDownloadExcel = () => {
-    const dataToExport = salaryHistory
+    const dataToExport = sortedSalaryHistory
       .filter((record: any) =>
         (selectedYear === 'all' || record.paymentYear === selectedYear) &&
         (selectedMonth === 'all' || record.paymentMonth === selectedMonth)
@@ -791,7 +805,7 @@ const EmployeeSalary: React.FC = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {salaryHistory
+              {sortedSalaryHistory
                 .filter((record: any) =>
                   (selectedYear === 'all' || record.paymentYear === selectedYear) &&
                   (selectedMonth === 'all' || record.paymentMonth === selectedMonth)

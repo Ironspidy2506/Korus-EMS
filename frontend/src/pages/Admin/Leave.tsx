@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Search, Filter, ChevronLeft, ChevronRight, Eye, FileText, Calendar, Clock, User, Download, CheckCircle, XCircle, Paperclip, MessageSquare, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { getAllLeaves, approveOrRejectLeave, updateReasonOfRejection } from '@/utils/Leave';
+import { getAllLeaves, approveOrRejectLeave, updateReasonOfRejection, deleteLeave } from '@/utils/Leave';
 import { useNavigate } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 
@@ -42,6 +42,9 @@ const AdminLeave: React.FC = () => {
   const [isDeletingAll, setIsDeletingAll] = useState(false);
   const [isDeleteRejectedDialogOpen, setIsDeleteRejectedDialogOpen] = useState(false);
   const [isDeletingRejected, setIsDeletingRejected] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [leaveToDelete, setLeaveToDelete] = useState<any>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const getLeaveTypeLabel = useCallback((type: string) => {
     const typeMap: { [key: string]: string } = {
@@ -389,6 +392,49 @@ const AdminLeave: React.FC = () => {
 
   const handleCancelDeleteRejected = useCallback(() => {
     setIsDeleteRejectedDialogOpen(false);
+  }, []);
+
+  const handleDeleteClick = useCallback((leave: any) => {
+    setLeaveToDelete(leave);
+    setIsDeleteDialogOpen(true);
+  }, []);
+
+  const handleDeleteConfirm = useCallback(async () => {
+    if (!leaveToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      const response = await deleteLeave(leaveToDelete._id);
+      if (response.success) {
+        toast({
+          title: "Success",
+          description: response.message || "Leave deleted successfully",
+        });
+        setIsDeleteDialogOpen(false);
+        setLeaveToDelete(null);
+        fetchLeaves(); // Refresh the list
+      } else {
+        toast({
+          title: "Error",
+          description: response.message || "Failed to delete leave",
+          variant: "destructive",
+        });
+      }
+    } catch (error: any) {
+      console.error("Error deleting leave:", error);
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Failed to delete leave",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  }, [leaveToDelete, toast]);
+
+  const handleCancelDelete = useCallback(() => {
+    setIsDeleteDialogOpen(false);
+    setLeaveToDelete(null);
   }, []);
 
   const handleView = useCallback((leave: any) => {
@@ -770,6 +816,15 @@ const AdminLeave: React.FC = () => {
                             </Button>
                           </>
                         )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-red-600 border-red-600 hover:bg-red-50"
+                          onClick={() => handleDeleteClick(request)}
+                        >
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          Delete
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -987,6 +1042,48 @@ const AdminLeave: React.FC = () => {
               disabled={isDeletingRejected}
             >
               {isDeletingRejected ? 'Deleting...' : 'Delete All Rejected'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Single Leave Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Delete Leave Request</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this leave request?
+              <br />
+              {leaveToDelete && (
+                <>
+                  <span className="text-sm text-gray-600">
+                    <strong>Employee:</strong> {leaveToDelete.employeeId?.name} ({leaveToDelete.employeeId?.employeeId})
+                    <br />
+                    <strong>Leave Type:</strong> {getLeaveTypeLabel(leaveToDelete.type)}
+                    <br />
+                    <strong>Days:</strong> {leaveToDelete.days}
+                    <br />
+                    <strong>Status:</strong> {leaveToDelete.status?.charAt(0).toUpperCase() + leaveToDelete.status?.slice(1)}
+                  </span>
+                </>
+              )}
+              <br />
+              <span className="text-red-600 font-semibold">
+                This action cannot be undone and will permanently remove this leave record.
+              </span>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-2 mt-4">
+            <Button variant="outline" onClick={handleCancelDelete}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteConfirm}
+              disabled={isDeleting}
+            >
+              {isDeleting ? 'Deleting...' : 'Delete'}
             </Button>
           </div>
         </DialogContent>

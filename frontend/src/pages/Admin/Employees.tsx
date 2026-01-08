@@ -131,9 +131,8 @@ const AdminEmployees: React.FC = () => {
     try {
       setIsLoading(true);
       const data = await getAllEmployees();
-      // Filter employees to only include those without a Date of Leaving (DOL)
-      const activeEmployees = data.filter((emp: Employee) => !emp.dol);
-      const sorted = activeEmployees.sort((a: Employee, b: Employee) => a.employeeId - b.employeeId);
+      // Store all employees (including inactive ones)
+      const sorted = data.sort((a: Employee, b: Employee) => a.employeeId - b.employeeId);
       setEmployees(sorted);
     } catch (error) {
       console.error("Failed to fetch employees:", error);
@@ -162,11 +161,12 @@ const AdminEmployees: React.FC = () => {
     }
   };
 
-  const filteredEmployees = employees.filter(emp =>
-    !emp.dol && (
-      emp.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      emp.employeeId.toString().includes(searchTerm)
-    )
+  // Filter to show only active employees in the table
+  const activeEmployees = employees.filter((emp: Employee) => !emp.dol);
+  
+  const filteredEmployees = activeEmployees.filter(emp =>
+    emp.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    emp.employeeId.toString().includes(searchTerm)
   );
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -607,7 +607,7 @@ const AdminEmployees: React.FC = () => {
       <Card>
         <CardHeader>
           <CardTitle>All Employees</CardTitle>
-          <CardDescription>Total: {employees.length} employees</CardDescription>
+          <CardDescription>Total: {activeEmployees.length} active employees</CardDescription>
           <div className="mt-4 flex items-center space-x-2">
             <Search className="h-4 w-4 text-gray-400" />
             <Input
