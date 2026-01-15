@@ -640,40 +640,6 @@ const AdminCTC: React.FC = () => {
         }}>
           <DialogContent className="max-w-[160vw] w-[160vw] p-0 mx-1 sm:mx-0 sm:max-w-2xl sm:w-auto rounded-lg">
             <div ref={slipRef} className="relative bg-white rounded-xl shadow-2xl border border-gray-300 print:bg-white print:shadow-none print:border print:rounded-none overflow-y-auto max-h-[90vh] w-full">
-              {/* Edit Mode Toggle Button */}
-              <div className="absolute top-4 right-4 print:hidden z-20">
-                {!isEditMode ? (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleEditToggle}
-                    disabled={!viewSlip.salaryId}
-                  >
-                    <Pencil className="h-4 w-4 mr-2" />
-                    Edit
-                  </Button>
-                ) : (
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleEditToggle}
-                      disabled={isSaving}
-                    >
-                      <X className="h-4 w-4 mr-2" />
-                      Cancel
-                    </Button>
-                    <Button
-                      size="sm"
-                      onClick={handleSaveChanges}
-                      disabled={isSaving}
-                    >
-                      <Save className="h-4 w-4 mr-2" />
-                      {isSaving ? 'Saving...' : 'Save'}
-                    </Button>
-                  </div>
-                )}
-              </div>
               {/* Header */}
               <div className="relative z-10 px-4 sm:px-6 pt-6 sm:pt-8 pb-4 border-b border-blue-200 bg-gradient-to-r from-blue-50 to-white">
                 <div className="flex flex-col items-center sm:items-start gap-4">
@@ -689,9 +655,24 @@ const AdminCTC: React.FC = () => {
                 </div>
               </div>
 
-              <div className="flex flex-col items-center mt-4">
+              <div className="flex flex-col items-center mt-4 relative">
                 <span className="text-base sm:text-lg font-semibold text-blue-700">CTC Slip</span>
                 <span className="text-gray-600 font-medium text-sm sm:text-base">{viewSlip.month} {viewSlip.year}</span>
+                {/* Edit Button - Only show when not in edit mode */}
+                {!isEditMode && (
+                  <div className="absolute top-0 right-4 sm:right-6 print:hidden">
+                    <Button
+                      variant="outline"
+                      size="default"
+                      onClick={handleEditToggle}
+                      disabled={!viewSlip.salaryId}
+                      className="px-4 py-2"
+                    >
+                      <Pencil className="h-4 w-4 mr-2" />
+                      Edit
+                    </Button>
+                  </div>
+                )}
               </div>
 
               {/* Employee Info */}
@@ -929,6 +910,27 @@ const AdminCTC: React.FC = () => {
                     <span className="text-xl sm:text-2xl font-extrabold text-green-700">₹{viewSlip.totalCTC.toLocaleString('en-IN')}</span>
                   )}
                 </div>
+                
+                {/* Save and Cancel Buttons - Only show in edit mode */}
+                {isEditMode && (
+                  <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-gray-200 print:hidden">
+                    <Button
+                      variant="outline"
+                      onClick={handleEditToggle}
+                      disabled={isSaving}
+                    >
+                      <X className="h-4 w-4 mr-2" />
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleSaveChanges}
+                      disabled={isSaving}
+                    >
+                      <Save className="h-4 w-4 mr-2" />
+                      {isSaving ? 'Saving...' : 'Save'}
+                    </Button>
+                  </div>
+                )}
               </div>
 
               {/* Footer */}
@@ -936,7 +938,7 @@ const AdminCTC: React.FC = () => {
                 Plot No. 32, Sector-4B, HSIIDC, Bahadurgarh, Haryana - 124507
               </div>
 
-              <div className="relative z-10 flex flex-col sm:flex-row justify-between items-center gap-3 mt-4 px-4 sm:px-6 pb-4 print:hidden">
+              <div className="sticky bottom-0 bg-white border-t border-gray-200 z-10 flex flex-col sm:flex-row justify-between items-center gap-3 mt-4 px-4 sm:px-6 py-4 print:hidden">
                 <span className="italic text-gray-400 text-xs text-center sm:text-left">*This is a computer generated slip and does not require signature</span>
                 <div className="flex gap-2 w-full sm:w-auto">
                   <Button variant="outline" onClick={() => {
