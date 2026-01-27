@@ -415,20 +415,54 @@ const HREmployees: React.FC = () => {
     </div>
   );
 
-  // Excel export handler
+  // Excel export handler - Comprehensive download
   const handleDownloadExcel = () => {
-    const dataToExport = filteredEmployees.map(emp => ({
-      'Emp ID': emp.employeeId,
-      'Name': emp.name,
-      'Email': emp.email,
+    const dataToExport = employees.map(emp => ({
+      'Employee ID': emp.employeeId,
+      'Name': emp.name || '',
+      'Email': emp.email || '',
+      'Korus Email': emp.korusEmail || '',
+      'Date of Birth': formatDate(emp.dob),
+      'Gender': emp.gender || '',
+      'Marital Status': emp.maritalStatus || '',
+      'Nationality': emp.nationality || '',
+      'Contact No': emp.contactNo || '',
+      'Alternate Contact No': emp.altContactNo || '',
+      'Permanent Address': emp.permanentAddress || '',
+      'Local Address': emp.localAddress || '',
+      'Designation': emp.designation || '',
       'Department': typeof emp.department === 'object' ? emp.department.departmentName : '',
-      'Designation': emp.designation,
-      'DOB': formatDate(emp.dob),
+      'HOD': emp.hod || '',
+      'Qualification': emp.qualification || '',
+      'Year of Passing': emp.yop || '',
+      'Date of Joining': emp.doj ? formatDate(emp.doj) : '',
+      'Date of Leaving': emp.dol ? formatDate(emp.dol) : '',
+      'Reporting Person': emp.repperson || '',
+      'Role': emp.role || '',
+      'Bank': emp.bank || '',
+      'Branch': emp.branch || '',
+      'IFSC Code': emp.ifsc || '',
+      'Account No': emp.accountNo || '',
+      'Aadhar No': emp.aadharNo || '',
+      'PAN No': emp.pan || '',
+      'UAN No': emp.uan || '',
+      'EPF No': emp.pfNo || '',
+      'ESI No': emp.esiNo || '',
+      'Passport No': emp.passportNo || '',
+      'Passport Type': emp.passportType || '',
+      'Passport Place of Issue': emp.passportpoi || '',
+      'Passport Date of Issue': emp.passportdoi ? formatDate(emp.passportdoi) : '',
+      'Passport Date of Expiry': emp.passportdoe ? formatDate(emp.passportdoe) : '',
+      'Status': emp.dol ? 'Inactive' : 'Active',
     }));
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Employees');
-    XLSX.writeFile(workbook, 'employees.xlsx');
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'All Employees');
+    XLSX.writeFile(workbook, 'all_employee_details.xlsx');
+    toast({
+      title: 'Success',
+      description: 'Employee data downloaded successfully',
+    });
   };
 
   // Print handler
@@ -639,7 +673,7 @@ const HREmployees: React.FC = () => {
               onClick={handleDownloadExcel}
             >
               <Download className="h-4 w-4 mr-2" />
-              Download as Excel
+              Download All Data
             </Button>
           </div>
         </CardHeader>
