@@ -24,7 +24,9 @@ export interface Salary {
     paymentYear: string;
 }
 
-const API_BASE_URL = 'https://korus-ems-backend.vercel.app/api/salary';
+import { API_ENDPOINTS } from '@/config/api';
+
+const API_BASE_URL = API_ENDPOINTS.SALARY;
 
 export const getAllSalaries = async () => {
     try {

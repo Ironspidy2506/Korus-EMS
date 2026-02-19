@@ -15,6 +15,7 @@ import { Leave, applyForLeave, updateLeave, deleteLeave, getUserLeaves } from '@
 import { getAllEmployees, Employee } from '@/utils/Employee';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { getLeaveAttachmentUrl } from '@/config/api';
 
 const EmployeeLeave: React.FC = () => {
   const { user } = useAuth();
@@ -575,7 +576,7 @@ const EmployeeLeave: React.FC = () => {
                         size="sm"
                         onClick={() =>
                           window.open(
-                            `https://korus-ems-backend.vercel.app/api/leaves/attachment/${request._id}`,
+                            getLeaveAttachmentUrl(request._id),
                             "_blank"
                           )
                         }

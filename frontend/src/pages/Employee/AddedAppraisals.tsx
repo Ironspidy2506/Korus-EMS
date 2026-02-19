@@ -15,6 +15,7 @@ import { getAppraisals, addAppraisal, deleteAppraisal, editAppraisal, getTeamLea
 import axios from 'axios';
 import { getAllEmployees } from "@/utils/Employee";
 import { useAuth } from "@/contexts/AuthContext";
+import { API_ENDPOINTS } from '@/config/api';
 
 const ratingScale = {
     1: 25,
@@ -242,7 +243,7 @@ const EmployeeAddedAppraisals: React.FC = () => {
     const fetchDepartments = async () => {
         try {
             const token = localStorage.getItem('token');
-            const response = await axios.get("https://korus-ems-backend.vercel.app/api/department", {
+            const response = await axios.get(API_ENDPOINTS.DEPARTMENTS, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             setDepartments(response.data.departments);

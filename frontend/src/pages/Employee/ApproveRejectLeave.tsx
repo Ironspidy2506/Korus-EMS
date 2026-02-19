@@ -14,6 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { getAllLeaves, approveOrRejectLeave, getLeaveForMyApprovals, updateReasonOfRejection } from '@/utils/Leave';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { getLeaveAttachmentUrl } from '@/config/api';
 
 const ITEMS_PER_PAGE = 20; // Show 20 items per page for better performance
 
@@ -463,7 +464,7 @@ const EmployeeApproveRejectLeave: React.FC = () => {
                                                     size="sm"
                                                     onClick={() =>
                                                         window.open(
-                                                            `https://korus-ems-backend.vercel.app/api/leaves/attachment/${request._id}`,
+                                                            getLeaveAttachmentUrl(request._id),
                                                             "_blank"
                                                         )
                                                     }
@@ -688,7 +689,7 @@ const EmployeeApproveRejectLeave: React.FC = () => {
                                             className="w-fit"
                                             onClick={() =>
                                                 window.open(
-                                                    `https://korus-ems-backend.vercel.app/api/leaves/attachment/${selectedLeave._id}`,
+                                                    getLeaveAttachmentUrl(selectedLeave._id),
                                                     "_blank"
                                                 )
                                             }

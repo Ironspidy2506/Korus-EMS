@@ -49,7 +49,9 @@ export interface TravelExpenditure {
   updatedAt?: Date;
 }
 
-const API_BASE_URL = 'https://korus-ems-backend.vercel.app/api/travel-expenditures';
+import { API_ENDPOINTS } from '@/config/api';
+
+const API_BASE_URL = API_ENDPOINTS.TRAVEL_EXPENDITURE;
 
 // Get all travel expenditures
 export const getAllTravelExpenditures = async () => {

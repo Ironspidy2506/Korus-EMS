@@ -2,7 +2,9 @@ import axios from 'axios';
 import { Department } from './Department';
 import { Employee } from './Employee';
 
-const API_BASE_URL = 'https://korus-ems-backend.vercel.app/api/ltc';
+import { API_ENDPOINTS } from '@/config/api';
+
+const API_BASE_URL = API_ENDPOINTS.LTC;
 
 export interface LTC {
   _id: string;

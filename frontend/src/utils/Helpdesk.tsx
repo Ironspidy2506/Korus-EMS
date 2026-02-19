@@ -16,7 +16,9 @@ export interface Helpdesk {
     status: boolean;
 }
 
-const BASE_URL = "https://korus-ems-backend.vercel.app/api/helpdesk";
+import { API_ENDPOINTS } from '@/config/api';
+
+const BASE_URL = API_ENDPOINTS.HELPDESK;
 
 // Fetch all helpdesk tickets
 export const getAllHelpdesks = async (): Promise<Helpdesk[]> => {

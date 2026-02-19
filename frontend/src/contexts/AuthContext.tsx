@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import axios from "axios";
+import { API_ENDPOINTS } from '@/config/api';
 
 // User interface
 export interface User {
@@ -44,8 +45,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       try {
+import { API_ENDPOINTS } from '@/config/api';
+
         const response = await axios.get(
-          "https://korus-ems-backend.vercel.app/api/auth/verify",
+          API_ENDPOINTS.AUTH.VERIFY,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -74,7 +77,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     try {
       const response = await axios.post(
-        "https://korus-ems-backend.vercel.app/api/auth/login",
+        API_ENDPOINTS.AUTH.LOGIN,
         {
           email,
           password,

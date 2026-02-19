@@ -14,6 +14,7 @@ import { Employee } from '@/utils/Employee';
 import { getAllDepartments, Department } from '@/utils/Department';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
+import { getLTCAttachmentUrl } from '@/config/api';
 import { format } from 'date-fns';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { Calendar as DateCalendar } from '@/components/ui/calendar';
@@ -428,7 +429,7 @@ const EmployeeLTC: React.FC = () => {
                             onClick={async () => {
                               try {
                                 const token = localStorage.getItem('token');
-                                const response = await fetch(`https://korus-ems-backend.vercel.app/api/ltc/attachment/${ltc._id}`, {
+                                const response = await fetch(getLTCAttachmentUrl(ltc._id), {
                                   headers: {
                                     'Authorization': `Bearer ${token}`
                                   }

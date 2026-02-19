@@ -14,6 +14,7 @@ import { Employee } from '@/utils/Employee';
 import { getAllDepartments, Department } from '@/utils/Department';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
+import { getLTCAttachmentUrl } from '@/config/api';
 import { format } from 'date-fns';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { Calendar as DateCalendar } from '@/components/ui/calendar';
@@ -361,7 +362,7 @@ const AdminLTC: React.FC = () => {
                           size="sm"
                           onClick={() =>
                             window.open(
-                              `https://korus-ems-backend.vercel.app/api/ltc/attachment/${ltc._id}`,
+                              getLTCAttachmentUrl(ltc._id),
                               "_blank"
                             )
                           }

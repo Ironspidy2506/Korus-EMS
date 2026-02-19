@@ -9,6 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { FixedAllowance, getUserFixedAllowances } from '@/utils/FixedAllowance';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { getFixedAllowanceAttachmentUrl } from '@/config/api';
 
 const ALLOWANCE_TYPE_LABELS: Record<string, string> = {
   bonus: 'Bonus',
@@ -156,7 +157,7 @@ const EmployeeFixedAllowances: React.FC = () => {
                         size="sm"
                         onClick={() =>
                           window.open(
-                            `https://korus-ems-backend.vercel.app/api/fixed-allowances/attachment/${a._id}`,
+                            getFixedAllowanceAttachmentUrl(a._id),
                             "_blank"
                           )
                         }

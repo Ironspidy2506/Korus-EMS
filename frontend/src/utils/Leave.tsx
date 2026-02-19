@@ -22,7 +22,9 @@ export interface Leave {
     ror?: string;
 }
 
-const API_BASE_URL = 'https://korus-ems-backend.vercel.app/api/leaves';
+import { API_ENDPOINTS } from '@/config/api';
+
+const API_BASE_URL = API_ENDPOINTS.LEAVES;
 
 // Get all leaves
 export const getAllLeaves = async () => {

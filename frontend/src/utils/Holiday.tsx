@@ -9,7 +9,9 @@ export interface Holiday {
     isRecurring: boolean,
 }
 
-const BASE_URL = "https://korus-ems-backend.vercel.app/api/holiday";
+import { API_ENDPOINTS } from '@/config/api';
+
+const BASE_URL = API_ENDPOINTS.HOLIDAY;
 
 // Fetch all holidays
 export const getAllHolidays = async (): Promise<Holiday[]> => {

@@ -7,7 +7,9 @@ export interface Department {
 }
 
 
-const BASE_URL = 'https://korus-ems-backend.vercel.app/api/department';
+import { API_ENDPOINTS } from '@/config/api';
+
+const BASE_URL = API_ENDPOINTS.DEPARTMENTS;
 
 // Fetch all departments
 export const getAllDepartments = async (): Promise<Department[]> => {

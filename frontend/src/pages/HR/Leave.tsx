@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { getAllLeaves, approveOrRejectLeave, updateReasonOfRejection, deleteLeave } from '@/utils/Leave';
 import { useNavigate } from 'react-router-dom';
 import * as XLSX from 'xlsx';
+import { API_ENDPOINTS, getLeaveAttachmentUrl } from '@/config/api';
 
 const ITEMS_PER_PAGE = 20; // Show 20 items per page for better performance
 
@@ -293,7 +294,7 @@ const HRLeave: React.FC = () => {
       }
 
       const deletePromises = approvedLeaves.map((leave: any) =>
-        fetch(`https://korus-ems-backend.vercel.app/api/leaves/${leave._id}`, {
+        fetch(`${API_ENDPOINTS.LEAVES}/${leave._id}`, {
           method: 'DELETE',
           headers: {
             'Content-Type': 'application/json',
@@ -351,7 +352,7 @@ const HRLeave: React.FC = () => {
       }
 
       const deletePromises = rejectedLeaves.map((leave: any) =>
-        fetch(`https://korus-ems-backend.vercel.app/api/leaves/${leave._id}`, {
+        fetch(`${API_ENDPOINTS.LEAVES}/${leave._id}`, {
           method: 'DELETE',
           headers: {
             'Content-Type': 'application/json',
@@ -715,7 +716,7 @@ const HRLeave: React.FC = () => {
                           size="sm"
                           onClick={() =>
                             window.open(
-                              `https://korus-ems-backend.vercel.app/api/leaves/attachment/${request._id}`,
+                              getLeaveAttachmentUrl(request._id),
                               "_blank"
                             )
                           }
@@ -949,7 +950,7 @@ const HRLeave: React.FC = () => {
                       className="w-fit"
                       onClick={() =>
                         window.open(
-                          `https://korus-ems-backend.vercel.app/api/leaves/attachment/${selectedLeave._id}`,
+                          getLeaveAttachmentUrl(selectedLeave._id),
                           "_blank"
                         )
                       }

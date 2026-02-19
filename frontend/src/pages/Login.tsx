@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { toast } from '@/hooks/use-toast';
 import axios from 'axios';
 import { Eye, EyeOff } from "lucide-react";
+import { API_ENDPOINTS } from '@/config/api';
 
 const Login: React.FC = () => {
   const { user, login, isLoading } = useAuth();
@@ -79,7 +80,7 @@ const Login: React.FC = () => {
 
     setIsSendingOtp(true);
     try {
-      const response = await axios.post('https://korus-ems-backend.vercel.app/api/auth/send-reset-otp', {
+      const response = await axios.post(API_ENDPOINTS.AUTH.SEND_RESET_OTP, {
         email: forgotEmail
       });
 
@@ -137,7 +138,7 @@ const Login: React.FC = () => {
 
     setIsResettingPassword(true);
     try {
-      const response = await axios.post('https://korus-ems-backend.vercel.app/api/auth/reset-password', {
+      const response = await axios.post(API_ENDPOINTS.AUTH.RESET_PASSWORD, {
         email: forgotEmail,
         otp,
         password: newPassword

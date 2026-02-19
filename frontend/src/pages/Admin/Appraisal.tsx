@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { getAppraisals, addAppraisal, deleteAppraisal, editAppraisal } from '@/utils/Appraisal';
 import axios from 'axios';
 import * as XLSX from 'xlsx';
+import { API_ENDPOINTS } from '@/config/api';
 
 const ratingScale = {
   1: 25,
@@ -224,7 +225,7 @@ const AdminAppraisal: React.FC = () => {
   const fetchEmployees = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get("https://korus-ems-backend.vercel.app/api/employees", {
+      const response = await axios.get(API_ENDPOINTS.EMPLOYEES, {
         headers: { Authorization: `Bearer ${token}` },
       });
       // Filter employees to only include those without a Date of Leaving (DOL)
@@ -243,7 +244,7 @@ const AdminAppraisal: React.FC = () => {
   const fetchDepartments = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get("https://korus-ems-backend.vercel.app/api/department", {
+      const response = await axios.get(API_ENDPOINTS.DEPARTMENTS, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setDepartments(response.data.departments);

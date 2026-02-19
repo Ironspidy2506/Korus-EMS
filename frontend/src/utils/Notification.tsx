@@ -9,7 +9,9 @@ export interface Notification {
     updatedAt?: string;
 }
 
-const BASE_URL = "https://korus-ems-backend.vercel.app/api/notification";
+import { API_ENDPOINTS } from '@/config/api';
+
+const BASE_URL = API_ENDPOINTS.NOTIFICATIONS;
 
 // Fetch all notifications
 export const getAllNotifications = async (): Promise<Notification[]> => {

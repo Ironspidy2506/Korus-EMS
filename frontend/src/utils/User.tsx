@@ -12,7 +12,9 @@ export interface User {
     resetOtpExpireAt?: number;
 }
 
-const BASE_URL = "https://korus-ems-backend.vercel.app/api/users";
+import { API_ENDPOINTS } from '@/config/api';
+
+const BASE_URL = API_ENDPOINTS.USERS;
 
 // Fetch all users
 export const getAllUsers = async (): Promise<User[]> => {

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { API_ENDPOINTS } from '@/config/api';
 
 export interface Appraisal {
     _id?: string;
@@ -23,7 +24,7 @@ export interface Appraisal {
     totalRating: number;
 }
 
-const API_BASE_URL = 'https://korus-ems-backend.vercel.app/api/appraisals';
+const API_BASE_URL = API_ENDPOINTS.APPRAISALS;
 
 // Get all appraisals
 export const getAppraisals = async () => {

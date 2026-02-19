@@ -16,6 +16,7 @@ import { getAllDepartments, Department } from '@/utils/Department';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
 import { useAuth } from '@/contexts/AuthContext';
+import { getTravelExpenditureAttachmentUrl } from '@/config/api';
 
 const getStatusBadgeColor = (status: string) => {
   switch (status) {
@@ -516,7 +517,7 @@ const EmployeeTravelExpenditure: React.FC = () => {
                               onClick={async () => {
                                 try {
                                   const token = localStorage.getItem('token');
-                                  const response = await fetch(`https://korus-ems-backend.vercel.app/api/travel-expenditures/attachment/${te._id}`, {
+                                  const response = await fetch(getTravelExpenditureAttachmentUrl(te._id), {
                                     headers: {
                                       'Authorization': `Bearer ${token}`
                                     }

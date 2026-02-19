@@ -63,7 +63,9 @@ export interface Employee {
     leaveBalance: LeaveBalance;
 }
 
-const BASE_URL = "https://korus-ems-backend.vercel.app/api/employees";
+import { API_ENDPOINTS } from '@/config/api';
+
+const BASE_URL = API_ENDPOINTS.EMPLOYEES;
 
 // Fetch all employees
 export const getAllEmployees = async (): Promise<Employee[]> => {

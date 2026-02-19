@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Employee } from '@/utils/Employee';
 import { getAllDepartments, Department } from '@/utils/Department';
 import { toast } from 'sonner';
+import { getLTCAttachmentUrl } from '@/config/api';
 import * as XLSX from 'xlsx';
 import { getAllLTCs, deleteLTC, approveOrRejectLTC, updateLTC } from '@/utils/LTC.tsx';
 
@@ -358,7 +359,7 @@ const HRLTC: React.FC = () => {
                           onClick={() =>
                             {
                             window.open(
-                              `https://korus-ems-backend.vercel.app/api/ltc/attachment/${ltc._id}`,
+                              getLTCAttachmentUrl(ltc._id),
                               "_blank"
                             )}
                           }

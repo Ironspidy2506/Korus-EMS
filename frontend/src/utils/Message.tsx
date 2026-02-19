@@ -22,7 +22,9 @@ export interface Message {
     createdAt: string;
 }
 
-const BASE_URL = "https://korus-ems-backend.vercel.app/api/message";
+import { API_ENDPOINTS } from '@/config/api';
+
+const BASE_URL = API_ENDPOINTS.MESSAGES;
 
 // Fetch all messages
 export const getAllMessages = async (): Promise<Message[]> => {

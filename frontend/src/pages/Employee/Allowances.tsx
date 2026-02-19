@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getUserById } from '@/utils/User';
+import { getAllowanceAttachmentUrl } from '@/config/api';
 
 const ALLOWANCE_TYPE_LABELS: Record<string, string> = {
   epfByCo: 'E.P.F By Co.',
@@ -414,7 +415,7 @@ const EmployeeAllowances: React.FC = () => {
                         size="sm"
                         onClick={() =>
                           window.open(
-                            `https://korus-ems-backend.vercel.app/api/allowances/attachment/${a._id}`,
+                            getAllowanceAttachmentUrl(a._id),
                             "_blank"
                           )
                         }

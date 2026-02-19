@@ -18,6 +18,7 @@ import { Employee } from '@/utils/Employee';
 import { getAllDepartments, Department } from '@/utils/Department';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
+import { getAllowanceAttachmentUrl } from '@/config/api';
 
 const ALLOWANCE_TYPE_LABELS: Record<string, string> = {
   epfByCo: 'E.P.F By Co.',
@@ -638,7 +639,7 @@ const AdminAllowances: React.FC = () => {
                         size="sm"
                         onClick={() =>
                           window.open(
-                            `https://korus-ems-backend.vercel.app/api/allowances/attachment/${a._id}`,
+                            getAllowanceAttachmentUrl(a._id),
                             "_blank"
                           )
                         }

@@ -1,6 +1,5 @@
 import axios from 'axios';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://korus-ems-backend.vercel.app/api';
+import { API_ENDPOINTS, API_BASE_URL } from '@/config/api';
 
 export interface SalaryPwdResponse {
   success: boolean;
@@ -13,7 +12,7 @@ export const verifySalaryPassword = async (salaryPassword: string): Promise<Sala
   try {
     const token = localStorage.getItem('token');
     const response = await axios.post(
-      `${API_BASE_URL}/salary-password/verify`,
+      `${API_ENDPOINTS.SALARY_PASSWORD}/verify`,
       { salaryPassword },
       {
         headers: {
@@ -33,7 +32,7 @@ export const setSalaryPassword = async (newPassword: string): Promise<SalaryPwdR
   try {
     const token = localStorage.getItem('token');
     const response = await axios.post(
-      `${API_BASE_URL}/salary-password/set`,
+      `${API_ENDPOINTS.SALARY_PASSWORD}/set`,
       { newPassword },
       {
         headers: {
@@ -53,7 +52,7 @@ export const sendSalaryPasswordResetOtp = async (): Promise<SalaryPwdResponse> =
   try {
     const token = localStorage.getItem('token');
     const response = await axios.post(
-      `${API_BASE_URL}/salary-password/send-reset-otp`,
+      `${API_ENDPOINTS.SALARY_PASSWORD}/send-reset-otp`,
       {},
       {
         headers: {
@@ -73,7 +72,7 @@ export const resetSalaryPassword = async (otp: string, newPassword: string): Pro
   try {
     const token = localStorage.getItem('token');
     const response = await axios.post(
-      `${API_BASE_URL}/salary-password/reset`,
+      `${API_ENDPOINTS.SALARY_PASSWORD}/reset`,
       { otp, newPassword },
       {
         headers: {

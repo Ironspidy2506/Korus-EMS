@@ -21,7 +21,9 @@ export interface FixedAllowance {
     updatedAt?: Date;
 }
 
-const API_BASE_URL = 'https://korus-ems-backend.vercel.app/api/fixed-allowances';
+import { API_ENDPOINTS } from '@/config/api';
+
+const API_BASE_URL = API_ENDPOINTS.FIXED_ALLOWANCES;
 
 // Get all fixed allowances
 export const getAllFixedAllowances = async () => {

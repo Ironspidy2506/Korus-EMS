@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Calendar } from 'lucide-react';
 import { Employee } from '@/utils/Employee';
 import { getAllDepartments, Department } from '@/utils/Department';
+import { getTravelExpenditureAttachmentUrl } from '@/config/api';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
 
@@ -384,7 +385,7 @@ const HRTravelExpenditure: React.FC = () => {
                             size="sm"
                             onClick={() =>
                               window.open(
-                                `https://korus-ems-backend.vercel.app/api/travel-expenditures/attachment/${te._id}`,
+                                getTravelExpenditureAttachmentUrl(te._id),
                                 "_blank"
                               )
                             }
