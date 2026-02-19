@@ -1,5 +1,5 @@
 // Centralized API Configuration
-export const API_BASE_URL = 'https://korus-ems-backend.vercel.app/api';
+export const API_BASE_URL = 'https://korus-ems-backend-bl2o.onrender.com/api';
 
 // Helper function to get full API endpoint
 export const getApiEndpoint = (endpoint: string): string => {

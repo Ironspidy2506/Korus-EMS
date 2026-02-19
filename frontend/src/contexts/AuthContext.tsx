@@ -45,8 +45,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       try {
-import { API_ENDPOINTS } from '@/config/api';
-
         const response = await axios.get(
           API_ENDPOINTS.AUTH.VERIFY,
           {
